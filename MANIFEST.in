@@ -1,0 +1,8 @@
+include MANIFEST.in
+include license.txt
+include readme.txt
+include setup.py
+
+recursive-include doc *.html
+recursive-include doc *.png
+recursive-include doc *.css
