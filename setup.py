@@ -46,7 +46,7 @@ background as you browse the results.""",
 		zip_safe=False,
 		entry_points = {
 			'gui_scripts': [
-				'runsnake=runsnake.runsnake:main',
+				'runsnake=runsnakerun.runsnake:main',
 			],
 		},
 		**extraArguments
