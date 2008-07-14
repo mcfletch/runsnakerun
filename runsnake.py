@@ -12,7 +12,8 @@ What we want to be able to do:
 		filename
 		function name
 """
-import wx, sys
+import wx, sys, os
+import pstats
 
 
 class ColumnDefinition( object ):
@@ -30,6 +31,31 @@ class ColumnDefinition( object ):
 		"""Get the value for this column from the function"""
 		return getattr( function, self.attribute )
 
+class PStatRow( object ):
+	def __init__( self, key, raw ):
+		file,line,func = key
+		try:
+			dirname,basename = os.path.dirname(file),os.path.basename(file)
+		except ValueError, err:
+			dirname = ''
+			basename = file
+		cc, nc, tt, ct, callers = raw
+		(
+			self.calls, self.recursive, self.local, self.localPer,
+			self.cummulative, self.cummulativePer, self.directory,
+			self.filename, self.name, self.lineno
+		) = (
+			cc, 
+			nc,
+			tt,
+			tt/nc,
+			ct,
+			ct/cc,
+			dirname,
+			basename,
+			func,
+			line,
+		)
 
 class ProfileView( wx.ListCtrl ):
 	"""A sortable profile list control"""
@@ -103,17 +129,31 @@ class ProfileView( wx.ListCtrl ):
 	def load( self, filename ):
 		"""Load our hotshot dataset (iteratively)"""
 		from runsnakerun import hotshotreader
-		for count, files, functions in hotshotreader.loadHotshot( filename, 20000 ):
-			if not count % 200000:
-				try:
-					self.integrateRecords( files, functions )
-				except wx.PyDeadObjectError, err:
-					return
-			wx.Yield()
 		try:
-			self.integrateRecords( files, functions )
-		except wx.PyDeadObjectError, err:
-			return
+			for count, files, functions in hotshotreader.loadHotshot( filename, 20000 ):
+				if not count % 200000:
+					try:
+						self.integrateRecords( files, functions )
+					except wx.PyDeadObjectError, err:
+						return
+				wx.Yield()
+			try:
+				self.integrateRecords( files, functions )
+			except wx.PyDeadObjectError, err:
+				return
+		except ValueError, err:
+			# likely a cProfile version...
+			s = pstats.Stats( filename )
+			s.sort_stats('calls')
+			records = {}
+			_,funcs = s.get_print_list(())
+			for raw in funcs:
+				#print raw, s.stats.get( raw )
+				stat = s.stats.get(raw, None)
+				if stat is not None:
+					records[raw] = PStatRow(raw,stat)
+			self.integrateRecords( [filename], records)
+			
 	def integrateRecords( self, files, functions ):
 		"""Integrate records from the loader"""
 		self.SetItemCount(len(functions))
