@@ -33,6 +33,11 @@ background as you browse the results.""",
 		author = "Mike C. Fletcher",
 		author_email = "mcfletch@vrplumber.com",
 		license = "BSD",
+		install_requires = [
+			# commented out as setuptools isn't well behaved for download deps
+#			"numpy",
+#			"wxPython",
+		],
 
 		package_dir = {
 			'runsnakerun':'.',

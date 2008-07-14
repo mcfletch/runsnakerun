@@ -32,6 +32,7 @@ class ColumnDefinition( object ):
 		return getattr( function, self.attribute )
 
 class PStatRow( object ):
+	"""Simulates a HotShot profiler record using PStats module"""
 	def __init__( self, key, raw ):
 		file,line,func = key
 		try:
