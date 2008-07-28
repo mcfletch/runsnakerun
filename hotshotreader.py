@@ -4,7 +4,7 @@ import os
 import parser
 import symbol
 import sys
-import Numeric
+import numpy
 import time
 
 class FileRecord( object ):
@@ -24,9 +24,9 @@ class FunctionRecord( object ):
 		self.key = (fileno,lineno)
 		self.name = name 
 		# accumArray being (local, cummulative) time elapsed
-		self.accumArray = Numeric.zeros( (2,), 'd' )
+		self.accumArray = numpy.zeros( (2,), 'd' )
 		# callArray being (direct, recursive) call counts
-		self.callArray = Numeric.zeros( (2,), 'l' )
+		self.callArray = numpy.zeros( (2,), 'l' )
 	def get_local( self ):
 		return self.accumArray[0]
 	def get_localPer( self ):
@@ -73,7 +73,7 @@ def loadHotshot( filename, yieldCount=10000 ):
 	functions = {}
 	stackSize = sys.getrecursionlimit() * 2
 	frames = [None]*stackSize
-	localDeltas = Numeric.zeros( (stackSize,), 'l' )
+	localDeltas = numpy.zeros( (stackSize,), 'l' )
 	# make this local for speed...
 	givesDelta = GIVES_DELTA.has_key
 	
@@ -97,7 +97,7 @@ def loadHotshot( filename, yieldCount=10000 ):
 					localDeltas[depth] = 0
 				except IndexError, err:
 					print 'extend localDeltas'
-					localDeltas = Numeric.resize( localDeltas, (depth+200,))
+					localDeltas = numpy.resize( localDeltas, (depth+200,))
 				if function is not None:
 					try:
 						frames[depth] = function.accumArray

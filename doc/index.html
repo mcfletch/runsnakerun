@@ -1,51 +1,54 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en-ca">
-<head>
+<html lang="en-ca"><head>
   <link rel="icon" type="image/png" href="/maps/favicon.png">
-  <meta http-equiv="content-type"
- content="text/html; charset=ISO-8859-1">
-  <title>RunSnakeRun Python Hotshot Profile Viewer</title>
-  <link rel="stylesheet" type="text/css" href="toolkit.css">
-  <meta name="author" content="Mike C. Fletcher">
-</head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  
+  <title>RunSnakeRun Python Hotshot Profile Viewer</title><link rel="stylesheet" type="text/css" href="toolkit.css">
+  <meta name="author" content="Mike C. Fletcher"></head>
+
 <body style="direction: ltr;">
 <h1>RunSnakeRun<br>
 </h1>
 <p class="introduction">RunSnakeRun is a small GUI utility that allows
-you to view HotShot profiler dumps in a sortable GUI view.&nbsp; It
-loads the dumps incrementally in the background so that you can begin
+you to view (Python) HotShot, cProfile or Profile profiler dumps in a sortable GUI view.&nbsp; It
+loads hotshot dumps incrementally in the background so that you can begin
 viewing the profile results fairly quickly.<br>
 </p>
-<h2>Installation<br>
+<h2><a name="install"></a>Installation<br>
 </h2>
-<p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
-and Python installation with <a href="http://numeric.scipy.org/">Numpy/Numeric</a>
-installed.&nbsp;
-RunSnakeRun is distributed as a Python <a href="#download">distutils
-package</a>, unpack the source to a temporary directory and run:</p>
+<p>If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install with:</p><pre>easy_install RunSnakeRun<br>easy_install numpy<br>easy_install wxPython</pre><p>As shown, you will require a modern <a href="http://www.wxpython.org/">wxPython</a>
+and Python installation with <a href="http://numpy.scipy.org/">Numpy/Numeric</a>
+installed. &nbsp;We don't automatically install these with
+easy_install, as that can cause problems for those who have manually
+installed the packages or who are behind corporate firewalls.</p><p>You can manually <a href="#download">download the package</a> and run:</p>
 <pre>python setup.py install</pre>
-<p>To install the package.&nbsp; You may wish to make a symlink in your
-/usr/bin or /bin directory to the installed runsnake.py script/module.</p>
-<h2>Usage</h2>
+<p>to install the package. &nbsp;This will setup a script named "runsnake" on Linux machines which launches the profiler.</p>
+<h2><a name="usage"></a>Usage</h2>
 <p>To record a hotshot profile of your application:</p>
 <pre>import hotshot<br>profiler = hotshot.Profile( "test.profile", lineevents=0 )<br>command = '''reactor.run()''' # your mainloop call here, this is for a Twisted app...<br>profiler.runctx( command, globals(), locals())<br>profiler.close()</pre>
-<p>To run the script:<br>
+<p>Or, to use cProfile:</p><pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
 </p>
 <pre>python ../runsnakerun/runsnake.py test.profile<br></pre>
 <p>There will be a brief delay as the application is created and begins
 the loading process, then you should see something like this:</p>
-<p style="text-align: center;"><img style="width: 810px; height: 428px;"
- alt="Screenshot of the application viewing a HotShot profile"
- src="screenshot.png"><br>
+<p style="text-align: center;"><img style="width: 810px; height: 428px;" alt="Screenshot of the application viewing a HotShot profile" src="screenshot.png"><br>
 </p>
 <p>Click on the column titles to sort by that property.&nbsp; As the
 loading proceeds the screen will refresh/flash to show the new
 data.&nbsp; Very large data-sets can take quite a long time to complete
-loading.<br>
-</p>
+loading.</p><h2><a name="code"></a>Code Access and Contributions</h2><p>RunSnakeRun
+is reasonably stable. &nbsp;I don't tend to do much work on it, as it
+tends to just work. &nbsp;If you have a bug, feature or idea, feel free
+to check out the code and implement the new feature. &nbsp;I'm willing
+to entertain new features or bug-fix requests as well. &nbsp;The code
+is available in bzr here:</p><pre>bzr branch http://www.vrplumber.com/bzr/runsnakerun/<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute (if there is interest we can move development to LaunchPad at some point).</p>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
-  <li><a href="RunSnakeRun-1.0.3.tar.gz">1.0.3</a> -- Fix stupid bug
+  <li><a href="RunSnakeRun-1.0.4.tar.gz">1.0.4</a> -- Add
+preliminary support for standard cProfile/profile profile results, note
+that we do not load cProfile results incrementally. &nbsp;Switch to
+numpy support from Numeric. &nbsp;Use setuptools for distribution.
+&nbsp;Provide source repository access.</li><li><a href="RunSnakeRun-1.0.3.tar.gz">1.0.3</a> -- Fix stupid bug
 introduced by last fix</li>
   <li><a href="RunSnakeRun-1.0.2.tar.gz">1.0.2</a> -- Magically grow
 the stack-tracking structures if we pass recursion limits, this will be
@@ -58,7 +61,6 @@ stack-exhaustion</li>
   <li><a href="RunSnakeRun-1.0.0.tar.gz">1.0.0</a> -- Initial release,
 no fancy features, just the raw functionality</li>
 </ul>
-<p class="footer">Copyright 2005-2006 Mike Fletcher<br>
+<p class="footer">Copyright 2005-2008 Mike Fletcher<br>
 </p>
-</body>
-</html>
+</body></html>
