@@ -27,6 +27,11 @@ class FunctionRecord( object ):
 		self.accumArray = numpy.zeros( (2,), 'd' )
 		# callArray being (direct, recursive) call counts
 		self.callArray = numpy.zeros( (2,), 'l' )
+		# children arcs are functions which were called by this function 
+		# should have the total they took for each of them...
+		self.childrenArcs = {
+			# (functionrecord,functionrecord): cummulativeTime,
+		}
 	def get_local( self ):
 		return self.accumArray[0]
 	def get_localPer( self ):
@@ -123,6 +128,7 @@ def loadHotshot( filename, yieldCount=10000 ):
 				# add time spent in this frame to cummulative for all open frames
 				localDelta = localDeltas[depth]*secondsFraction
 				# XXX should avoid this list-copy somehow...
+				lastParent = None
 				for frame in frames[:depth]:
 					if frame is not None:
 						frame[1] += localDelta
@@ -150,6 +156,73 @@ def loadHotshot( filename, yieldCount=10000 ):
 
 	yield i, files, functions
 
+def loadHotshot2( filename ):
+	"""Yield a tree-like structure with stack: total values"""
+	reader = _hotshot.logreader(filename)
+	givesDelta = GIVES_DELTA.has_key
+	secondsFraction = SECONDS_FRACTION
+	stack = ()
+	files = {}
+	functions = {}
+	currentDelta = 0.0
+	for i, (what, tdelta, fileno, lineno) in enumerate(reader):
+		if givesDelta( what ):
+			tdelta*=secondsFraction
+			if what == whatEnter:
+				key = (fileno,lineno)
+				stack += (key,)
+			heatmap[stack] = heatmap.get(stack,0.0) + tdelta
+			if what == whatExit:
+				stack = stack[:-1]
+		elif what == defineFile:
+			files[ fileno ] = FileRecord( fileno, tdelta )
+		elif what == defineFunction:
+			file = files.get( fileno )
+			record = FunctionRecord( fileno,lineno,tdelta, file)
+			functions[ (fileno,lineno) ] = record
+			if file is not None:
+				file.functions[ lineno ] = record
+		else:
+			print 'unrecognised what', what
+			for name in [n for n in dir(_hotshot) if n.startswith( 'WHAT_')]:
+				if getattr( _hotshot,name) == what:
+					print ' == %s'%(name,)
+					break
+	return asTree( heatmap ), functions
+class StackInfo( object ):
+	def __init__( self, stack, local ):
+		self.stack = stack 
+		self.local = local 
+		self.cummulative = local
+		self.children = []
+	def addChild( self, child ):
+		self.children.append( child )
+		self.cummulative += child.cummulative 
+def asTree( heatmap ):
+	"""Convert stacks to trees"""
+	values = sorted( heatmap.items() )
+	current = root = StackInfo( * values[0] )
+	inProcess = [current]
+	for (key,total) in values[1:]:
+		child = StackInfo( key, total )
+		if len(key) > len(current.stack):
+			current.addChild( child )
+			inProcess.append( child )
+			current = child
+		elif len(key) == len(current.stack):
+			# sibling of current...
+			inProcess.pop( -1 )
+			inProcess.append( child )
+			current = child 
+		else:
+			# sibling of a parent...
+			while len(key) <= len(current.stack):
+				inProcess.pop( -1 )
+				current = inProcess[-1]
+			current.addChild( child )
+			inProcess.append( child )
+			current = child
+	return current
 
 if __name__ == "__main__":
 	startTime = time.time()
@@ -167,3 +240,9 @@ if __name__ == "__main__":
 		print files.get(fileno).filename, lineno,
 		print value.calls, value.recursive, value.local, value.cummulative
 	print 'read %i records in %s seconds'%( i, completion-startTime )
+
+	t = time.time()
+	loadHotshot2( sys.argv[1] )
+	t2 = time.time()
+	print 'loadHotshot2: %s seconds', t2-t1
+	

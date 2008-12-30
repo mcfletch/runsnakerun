@@ -229,6 +229,8 @@ class ProfileView( wx.ListCtrl ):
 		),
 	]
 
+	
+
 
 class MainFrame( wx.Frame ):
 	"""The root frame for the display of a single data-set"""
@@ -245,9 +247,16 @@ class MainFrame( wx.Frame ):
 		self.CreateControls()
 	def CreateControls( self ):
 		"""Create our sub-controls"""
-		self.listControl = ProfileView(
-			self, sys.argv[1]
+		self.splitter = wx.SplitterWindow(
+			self, 
 		)
+		self.listControl = ProfileView(
+			self.splitter, sys.argv[1]
+		)
+		self.heatMap = HeatMapView(
+			self.splitter, 
+		)
+		self.splitter.SplitHorizontally( self.listControl, self.heatMap )
 		self.Maximize(True)
 
 
