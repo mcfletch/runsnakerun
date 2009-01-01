@@ -17,7 +17,7 @@ import pstats
 from squaremap import squaremap
 from runsnakerun import pstatsloader
 
-class RelativeSquareMap( squaremap.SquareMap ):
+class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
         return parent.child_cumulative_time( node )
     def label( self, node ):
@@ -126,7 +126,7 @@ class ProfileView( wx.ListCtrl ):
             # likely a cProfile version...
             s = pstatsloader.PStatsLoader( filename )
             self.integrateRecords( [filename], s.rows)
-            self.squareMap.setModel( s.tree )
+            self.squareMap.SetModel( s.tree )
             
     def integrateRecords( self, files, functions ):
         """Integrate records from the loader"""
@@ -227,15 +227,16 @@ class MainFrame( wx.Frame ):
         self.listControl = ProfileView(
             self.splitter, sys.argv[1]
         )
-        self.squareMap = RelativeSquareMap(
+        self.squareMap = squaremap.SquareMap(
             self.splitter, 
+            adapter = PStatsAdapter(),
         )
         self.listControl.squareMap = self.squareMap
         self.splitter.SplitHorizontally( self.listControl, self.squareMap )
-        squaremap.EVT_SQUARE_SELECTED( self.squareMap, self.OnSquareSelected )
+        squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareSelected )
         self.Maximize(True)
     def OnSquareSelected( self, event ):
-        self.SetStatusText( self.squareMap.label( event.node ) )
+        self.SetStatusText( self.squareMap.adapter.label( event.node ) )
 
 
 class RunSnakeRunApp(wx.App):
