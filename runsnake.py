@@ -22,6 +22,10 @@ class PStatsAdapter( squaremap.DefaultAdapter ):
         return parent.child_cumulative_time( node )
     def label( self, node ):
         return '%s:%s (%s)'%(node.filename,node.lineno,node.name)
+    def empty( self, node ):
+        if node.cummulative:
+            return node.local/float( node.cummulative )
+        return 0.0
 
 class ColumnDefinition( object ):
     """Definition of a given column for display"""
@@ -229,6 +233,7 @@ class MainFrame( wx.Frame ):
         )
         self.squareMap = squaremap.SquareMap(
             self.splitter, 
+            padding = 4,
             adapter = PStatsAdapter(),
         )
         self.listControl.squareMap = self.squareMap

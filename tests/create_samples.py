@@ -9,6 +9,8 @@ def x( ):
     a()
 def y( ):
     print 'y'
+    for i in range( 2500 ):
+        long(i) ** i
     time.sleep( 0.25 )
     z()
 def z( ):
