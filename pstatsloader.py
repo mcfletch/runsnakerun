@@ -8,7 +8,7 @@ class PStatsLoader( object ):
         self.rows = {}
         self.stats = pstats.Stats( filename )
         self.tree = self.load( self.stats.stats )
-        #self.location_tree = self.load_location( )
+        self.location_tree = l = self.load_location( )
     def load( self, stats ):
         """Build a squaremap-compatible model from a pstats class"""
         rows = self.rows
@@ -34,17 +34,26 @@ class PStatsLoader( object ):
         root = PStatLocation( '/', 'PYTHONPATH' )
         for child in self.rows.values():
             current = directories.get( child.directory )
+            directory, filename = child.directory, child.filename
             if current is None:
-                directory, filename = child.directory, child.filename
                 if directory == '':
                     current = root
                 else:
-                    current = PStatLocation( directory, 'package' )
+                    current = PStatLocation( directory, '' )
                 directories[ directory ] = current 
+            if filename == '~':
+                filename = '<built-in>'
             file_current = files.get( (directory,filename) )
-            current.children.append( child )
+            if file_current is None:
+                file_current = PStatLocation( directory, filename )
+                files[ (directory,filename) ] = file_current 
+                current.children.append( file_current )
+                print 'Adding file %s to %s'%( filename, current )
+            file_current.children.append( child )
         # now link the directories...
         for key,value in directories.items():
+            if value is root:
+                continue
             found = False
             while key:
                 new_key,rest = os.path.split( key )
@@ -60,8 +69,7 @@ class PStatsLoader( object ):
                         break 
             if not found:
                 print 'adding to root', value
-                if value is not root:
-                    root.children.append( value )
+                root.children.append( value )
         # lastly, finalize all of the directory records...
         root.finalize()
         return root 
@@ -96,7 +104,7 @@ class PStatRow( object ):
         )
         self.callers = callers
     def __repr__( self ):
-        return 'PStatRow( %r,%r,%r,%r, %s )'%(self.directory, self.filename, self.lineno, self.name, self.children)
+        return 'PStatRow( %r,%r,%r,%r, %s )'%(self.directory, self.filename, self.lineno, self.name, len(self.children))
     def add_child( self, child ):
         self.children.append( child )
     
@@ -116,6 +124,8 @@ class PStatRow( object ):
 
 class PStatGroup( object ):
     """A node/record that holds a group of children but isn't a raw-record based group"""
+    # if LOCAL_ONLY then only take the raw-record's local values, not cummulative values
+    LOCAL_ONLY = False
     def __init__( self, directory='', filename='', name='', children=None, local_children=None ):
         self.directory = directory
         self.filename = filename
@@ -141,8 +151,14 @@ class PStatGroup( object ):
         """Filter our children into regular and local children sets (if appropriate)"""
     def calculate_totals( self, children, local_children=None ):
         """Calculate our cummulative totals from children and/or local children"""
-        for field in ('recursive','cummulative'):
-            value = sum([ getattr( child, field, 0 ) for child in children] )
+        for field,local_field in (('recursive','calls'),('cummulative','local')):
+            values = []
+            for child in children:
+                if isinstance( child, PStatGroup ) or not self.LOCAL_ONLY:
+                    values.append( getattr( child, field, 0 ) )
+                elif isinstance( child, PStatRow ) and self.LOCAL_ONLY:
+                    values.append( getattr( child, local_field, 0 ) )
+            value = sum( values )
             setattr( self, field, value )
         if self.recursive:
             self.cummulativePer = self.cummulative/float(self.recursive)
@@ -168,6 +184,7 @@ class PStatLocation( PStatGroup ):
     Children with the name <module> are our "empty" space,
     our totals are otherwise just the sum of our children.
     """
+    LOCAL_ONLY = True
     def __init__( self, directory, filename):
         super( PStatLocation, self ).__init__( directory=directory, filename=filename, name='package' )
     def filter_children( self ):

@@ -20,6 +20,7 @@ from runsnakerun import pstatsloader
 
 ID_OPEN = wx.NewId()
 ID_EXIT = wx.NewId()
+ID_PACKAGE_VIEW = wx.NewId()
 
 class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
@@ -30,7 +31,6 @@ class PStatsAdapter( squaremap.DefaultAdapter ):
                 return 0
         return parent.child_cumulative_time( node )
     def label( self, node ):
-        
         if isinstance( node, pstatsloader.PStatGroup ):
             return '%s / %s'%( node.directory, node.filename )
         return '%s:%s (%s)'%(node.filename,node.lineno,node.name)
@@ -38,6 +38,13 @@ class PStatsAdapter( squaremap.DefaultAdapter ):
         if node.cummulative:
             return node.local/float( node.cummulative )
         return 0.0
+
+class DirectoryViewAdapter( PStatsAdapter ):
+    """Provides a directory-view-only adapter for PStats objects"""
+    def children( self, node ):
+        if isinstance( node, pstatsloader.PStatGroup ):
+            return node.children 
+        return []
 
 class ColumnDefinition( object ):
     """Definition of a given column for display"""
@@ -196,8 +203,6 @@ class ProfileView( wx.ListCtrl ):
         ),
     ]
 
-    
-
 
 class MainFrame( wx.Frame ):
     """The root frame for the display of a single data-set"""
@@ -236,16 +241,20 @@ class MainFrame( wx.Frame ):
             wx.CallAfter( self.load, sys.argv[1] )
     def CreateMenuBar( self ):
         """Create our menu-bar for triggering operations"""
+        menubar = wx.MenuBar()
         menu = wx.Menu( )
         menu.Append( ID_OPEN, '&Open', 'Open a new profile file' )
         menu.AppendSeparator()
         menu.Append( ID_EXIT, 'E&xit', 'Close RunSnakeRun' )
-        menubar = wx.MenuBar()
         menubar.Append( menu, '&File'  )
+        menu = wx.Menu( )
+        menu.Append( ID_PACKAGE_VIEW, '&Package View', 'View time spent by package/module' )
+        menubar.Append( menu, '&View'  )
         self.SetMenuBar( menubar )
         
         wx.EVT_MENU( self, ID_EXIT, lambda evt: self.Close(True) )
         wx.EVT_MENU( self, ID_OPEN, self.OnOpenFile )
+        wx.EVT_MENU( self, ID_PACKAGE_VIEW, self.OnPackageView )
     
     def OnOpenFile( self, event ):
         """Request to open a new profile file"""
@@ -260,7 +269,10 @@ class MainFrame( wx.Frame ):
                     frame.load( path )
                 else:
                     self.load( path )
-        
+    def OnPackageView( self, event ):
+        if self.loader:
+            self.adapter = DirectoryViewAdapter()
+            self.squareMap.SetModel( self.loader.location_tree, self.adapter)
         
     def OnSquareSelected( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )
