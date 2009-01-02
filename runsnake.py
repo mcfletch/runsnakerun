@@ -17,9 +17,13 @@ import pstats
 from squaremap import squaremap
 from runsnakerun import pstatsloader
 
+
+ID_OPEN = wx.NewId()
+ID_EXIT = wx.NewId()
+
 class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
-        if isinstance( parent, pstatsloader.PStatLocation ):
+        if isinstance( parent, pstatsloader.PStatGroup ):
             if parent.cummulative:
                 return node.cummulative/parent.cummulative
             else:
@@ -27,8 +31,8 @@ class PStatsAdapter( squaremap.DefaultAdapter ):
         return parent.child_cumulative_time( node )
     def label( self, node ):
         
-        if isinstance( node, pstatsloader.PStatLocation ):
-            return 'Directory: %s %s'%( node.directory, node.filename )
+        if isinstance( node, pstatsloader.PStatGroup ):
+            return '%s / %s'%( node.directory, node.filename )
         return '%s:%s (%s)'%(node.filename,node.lineno,node.name)
     def empty( self, node ):
         if node.cummulative:
@@ -53,7 +57,7 @@ class ColumnDefinition( object ):
 class ProfileView( wx.ListCtrl ):
     """A sortable profile list control"""
     def __init__( 
-        self, parent, filename,
+        self, parent,
         id=-1, 
         pos=wx.DefaultPosition, size=wx.DefaultSize, 
         style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_VRULES, 
@@ -66,7 +70,6 @@ class ProfileView( wx.ListCtrl ):
         self.functions = {}
         self.sorted = []
         self.CreateControls( )
-        wx.CallAfter( self.load, filename )
     def CreateControls( self ):
         """Create our sub-controls"""
         wx.EVT_LIST_COL_CLICK( self, self.GetId(), self.OnReorder )
@@ -119,27 +122,6 @@ class ProfileView( wx.ListCtrl ):
                 else:
                     return diff 
         return 0
-    def load( self, filename ):
-        """Load our hotshot dataset (iteratively)"""
-        from runsnakerun import hotshotreader
-        try:
-            for count, files, functions in hotshotreader.loadHotshot( filename, 20000 ):
-                if not count % 200000:
-                    try:
-                        self.integrateRecords( files, functions )
-                    except wx.PyDeadObjectError, err:
-                        return
-                wx.Yield()
-            try:
-                self.integrateRecords( files, functions )
-            except wx.PyDeadObjectError, err:
-                return
-        except ValueError, err:
-            # likely a cProfile version...
-            s = pstatsloader.PStatsLoader( filename )
-            self.integrateRecords( [filename], s.rows)
-            self.squareMap.SetModel( s.tree )
-            
     def integrateRecords( self, files, functions ):
         """Integrate records from the loader"""
         self.SetItemCount(len(functions))
@@ -148,7 +130,7 @@ class ProfileView( wx.ListCtrl ):
         self.Refresh()
     def OnGetItemText(self, item, col):
         """Retrieve text for the item and column respectively"""
-        # XXX need for format for rjust and the like...
+        # TODO: need to format for rjust and the like...
         try:
             column = self.columns[col]
             value = column.get(self.sorted[item])
@@ -219,6 +201,7 @@ class ProfileView( wx.ListCtrl ):
 
 class MainFrame( wx.Frame ):
     """The root frame for the display of a single data-set"""
+    loader = None
     def __init__( 
         self, parent=None, id=-1, 
         title="Run Snake Run", 
@@ -232,24 +215,60 @@ class MainFrame( wx.Frame ):
         self.CreateControls()
     def CreateControls( self ):
         """Create our sub-controls"""
+        self.CreateMenuBar()
         self.CreateStatusBar()
         self.splitter = wx.SplitterWindow(
-            self, 
+            self, style=wx.SP_3D,
         )
         self.listControl = ProfileView(
-            self.splitter, sys.argv[1]
+            self.splitter,
         )
+        self.adapter = PStatsAdapter()
         self.squareMap = squaremap.SquareMap(
             self.splitter, 
             padding = 6,
-            adapter = PStatsAdapter(),
+            adapter = self.adapter,
         )
-        self.listControl.squareMap = self.squareMap
+        self.Maximize(True)
         self.splitter.SplitHorizontally( self.listControl, self.squareMap )
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareSelected )
-        self.Maximize(True)
+        if sys.argv[1:]:
+            wx.CallAfter( self.load, sys.argv[1] )
+    def CreateMenuBar( self ):
+        """Create our menu-bar for triggering operations"""
+        menu = wx.Menu( )
+        menu.Append( ID_OPEN, '&Open', 'Open a new profile file' )
+        menu.AppendSeparator()
+        menu.Append( ID_EXIT, 'E&xit', 'Close RunSnakeRun' )
+        menubar = wx.MenuBar()
+        menubar.Append( menu, '&File'  )
+        self.SetMenuBar( menubar )
+        
+        wx.EVT_MENU( self, ID_EXIT, lambda evt: self.Close(True) )
+        wx.EVT_MENU( self, ID_OPEN, self.OnOpenFile )
+    
+    def OnOpenFile( self, event ):
+        """Request to open a new profile file"""
+        dialog = wx.FileDialog( self, style=wx.OPEN )
+        if dialog.ShowModal( ) == wx.ID_OK:
+            path = dialog.GetPath()
+            if os.path.exists( path ):
+                if self.loader:
+                    # we've already got a displayed data-set, open new window...
+                    frame = MainFrame()
+                    frame.Show( True )
+                    frame.load( path )
+                else:
+                    self.load( path )
+        
+        
     def OnSquareSelected( self, event ):
-        self.SetStatusText( self.squareMap.adapter.label( event.node ) )
+        self.SetStatusText( self.adapter.label( event.node ) )
+    def load( self, filename ):
+        """Load our hotshot dataset (iteratively)"""
+        self.loader = pstatsloader.PStatsLoader( filename )
+        self.listControl.integrateRecords( [filename], self.loader.rows)
+        self.squareMap.SetModel( self.loader.tree )
 
 
 class RunSnakeRunApp(wx.App):
@@ -269,11 +288,8 @@ profilefile -- a file generated by a HotShot profile run from Python
 """
 def main():
     """Mainloop for the application"""
-    if not sys.argv[1:]:
-        print usage
-    else:
-        app = RunSnakeRunApp(0)
-        app.MainLoop()
+    app = RunSnakeRunApp(0)
+    app.MainLoop()
 
 
 

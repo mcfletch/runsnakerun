@@ -16,9 +16,16 @@ class PStatsLoader( object ):
             rows[func] =  PStatRow( func,raw )
         for row in rows.itervalues():
             row.weave( rows )
+        roots = []
         for key,value in rows.items():
             if not value.parents:
-                return value
+                roots.append( value )
+        if len(roots) == 1:
+            return roots[0]
+        elif roots:
+            root = PStatGroup( '/', 'PYTHONPATH', children= roots )
+            root.finalize()
+            return root
         raise RuntimeError( 'No top-level function???' )
     def load_location( self ):
         """Build a squaremap-compatible model for location-based hierarchy"""
@@ -107,37 +114,33 @@ class PStatRow( object ):
             return float(ct)/total
         return 0
 
-class PStatLocation( PStatRow ):
-    """A row that represents a hierarchic structure other than call-patterns
-    
-    This is used to create a file-based hierarchy for the views
-    
-    Children with the name <module> are our "empty" space,
-    our totals are otherwise just the sum of our children.
-    """
-    def __init__( self, directory, filename):
+class PStatGroup( object ):
+    """A node/record that holds a group of children but isn't a raw-record based group"""
+    def __init__( self, directory='', filename='', name='', children=None, local_children=None ):
         self.directory = directory
         self.filename = filename
         self.name = ''
-        self.children = []
+        self.children = children or []
+        self.local_children = local_children or []
     def __repr__( self ):
-        return 'PStatLocation( %r,%r )'%(self.directory, self.filename)
+        return '%s( %r,%r,%s )'%(self.__class__.__name__,self.directory, self.filename, self.name)
     def finalize( self, already_done=None ):
+        """Finalize our values (recursively) taken from our children"""
         if already_done is None:
             already_done = {}
         if already_done.has_key( self ):
             return True 
         already_done[self] = True
+        self.filter_children()
         children = self.children
-        real_children = []
-        local_children = []
         for child in children:
             if hasattr( child, 'finalize' ):
                 child.finalize( already_done)
-            if child.name == '<module>':
-                local_children.append( child )
-            else:
-                real_children.append( child )
+        self.calculate_totals( self.children, self.local_children )
+    def filter_children( self ):
+        """Filter our children into regular and local children sets (if appropriate)"""
+    def calculate_totals( self, children, local_children=None ):
+        """Calculate our cummulative totals from children and/or local children"""
         for field in ('recursive','cummulative'):
             value = sum([ getattr( child, field, 0 ) for child in children] )
             setattr( self, field, value )
@@ -153,7 +156,30 @@ class PStatLocation( PStatRow ):
                 self.localPer = self.local / self.calls 
         else:
             self.local = 0
+            self.calls = 0
+            self.localPer = 0
+        
+
+class PStatLocation( PStatGroup ):
+    """A row that represents a hierarchic structure other than call-patterns
+    
+    This is used to create a file-based hierarchy for the views
+    
+    Children with the name <module> are our "empty" space,
+    our totals are otherwise just the sum of our children.
+    """
+    def __init__( self, directory, filename):
+        super( PStatLocation, self ).__init__( directory=directory, filename=filename, name='package' )
+    def filter_children( self ):
+        """Filter our children into regular and local children sets"""
+        real_children = []
+        for child in self.children:
+            if child.name == '<module>':
+                self.local_children.append( child )
+            else:
+                real_children.append( child )
         self.children = real_children
+        
 
 
 if __name__ == "__main__":
