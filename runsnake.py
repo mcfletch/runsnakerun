@@ -19,8 +19,16 @@ from runsnakerun import pstatsloader
 
 class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
+        if isinstance( parent, pstatsloader.PStatLocation ):
+            if parent.cummulative:
+                return node.cummulative/parent.cummulative
+            else:
+                return 0
         return parent.child_cumulative_time( node )
     def label( self, node ):
+        
+        if isinstance( node, pstatsloader.PStatLocation ):
+            return 'Directory: %s %s'%( node.directory, node.filename )
         return '%s:%s (%s)'%(node.filename,node.lineno,node.name)
     def empty( self, node ):
         if node.cummulative:
@@ -233,7 +241,7 @@ class MainFrame( wx.Frame ):
         )
         self.squareMap = squaremap.SquareMap(
             self.splitter, 
-            padding = 4,
+            padding = 6,
             adapter = PStatsAdapter(),
         )
         self.listControl.squareMap = self.squareMap

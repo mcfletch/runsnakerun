@@ -1,5 +1,5 @@
 RunSnakeRun, a simple wxPython GUI viewer for HotShot profile logs
-	Copyright (c) 2005-2006, Michael C. Fletcher All rights reserved.
+	Copyright (c) 2005-2009, Michael C. Fletcher All rights reserved.
 
 THIS SOFTWARE IS NOT FAULT TOLERANT AND SHOULD NOT BE USED IN ANY
 SITUATION ENDANGERING HUMAN LIFE OR PROPERTY.

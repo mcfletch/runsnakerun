@@ -1,12 +1,15 @@
 #! /usr/bin/env python
 """Creates hotshot and cProfile sample files"""
 import time,cProfile,hotshot
+from subpackage.timewaster import r
 
 def x( ):
     print 'x'
     y()
     z()
+    import big_import
     a()
+    r()
 def y( ):
     print 'y'
     for i in range( 2500 ):
