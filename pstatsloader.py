@@ -48,7 +48,6 @@ class PStatsLoader( object ):
                 file_current = PStatLocation( directory, filename )
                 files[ (directory,filename) ] = file_current 
                 current.children.append( file_current )
-                print 'Adding file %s to %s'%( filename, current )
             file_current.children.append( child )
         # now link the directories...
         for key,value in directories.items():
@@ -64,11 +63,9 @@ class PStatsLoader( object ):
                 if parent:
                     if value is not parent:
                         parent.children.append( value )
-                        print '%s as parent of %s'%( parent, value )
                         found = True 
                         break 
             if not found:
-                print 'adding to root', value
                 root.children.append( value )
         # lastly, finalize all of the directory records...
         root.finalize()

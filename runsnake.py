@@ -63,11 +63,12 @@ class ColumnDefinition( object ):
 
 class ProfileView( wx.ListCtrl ):
     """A sortable profile list control"""
+    indicated = -1
     def __init__( 
         self, parent,
         id=-1, 
         pos=wx.DefaultPosition, size=wx.DefaultSize, 
-        style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_VRULES, 
+        style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_VRULES|wx.LC_SINGLE_SEL, 
         validator=wx.DefaultValidator, 
         name="ProfileView",
     ):
@@ -80,11 +81,51 @@ class ProfileView( wx.ListCtrl ):
     def CreateControls( self ):
         """Create our sub-controls"""
         wx.EVT_LIST_COL_CLICK( self, self.GetId(), self.OnReorder )
+        wx.EVT_LIST_ITEM_SELECTED( self, self.GetId(), self.OnNodeSelected )
+        wx.EVT_MOTION( self, self.OnMouseMove )
         for i,column in enumerate( self.columns ):
             column.index = i
             self.InsertColumn( i, column.name )
             self.SetColumnWidth( i, wx.LIST_AUTOSIZE )
         self.SetItemCount(0)
+    
+    def OnNodeSelected( self, event ):
+        """We have selected a node with the list control, tell the world"""
+        try:
+            node = self.sorted[ event.GetIndex() ]
+        except IndexError, err: 
+            print 'invalid index', event.GetIndex()
+        else:
+            wx.PostEvent( 
+                self, 
+                squaremap.SquareSelectionEvent( node=node, point=None, map=None ) 
+            )
+    def OnMouseMove( self, event ):
+        point = event.GetPosition()
+        item,where = self.HitTest( point )
+        if item > -1:
+            try:
+                node = self.sorted[ item ]
+            except IndexError, err:
+                print 'invalid index', item 
+        else:
+            wx.PostEvent( 
+                self, 
+                squaremap.SquareHighlightEvent( node=node, point=point, map=None ) 
+            )
+    
+    def SetIndicated( self, node ):
+        """Set this node to indicated status"""
+        self.indicated = self.NodeToIndex( node )
+        self.Refresh(False)
+        return self.indicated
+    
+    def NodeToIndex( self, node ):
+        for i,n in enumerate( self.sorted ):
+            if n is node:
+                return i 
+        return -1
+    
     def columnByAttribute( self, name ):
         for column in self.columns:
             if column.attribute == name:
@@ -135,6 +176,13 @@ class ProfileView( wx.ListCtrl ):
         self.sorted = functions.values()
         self.reorder( )
         self.Refresh()
+    indicated_attribute = wx.ListItemAttr()
+    indicated_attribute.SetBackgroundColour( '#00ff00' )
+    def OnGetItemAttr( self, item ):
+        """Retrieve ListItemAttr for the given item (index)"""
+        if self.indicated > -1 and item == self.indicated:
+            return self.indicated_attribute
+        return None
     def OnGetItemText(self, item, col):
         """Retrieve text for the item and column respectively"""
         # TODO: need to format for rjust and the like...
@@ -150,6 +198,11 @@ class ProfileView( wx.ListCtrl ):
                 return str( value )
             
     columns = [
+        ColumnDefinition(
+            name = 'Name',
+            attribute = 'name',
+            defaultOrder = True,
+        ),
         ColumnDefinition(
             name = 'Calls',
             attribute = 'calls',
@@ -188,11 +241,6 @@ class ProfileView( wx.ListCtrl ):
             name = 'File',
             attribute = 'filename',
             sortOn = ('filename','lineno','directory',),
-            defaultOrder = True,
-        ),
-        ColumnDefinition(
-            name = 'Name',
-            attribute = 'name',
             defaultOrder = True,
         ),
         ColumnDefinition(
@@ -235,8 +283,10 @@ class MainFrame( wx.Frame ):
             adapter = self.adapter,
         )
         self.Maximize(True)
-        self.splitter.SplitHorizontally( self.listControl, self.squareMap )
-        squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareSelected )
+        self.splitter.SplitVertically( self.listControl, self.squareMap, 300 )
+        squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareHighlightedMap )
+        squaremap.EVT_SQUARE_HIGHLIGHTED( self.listControl, self.OnSquareHighlightedList )
+        squaremap.EVT_SQUARE_SELECTED( self.listControl, self.OnSquareSelectedList )
         if sys.argv[1:]:
             wx.CallAfter( self.load, sys.argv[1] )
     def CreateMenuBar( self ):
@@ -274,8 +324,18 @@ class MainFrame( wx.Frame ):
             self.adapter = DirectoryViewAdapter()
             self.squareMap.SetModel( self.loader.location_tree, self.adapter)
         
-    def OnSquareSelected( self, event ):
+    def OnSquareHighlightedMap( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )
+        self.listControl.SetIndicated( event.node )
+    def OnSquareSelectedList( self, event ):
+        self.SetStatusText( self.adapter.label( event.node ) )
+        self.squareMap.SetSelected( event.node )
+    def OnSquareHighlightedList( self, event ):
+        print 'highlighted in list'
+        self.SetStatusText( self.adapter.label( event.node ) )
+        
+        self.squareMap.SetHighlight( event.node, propagate=False  )
+        
     def load( self, filename ):
         """Load our hotshot dataset (iteratively)"""
         self.loader = pstatsloader.PStatsLoader( filename )
