@@ -287,6 +287,7 @@ class MainFrame( wx.Frame ):
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareHighlightedMap )
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.listControl, self.OnSquareHighlightedList )
         squaremap.EVT_SQUARE_SELECTED( self.listControl, self.OnSquareSelectedList )
+        squaremap.EVT_SQUARE_SELECTED( self.squareMap, self.OnSquareSelectedMap )
         if sys.argv[1:]:
             wx.CallAfter( self.load, sys.argv[1] )
     def CreateMenuBar( self ):
@@ -331,10 +332,12 @@ class MainFrame( wx.Frame ):
         self.SetStatusText( self.adapter.label( event.node ) )
         self.squareMap.SetSelected( event.node )
     def OnSquareHighlightedList( self, event ):
-        print 'highlighted in list'
         self.SetStatusText( self.adapter.label( event.node ) )
-        
         self.squareMap.SetHighlight( event.node, propagate=False  )
+    def OnSquareSelectedMap( self, event ):
+        index = self.listControl.NodeToIndex( event.node )
+        self.listControl.Focus( index )
+        self.listControl.Select( index, True )
         
     def load( self, filename ):
         """Load our hotshot dataset (iteratively)"""
