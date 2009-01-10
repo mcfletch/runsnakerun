@@ -1,17 +1,5 @@
 #! /usr/bin/python
-"""The main script for the RunSnakeRun profile viewer
-
-What we want to be able to do:
-    Sort by any of:
-        numcalls
-        num recursive calls
-        local time 
-        (local/numcalls)
-        cummulative time
-        (cummulative/numcalls)
-        filename
-        function name
-"""
+"""The main script for the RunSnakeRun profile viewer"""
 import wx, sys, os
 import pstats
 from squaremap import squaremap
