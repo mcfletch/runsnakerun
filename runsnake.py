@@ -62,9 +62,12 @@ class ProfileView( wx.ListCtrl ):
         pos=wx.DefaultPosition, size=wx.DefaultSize, 
         style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_VRULES|wx.LC_SINGLE_SEL, 
         validator=wx.DefaultValidator, 
+        columns = None,
         name="ProfileView",
     ):
         wx.ListCtrl.__init__( self, parent, id, pos, size, style, validator, name )
+        if columns is not None:
+            self.columns = columns
         self.sortOrder = [ (self.columns[2].defaultOrder,self.columns[2]), ]
         self.sorted = []
         self.CreateControls( )
@@ -79,6 +82,7 @@ class ProfileView( wx.ListCtrl ):
         """Create our sub-controls"""
         wx.EVT_LIST_COL_CLICK( self, self.GetId(), self.OnReorder )
         wx.EVT_LIST_ITEM_SELECTED( self, self.GetId(), self.OnNodeSelected )
+        wx.EVT_LIST_ITEM_ACTIVATED( self, self.GetId(), self.OnNodeActivated )
         wx.EVT_MOTION( self, self.OnMouseMove )
         for i,column in enumerate( self.columns ):
             column.index = i
@@ -86,6 +90,9 @@ class ProfileView( wx.ListCtrl ):
             self.SetColumnWidth( i, wx.LIST_AUTOSIZE )
         self.SetItemCount(0)
     
+    def OnNodeActivated( self, event ):
+        """We have double-clicked for hit enter on a node refocus squaremap to this node"""
+        
     def OnNodeSelected( self, event ):
         """We have selected a node with the list control, tell the world"""
         try:
@@ -258,6 +265,7 @@ class MainFrame( wx.Frame ):
     """The root frame for the display of a single data-set"""
     loader = None
     percentageView = False
+    directoryView = False
     def __init__( 
         self, parent=None, id=-1, 
         title="Run Snake Run", 
@@ -268,6 +276,7 @@ class MainFrame( wx.Frame ):
     ):
         """Initialise the Frame"""
         wx.Frame.__init__( self, parent, id, title, pos, size, style, name )
+        self.adapter = PStatsAdapter()
         self.CreateControls()
     def CreateControls( self ):
         """Create our sub-controls"""
@@ -282,7 +291,6 @@ class MainFrame( wx.Frame ):
         self.listControl = ProfileView(
             self.leftSplitter,
         )
-        self.adapter = PStatsAdapter()
         self.squareMap = squaremap.SquareMap(
             self.rightSplitter, 
             padding = 6,
@@ -363,9 +371,9 @@ class MainFrame( wx.Frame ):
                 else:
                     self.load( path )
     def OnPackageView( self, event ):
+        self.directoryView = not self.directoryView
         if self.loader:
-            self.adapter = DirectoryViewAdapter()
-            self.squareMap.SetModel( self.loader.location_tree, self.adapter)
+            self.SetModel( self.loader )
     def OnPercentageView( self, event ):
         self.percentageView = not self.percentageView
         total = self.loader.tree.cummulative
@@ -399,10 +407,17 @@ class MainFrame( wx.Frame ):
     
     def load( self, filename ):
         """Load our hotshot dataset (iteratively)"""
-        self.loader = pstatsloader.PStatsLoader( filename )
+        self.SetModel( pstatsloader.PStatsLoader( filename ) )
+    def SetModel( self, loader ):
+        """Set our overall model (a loader object) and populate sub-controls"""
+        self.loader = loader
         self.listControl.integrateRecords( self.loader.rows.values())
-        self.squareMap.SetModel( self.loader.tree )
-
+        if self.directoryView:
+            self.adapter = DirectoryViewAdapter()
+            self.squareMap.SetModel( self.loader.location_tree, self.adapter )
+        else:
+            self.adapter = PStatsAdapter()
+            self.squareMap.SetModel( self.loader.tree, self.adapter )
 
 class RunSnakeRunApp(wx.App):
     """Basic application for holding the viewing Frame"""
