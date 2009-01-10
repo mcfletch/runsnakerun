@@ -5,14 +5,13 @@
   
   <title>RunSnakeRun Python Hotshot Profile Viewer</title><link rel="stylesheet" type="text/css" href="toolkit.css">
   <meta name="author" content="Mike C. Fletcher"></head>
-
 <body style="direction: ltr;">
 <h1>RunSnakeRun<br>
 </h1>
 <p class="introduction">RunSnakeRun is a small GUI utility that allows
-you to view (Python) HotShot, cProfile or Profile profiler dumps in a sortable GUI view.&nbsp; It
-loads hotshot dumps incrementally in the background so that you can begin
-viewing the profile results fairly quickly.<br>
+you to view (Python) cProfile or Profile profiler dumps in a sortable
+GUI view. &nbsp;It allows you to explore the profiler information using
+a "square map" visualization or sortable tables of data.<br>
 </p>
 <h2><a name="install"></a>Installation<br>
 </h2>
@@ -23,28 +22,28 @@ easy_install, as that can cause problems for those who have manually
 installed the packages or who are behind corporate firewalls.</p><p>You can manually <a href="#download">download the package</a> and run:</p>
 <pre>python setup.py install</pre>
 <p>to install the package. &nbsp;This will setup a script named "runsnake" on Linux machines which launches the profiler.</p>
-<h2><a name="usage"></a>Usage</h2>
-<p>To record a hotshot profile of your application:</p>
-<pre>import hotshot<br>profiler = hotshot.Profile( "test.profile", lineevents=0 )<br>command = '''reactor.run()''' # your mainloop call here, this is for a Twisted app...<br>profiler.runctx( command, globals(), locals())<br>profiler.close()</pre>
-<p>Or, to use cProfile:</p><pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
+<h2><a name="usage"></a>Usage</h2><p>To use cProfile to capture your application's profile data:</p><pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
 </p>
 <pre>python ../runsnakerun/runsnake.py test.profile<br></pre>
 <p>There will be a brief delay as the application is created and begins
 the loading process, then you should see something like this:</p>
-<p style="text-align: center;"><img style="width: 810px; height: 428px;" alt="Screenshot of the application viewing a HotShot profile" src="screenshot.png"><br>
+<p style="text-align: center;"><img style="width: 1113px; height: 872px;" alt="Screenshot of the application viewing a HotShot profile" src="screenshot-2.0.png"><br>
 </p>
-<p>Click on the column titles to sort by that property.&nbsp; As the
-loading proceeds the screen will refresh/flash to show the new
-data.&nbsp; Very large data-sets can take quite a long time to complete
-loading.</p><h2><a name="code"></a>Code Access and Contributions</h2><p>RunSnakeRun
+<p>Click on any column title to sort by that property within that list.
+&nbsp;Select a record in the left-most list view to see a breakdown of
+that record in the right-side list views. &nbsp;Choose the appropriate
+view on the right via the tabs. &nbsp;You can resize the borders
+between the lists and square-map views. &nbsp;You can select a
+package/module/function hierarchic view via the menus. &nbsp;You can
+also toggle use of percentage displays there.</p><h2><a name="code"></a>Code Access and Contributions</h2><p>RunSnakeRun
 is reasonably stable. &nbsp;I don't tend to do much work on it, as it
 tends to just work. &nbsp;If you have a bug, feature or idea, feel free
 to check out the code and implement the new feature. &nbsp;I'm willing
 to entertain new features or bug-fix requests as well. &nbsp;The code
-is available in bzr here:</p><pre>bzr branch http://www.vrplumber.com/bzr/runsnakerun/<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute (if there is interest we can move development to LaunchPad at some point).</p>
+is available in bzr here:</p><pre>bzr branch lp:~mcfletch/runsnakerun/trunk<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute.</p>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
-  <li><a href="RunSnakeRun-1.0.4.tar.gz">1.0.4</a> -- Add
+  <li>2.0.0 -- Eliminate support for Hotshot profiles, add squaremap visualization and callee/caller views</li><li><a href="RunSnakeRun-1.0.4.tar.gz">1.0.4</a> -- Add
 preliminary support for standard cProfile/profile profile results, note
 that we do not load cProfile results incrementally. &nbsp;Switch to
 numpy support from Numeric. &nbsp;Use setuptools for distribution.
