@@ -21,6 +21,7 @@ from runsnakerun import pstatsloader
 ID_OPEN = wx.NewId()
 ID_EXIT = wx.NewId()
 ID_PACKAGE_VIEW = wx.NewId()
+ID_PERCENTAGE_VIEW = wx.NewId()
 
 class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
@@ -54,16 +55,19 @@ class ColumnDefinition( object ):
     sortOn = None
     format = None
     defaultOrder = False
+    percentPossible = False
     def __init__( self, **named ):
         for key,value in named.items():
             setattr( self, key, value )
     def get( self, function ):
         """Get the value for this column from the function"""
-        return getattr( function, self.attribute )
+        return getattr( function, self.attribute, '' )
 
 class ProfileView( wx.ListCtrl ):
     """A sortable profile list control"""
     indicated = -1
+    total = 0
+    percentageView = False
     def __init__( 
         self, parent,
         id=-1, 
@@ -74,10 +78,15 @@ class ProfileView( wx.ListCtrl ):
     ):
         wx.ListCtrl.__init__( self, parent, id, pos, size, style, validator, name )
         self.sortOrder = [ (self.columns[2].defaultOrder,self.columns[2]), ]
-        self.files = {}
-        self.functions = {}
         self.sorted = []
         self.CreateControls( )
+    
+    def SetPercentage( self, percent, total ):
+        """Set whether to display percentage values (and total for doing so)"""
+        self.percentageView = percent
+        self.total = total 
+        self.Refresh()
+    
     def CreateControls( self ):
         """Create our sub-controls"""
         wx.EVT_LIST_COL_CLICK( self, self.GetId(), self.OnReorder )
@@ -108,11 +117,11 @@ class ProfileView( wx.ListCtrl ):
                 node = self.sorted[ item ]
             except IndexError, err:
                 print 'invalid index', item 
-        else:
-            wx.PostEvent( 
-                self, 
-                squaremap.SquareHighlightEvent( node=node, point=point, map=None ) 
-            )
+            else:
+                wx.PostEvent( 
+                    self, 
+                    squaremap.SquareHighlightEvent( node=node, point=point, map=None ) 
+                )
     
     def SetIndicated( self, node ):
         """Set this node to indicated status"""
@@ -153,6 +162,7 @@ class ProfileView( wx.ListCtrl ):
                     (a,b) 
                     for (a,b) in self.sortOrder if b is not column 
                 ]
+        # TODO: store current selection and re-select after sorting...
         self.reorder()
         self.Refresh()
         
@@ -170,10 +180,10 @@ class ProfileView( wx.ListCtrl ):
                 else:
                     return diff 
         return 0
-    def integrateRecords( self, files, functions ):
+    def integrateRecords( self, functions ):
         """Integrate records from the loader"""
         self.SetItemCount(len(functions))
-        self.sorted = functions.values()
+        self.sorted = functions[:]
         self.reorder( )
         self.Refresh()
     indicated_attribute = wx.ListItemAttr()
@@ -192,6 +202,8 @@ class ProfileView( wx.ListCtrl ):
         except IndexError, err:
             return None
         else:
+            if column.percentPossible and self.percentageView and self.total:
+                value = value/float( self.total ) * 100.00
             if column.format:
                 return column.format%(value,)
             else:
@@ -215,6 +227,7 @@ class ProfileView( wx.ListCtrl ):
             name = 'Local',
             attribute = 'local',
             format = '%0.5f',
+            percentPossible = True,
         ),
         ColumnDefinition(
             name = '/Call',
@@ -225,6 +238,7 @@ class ProfileView( wx.ListCtrl ):
             name = 'Cum',
             attribute = 'cummulative',
             format = '%0.5f',
+            percentPossible = True,
         ),
         ColumnDefinition(
             name = '/Call',
@@ -255,6 +269,7 @@ class ProfileView( wx.ListCtrl ):
 class MainFrame( wx.Frame ):
     """The root frame for the display of a single data-set"""
     loader = None
+    percentageView = False
     def __init__( 
         self, parent=None, id=-1, 
         title="Run Snake Run", 
@@ -270,20 +285,57 @@ class MainFrame( wx.Frame ):
         """Create our sub-controls"""
         self.CreateMenuBar()
         self.CreateStatusBar()
-        self.splitter = wx.SplitterWindow(
-            self, style=wx.SP_3D,
+        self.leftSplitter = wx.SplitterWindow(
+            self
+        )
+        self.rightSplitter = wx.SplitterWindow(
+            self.leftSplitter
         )
         self.listControl = ProfileView(
-            self.splitter,
+            self.leftSplitter,
         )
         self.adapter = PStatsAdapter()
         self.squareMap = squaremap.SquareMap(
-            self.splitter, 
+            self.rightSplitter, 
             padding = 6,
             adapter = self.adapter,
         )
+        self.tabs = wx.Notebook(
+            self.rightSplitter,
+        )
+        
+        self.calleeListControl = ProfileView(
+            self.tabs,
+        )
+        self.allCalleeListControl = ProfileView(
+            self.tabs,
+        )
+        self.allCallerListControl = ProfileView(
+            self.tabs,
+        )
+        self.callerListControl = ProfileView(
+            self.tabs,
+        )
+        self.ProfileListControls = [
+            self.listControl,
+            self.calleeListControl,
+            self.allCalleeListControl,
+            self.callerListControl,
+            self.allCallerListControl,
+        ]
+        self.tabs.AddPage( self.calleeListControl, 'Callees', True )
+        self.tabs.AddPage( self.allCalleeListControl, 'All Callees', False )
+        self.tabs.AddPage( self.callerListControl, 'Callers', False )
+        self.tabs.AddPage( self.allCallerListControl, 'All Callers', False )
+        self.rightSplitter.SetSashSize( 10 )
         self.Maximize(True)
-        self.splitter.SplitVertically( self.listControl, self.squareMap, 300 )
+        # calculate size as proportional value for initial display...
+        width,height = wx.GetDisplaySize()
+        rightsplit = 2*(height//3)
+        leftsplit = width//3
+        print 'splits', leftsplit,rightsplit
+        self.rightSplitter.SplitHorizontally( self.squareMap, self.tabs, rightsplit )
+        self.leftSplitter.SplitVertically( self.listControl, self.rightSplitter, leftsplit )
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareHighlightedMap )
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.listControl, self.OnSquareHighlightedList )
         squaremap.EVT_SQUARE_SELECTED( self.listControl, self.OnSquareSelectedList )
@@ -300,12 +352,14 @@ class MainFrame( wx.Frame ):
         menubar.Append( menu, '&File'  )
         menu = wx.Menu( )
         menu.Append( ID_PACKAGE_VIEW, '&Package View', 'View time spent by package/module' )
+        menu.Append( ID_PERCENTAGE_VIEW, '&Percentage View', 'View time spent as percent of overall time' )
         menubar.Append( menu, '&View'  )
         self.SetMenuBar( menubar )
         
         wx.EVT_MENU( self, ID_EXIT, lambda evt: self.Close(True) )
         wx.EVT_MENU( self, ID_OPEN, self.OnOpenFile )
         wx.EVT_MENU( self, ID_PACKAGE_VIEW, self.OnPackageView )
+        wx.EVT_MENU( self, ID_PERCENTAGE_VIEW, self.OnPercentageView )
     
     def OnOpenFile( self, event ):
         """Request to open a new profile file"""
@@ -324,25 +378,41 @@ class MainFrame( wx.Frame ):
         if self.loader:
             self.adapter = DirectoryViewAdapter()
             self.squareMap.SetModel( self.loader.location_tree, self.adapter)
+    def OnPercentageView( self, event ):
+        self.percentageView = not self.percentageView
+        total = self.loader.tree.cummulative
+        for control in self.ProfileListControls:
+            control.SetPercentage( self.percentageView, total )
         
     def OnSquareHighlightedMap( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )
         self.listControl.SetIndicated( event.node )
-    def OnSquareSelectedList( self, event ):
-        self.SetStatusText( self.adapter.label( event.node ) )
-        self.squareMap.SetSelected( event.node )
     def OnSquareHighlightedList( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )
         self.squareMap.SetHighlight( event.node, propagate=False  )
+    
+    def OnSquareSelectedList( self, event ):
+        self.SetStatusText( self.adapter.label( event.node ) )
+        self.squareMap.SetSelected( event.node )
+        self.OnSquareSelected( event )
+    
     def OnSquareSelectedMap( self, event ):
         index = self.listControl.NodeToIndex( event.node )
         self.listControl.Focus( index )
         self.listControl.Select( index, True )
-        
+        self.OnSquareSelected( event )
+    
+    def OnSquareSelected( self, event ):
+        """Update all views to show selection children/parents"""
+        self.calleeListControl.integrateRecords( event.node.children )
+        self.callerListControl.integrateRecords( event.node.parents )
+        self.allCalleeListControl.integrateRecords( event.node.descendants() )
+        self.allCallerListControl.integrateRecords( event.node.ancestors() )
+    
     def load( self, filename ):
         """Load our hotshot dataset (iteratively)"""
         self.loader = pstatsloader.PStatsLoader( filename )
-        self.listControl.integrateRecords( [filename], self.loader.rows)
+        self.listControl.integrateRecords( self.loader.rows.values())
         self.squareMap.SetModel( self.loader.tree )
 
 

@@ -70,8 +70,24 @@ class PStatsLoader( object ):
         # lastly, finalize all of the directory records...
         root.finalize()
         return root 
+
+class BaseStat( object ):
+    def recursive_distinct( self, already_done=None, attribute='children' ):
+        if already_done is None:
+            already_done = {}
+        for child in getattr(self,attribute,()):
+            if not already_done.has_key( child ):
+                already_done[child] = True 
+                yield child 
+                for descendent in child.recursive_distinct( already_done=already_done, attribute=attribute ):
+                    yield descendent
     
-class PStatRow( object ):
+    def descendants( self ):
+        return list( self.recursive_distinct( attribute='children' ))
+    def ancestors( self ):
+        return list( self.recursive_distinct( attribute='parents' ))
+
+class PStatRow( BaseStat ):
     """Simulates a HotShot profiler record using PStats module"""
     def __init__( self, key, raw ):
         self.children = []
@@ -118,8 +134,10 @@ class PStatRow( object ):
             (cc,nc,tt,ct) = child.callers[ self.key ]
             return float(ct)/total
         return 0
-
-class PStatGroup( object ):
+    
+        
+    
+class PStatGroup( BaseStat ):
     """A node/record that holds a group of children but isn't a raw-record based group"""
     # if LOCAL_ONLY then only take the raw-record's local values, not cummulative values
     LOCAL_ONLY = False
@@ -128,6 +146,7 @@ class PStatGroup( object ):
         self.filename = filename
         self.name = ''
         self.children = children or []
+        self.parents = []
         self.local_children = local_children or []
     def __repr__( self ):
         return '%s( %r,%r,%s )'%(self.__class__.__name__,self.directory, self.filename, self.name)
@@ -143,6 +162,7 @@ class PStatGroup( object ):
         for child in children:
             if hasattr( child, 'finalize' ):
                 child.finalize( already_done)
+            child.parents.append( self )
         self.calculate_totals( self.children, self.local_children )
     def filter_children( self ):
         """Filter our children into regular and local children sets (if appropriate)"""
