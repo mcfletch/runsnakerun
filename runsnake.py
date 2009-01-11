@@ -294,6 +294,7 @@ class MainFrame( wx.Frame ):
         self.squareMap = squaremap.SquareMap(
             self.rightSplitter, 
             padding = 6,
+            labels = False,
             adapter = self.adapter,
         )
         self.tabs = wx.Notebook(
