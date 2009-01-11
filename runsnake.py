@@ -10,6 +10,8 @@ ID_OPEN = wx.NewId()
 ID_EXIT = wx.NewId()
 ID_PACKAGE_VIEW = wx.NewId()
 ID_PERCENTAGE_VIEW = wx.NewId()
+ID_ROOT_VIEW = wx.NewId()
+ID_BACK_VIEW = wx.NewId()
 
 class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
@@ -274,6 +276,9 @@ class MainFrame( wx.Frame ):
     loader = None
     percentageView = False
     directoryView = False
+    historyIndex = None
+    activated_node = None 
+    selected_node = None
     def __init__( 
         self, parent=None, id=-1, 
         title="Run Snake Run", 
@@ -284,8 +289,10 @@ class MainFrame( wx.Frame ):
     ):
         """Initialise the Frame"""
         wx.Frame.__init__( self, parent, id, title, pos, size, style, name )
+        # TODO: toolbar for back, up, root, directory-view, percentage view
         self.adapter = PStatsAdapter()
         self.CreateControls()
+        self.history = [] # set of (activated_node,selected_node) pairs...
     def CreateControls( self ):
         """Create our sub-controls"""
         self.CreateMenuBar()
@@ -338,7 +345,6 @@ class MainFrame( wx.Frame ):
         width,height = wx.GetDisplaySize()
         rightsplit = 2*(height//3)
         leftsplit = width//3
-        print 'splits', leftsplit,rightsplit
         self.rightSplitter.SplitHorizontally( self.squareMap, self.tabs, rightsplit )
         self.leftSplitter.SplitVertically( self.listControl, self.rightSplitter, leftsplit )
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareHighlightedMap )
@@ -348,21 +354,27 @@ class MainFrame( wx.Frame ):
         for control in self.ProfileListControls:
             squaremap.EVT_SQUARE_ACTIVATED( control, self.OnNodeActivated )
             squaremap.EVT_SQUARE_HIGHLIGHTED( control, self.OnSquareHighlightedList )
-        
-        
-        if sys.argv[1:]:
-            wx.CallAfter( self.load, sys.argv[1] )
     def CreateMenuBar( self ):
         """Create our menu-bar for triggering operations"""
         menubar = wx.MenuBar()
         menu = wx.Menu( )
         menu.Append( ID_OPEN, '&Open', 'Open a new profile file' )
         menu.AppendSeparator()
-        menu.Append( ID_EXIT, 'E&xit', 'Close RunSnakeRun' )
+        menu.Append( ID_EXIT, '&Close', 'Close this RunSnakeRun window' )
         menubar.Append( menu, '&File'  )
         menu = wx.Menu( )
-        menu.Append( ID_PACKAGE_VIEW, '&Package View', 'View time spent by package/module' )
-        menu.Append( ID_PERCENTAGE_VIEW, '&Percentage View', 'View time spent as percent of overall time' )
+        self.packageMenuItem = menu.AppendCheckItem( 
+            ID_PACKAGE_VIEW, '&Package View', 'View time spent by package/module' 
+        )
+        self.percentageMenuItem = menu.AppendCheckItem( 
+            ID_PERCENTAGE_VIEW, 'Pe&rcentage View', 'View time spent as percent of overall time' 
+        )
+        self.rootViewItem = menu.Append( 
+            ID_ROOT_VIEW, '&Root View', 'View the root of the tree' 
+        )
+        self.backViewItem = menu.Append( 
+            ID_BACK_VIEW, '&Back', 'Go back in your viewing history' 
+        )
         menubar.Append( menu, '&View'  )
         self.SetMenuBar( menubar )
         
@@ -370,6 +382,8 @@ class MainFrame( wx.Frame ):
         wx.EVT_MENU( self, ID_OPEN, self.OnOpenFile )
         wx.EVT_MENU( self, ID_PACKAGE_VIEW, self.OnPackageView )
         wx.EVT_MENU( self, ID_PERCENTAGE_VIEW, self.OnPercentageView )
+        wx.EVT_MENU( self, ID_ROOT_VIEW, self.OnRootView )
+        wx.EVT_MENU( self, ID_BACK_VIEW, self.OnBackView )
     
     def OnOpenFile( self, event ):
         """Request to open a new profile file"""
@@ -385,18 +399,49 @@ class MainFrame( wx.Frame ):
                 else:
                     self.load( path )
     def OnPackageView( self, event ):
+        self.SetPackageView( not self.directoryView )
+    def SetPackageView( self, directoryView ):
+        """Set whether to use directory/package based view"""
         self.directoryView = not self.directoryView
+        self.packageMenuItem.Check( self.directoryView )
         if self.loader:
             self.SetModel( self.loader )
+        self.RecordHistory()
     def OnPercentageView( self, event ):
-        self.percentageView = not self.percentageView
+        """Handle percentage-view event from menu/toolbar"""
+        self.SetPercentage( not self.percentageView )
+    def SetPercentageView( self, percentageView ):
+        """Set whether to display percentage or absolute values"""
+        self.percentageView = percentageView
+        self.percentageMenuItem.Check( self.percentageView )
         total = self.loader.tree.cummulative
         for control in self.ProfileListControls:
             control.SetPercentage( self.percentageView, total )
+    
+    def OnBackView( self, event ):
+        """Request to move backward in the history"""
+        index = self.historyIndex
+        if index is None:
+            index = len( self.history ) - 1
+        index = index -1
+        self.historyIndex = index 
+        try:
+            self.RestoreHistory( self.history[ index ] )
+        except IndexError, err:
+            pass # tell user about the problem...
+    
+    def OnRootView( self, event ):
+        """Reset view to the root of the tree"""
+        self.adapter,tree = self.RootNode()
+        self.squareMap.SetModel( tree, self.adapter )
+        self.RecordHistory()
+    
     def OnNodeActivated( self, event ):
         """Double-click or enter on a node in some control..."""
+        self.activated_node = self.selected_node = event.node 
         self.squareMap.SetModel( event.node, self.adapter )
         self.OnSquareSelected( event )
+        self.RecordHistory()
         
     def OnSquareHighlightedMap( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )
@@ -409,20 +454,55 @@ class MainFrame( wx.Frame ):
         self.SetStatusText( self.adapter.label( event.node ) )
         self.squareMap.SetSelected( event.node )
         self.OnSquareSelected( event )
+        self.RecordHistory()
     
     def OnSquareSelectedMap( self, event ):
         index = self.listControl.NodeToIndex( event.node )
         self.listControl.Focus( index )
         self.listControl.Select( index, True )
         self.OnSquareSelected( event )
+        self.RecordHistory()
     
     def OnSquareSelected( self, event ):
         """Update all views to show selection children/parents"""
+        self.selected_node = event.node 
         self.calleeListControl.integrateRecords( event.node.children )
         self.callerListControl.integrateRecords( event.node.parents )
         self.allCalleeListControl.integrateRecords( event.node.descendants() )
         self.allCallerListControl.integrateRecords( event.node.ancestors() )
-    
+
+    restoringHistory = False
+    def RecordHistory( self ):
+        """Add the given node to the history-set"""
+        if not self.restoringHistory:
+            self.history.append( (self.activated_node,self.selected_node, self.directoryView) )
+            try:
+                del self.historyIndex
+            except AttributeError, err:
+                pass
+            del self.history[:-200]
+    def RestoreHistory( self, record ):
+        self.restoringHistory = True 
+        try:
+            activated,selected,directory = record 
+            class activated_event:
+                node = activated 
+            class selected_event:
+                node = selected
+            
+            self.SetPackageView( directory )
+            if activated:
+                self.OnNodeActivated( activated_event )
+                self.squareMap.SetSelected( activated_event.node )
+            if selected:
+                self.OnSquareSelected( selected_event )
+            
+                index = self.listControl.NodeToIndex( selected_event.node )
+                self.listControl.Focus( index )
+                self.listControl.Select( index, True )
+        finally:
+            self.restoringHistory = False
+
     def load( self, filename ):
         """Load our hotshot dataset (iteratively)"""
         self.SetModel( pstatsloader.PStatsLoader( filename ) )
@@ -430,12 +510,16 @@ class MainFrame( wx.Frame ):
         """Set our overall model (a loader object) and populate sub-controls"""
         self.loader = loader
         self.listControl.integrateRecords( self.loader.rows.values())
+        self.adapter,tree = self.RootNode( )
+        self.activated_node = tree
+        self.squareMap.SetModel( tree, self.adapter )
+    def RootNode( self ):
+        """Return our current root node and appropriate adapter for it"""
         if self.directoryView:
-            self.adapter = DirectoryViewAdapter()
-            self.squareMap.SetModel( self.loader.location_tree, self.adapter )
+            return DirectoryViewAdapter(), self.loader.location_tree
         else:
-            self.adapter = PStatsAdapter()
-            self.squareMap.SetModel( self.loader.tree, self.adapter )
+            return PStatsAdapter(), self.loader.tree
+        
 
 class RunSnakeRunApp(wx.App):
     """Basic application for holding the viewing Frame"""
@@ -446,6 +530,8 @@ class RunSnakeRunApp(wx.App):
         )
         frame.Show(True)
         self.SetTopWindow(frame)
+        if sys.argv[1:]:
+            wx.CallAfter( frame.load, sys.argv[1] )
         return True
 
 usage = """runsnake.py profilefile
