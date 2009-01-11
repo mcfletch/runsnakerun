@@ -82,17 +82,25 @@ class ProfileView( wx.ListCtrl ):
         """Create our sub-controls"""
         wx.EVT_LIST_COL_CLICK( self, self.GetId(), self.OnReorder )
         wx.EVT_LIST_ITEM_SELECTED( self, self.GetId(), self.OnNodeSelected )
-        wx.EVT_LIST_ITEM_ACTIVATED( self, self.GetId(), self.OnNodeActivated )
         wx.EVT_MOTION( self, self.OnMouseMove )
+        wx.EVT_LIST_ITEM_ACTIVATED( self, self.GetId(), self.OnNodeActivated )
         for i,column in enumerate( self.columns ):
             column.index = i
             self.InsertColumn( i, column.name )
             self.SetColumnWidth( i, wx.LIST_AUTOSIZE )
         self.SetItemCount(0)
-    
     def OnNodeActivated( self, event ):
         """We have double-clicked for hit enter on a node refocus squaremap to this node"""
-        
+        try:
+            node = self.sorted[ event.GetIndex() ]
+        except IndexError, err: 
+            print 'invalid index', event.GetIndex()
+        else:
+            wx.PostEvent( 
+                self, 
+                squaremap.SquareActivationEvent( node=node, point=None, map=None ) 
+            )
+    
     def OnNodeSelected( self, event ):
         """We have selected a node with the list control, tell the world"""
         try:
@@ -334,9 +342,14 @@ class MainFrame( wx.Frame ):
         self.rightSplitter.SplitHorizontally( self.squareMap, self.tabs, rightsplit )
         self.leftSplitter.SplitVertically( self.listControl, self.rightSplitter, leftsplit )
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.squareMap, self.OnSquareHighlightedMap )
-        squaremap.EVT_SQUARE_HIGHLIGHTED( self.listControl, self.OnSquareHighlightedList )
         squaremap.EVT_SQUARE_SELECTED( self.listControl, self.OnSquareSelectedList )
         squaremap.EVT_SQUARE_SELECTED( self.squareMap, self.OnSquareSelectedMap )
+        squaremap.EVT_SQUARE_ACTIVATED( self.squareMap, self.OnNodeActivated )
+        for control in self.ProfileListControls:
+            squaremap.EVT_SQUARE_ACTIVATED( control, self.OnNodeActivated )
+            squaremap.EVT_SQUARE_HIGHLIGHTED( control, self.OnSquareHighlightedList )
+        
+        
         if sys.argv[1:]:
             wx.CallAfter( self.load, sys.argv[1] )
     def CreateMenuBar( self ):
@@ -380,6 +393,10 @@ class MainFrame( wx.Frame ):
         total = self.loader.tree.cummulative
         for control in self.ProfileListControls:
             control.SetPercentage( self.percentageView, total )
+    def OnNodeActivated( self, event ):
+        """Double-click or enter on a node in some control..."""
+        self.squareMap.SetModel( event.node, self.adapter )
+        self.OnSquareSelected( event )
         
     def OnSquareHighlightedMap( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )

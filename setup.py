@@ -16,29 +16,22 @@ if __name__ == "__main__":
 			"""Intended Audience :: Developers""",
 		],
 		'keywords': 'hotshot,profile,gui,wxPython',
-		'long_description' : """GUI Viewer for Hotshot profiling runs
+		'long_description' : """GUI Viewer for Python profiling runs
 
-Simple GUI client to load and display Hotshot profiler runs,
-displays the profile results incrementally, loading in the 
-background as you browse the results.""",
+Provides explorability and overall visualization of the call tree
+and package/module structures.""",
 		'platforms': ['Any'],
 	}
 	### Now the actual set up call
 	setup (
 		name = "RunSnakeRun",
-		version = '1.0.4',
+		version = '2.0.0',
 		url = "http://www.vrplumber.com/programming/runsnakerun/",
 		download_url = "http://www.vrplumber.com/programming/runsnakerun/",
-		description = "GUI Viewer for Hotshot/cProfile profiling runs",
+		description = "GUI Viewer for Python profiling runs",
 		author = "Mike C. Fletcher",
 		author_email = "mcfletch@vrplumber.com",
 		license = "BSD",
-		install_requires = [
-			# commented out as setuptools isn't well behaved for download deps
-#			"numpy",
-#			"wxPython",
-		],
-
 		package_dir = {
 			'runsnakerun':'.',
 		},
