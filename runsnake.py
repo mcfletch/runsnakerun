@@ -133,6 +133,13 @@ class ProfileView( wx.ListCtrl ):
         self.indicated = self.NodeToIndex( node )
         self.Refresh(False)
         return self.indicated
+    def SetSelected( self, node ):
+        """Set our selected node"""
+        index = self.NodeToIndex( node )
+        if index != -1:
+            self.Focus( index )
+            self.Select( index, True )
+        return index
     
     def NodeToIndex( self, node ):
         for i,n in enumerate( self.sorted ):
@@ -276,7 +283,7 @@ class MainFrame( wx.Frame ):
     loader = None
     percentageView = False
     directoryView = False
-    historyIndex = None
+    historyIndex = -1
     activated_node = None 
     selected_node = None
     def __init__( 
@@ -420,13 +427,9 @@ class MainFrame( wx.Frame ):
     
     def OnBackView( self, event ):
         """Request to move backward in the history"""
-        index = self.historyIndex
-        if index is None:
-            index = len( self.history ) - 1
-        index = index -1
-        self.historyIndex = index 
+        self.historyIndex -= 1
         try:
-            self.RestoreHistory( self.history[ index ] )
+            self.RestoreHistory( self.history[ self.historyIndex ] )
         except IndexError, err:
             pass # tell user about the problem...
     
@@ -457,9 +460,7 @@ class MainFrame( wx.Frame ):
         self.RecordHistory()
     
     def OnSquareSelectedMap( self, event ):
-        index = self.listControl.NodeToIndex( event.node )
-        self.listControl.Focus( index )
-        self.listControl.Select( index, True )
+        self.listControl.SetSelected( event.node )
         self.OnSquareSelected( event )
         self.RecordHistory()
     
@@ -475,31 +476,27 @@ class MainFrame( wx.Frame ):
     def RecordHistory( self ):
         """Add the given node to the history-set"""
         if not self.restoringHistory:
-            self.history.append( (self.activated_node,self.selected_node, self.directoryView) )
-            try:
-                del self.historyIndex
-            except AttributeError, err:
-                pass
+            record = self.activated_node
+            if self.historyIndex < -1:
+                try:
+                    del self.history[self.historyIndex+1:]
+                except AttributeError, err:
+                    pass
+            if (not self.history) or record != self.history[-1]:
+                self.history.append( record )
             del self.history[:-200]
+            self.historyIndex = -1
     def RestoreHistory( self, record ):
         self.restoringHistory = True 
         try:
-            activated,selected,directory = record 
+            activated = record 
             class activated_event:
                 node = activated 
-            class selected_event:
-                node = selected
             
-            self.SetPackageView( directory )
             if activated:
                 self.OnNodeActivated( activated_event )
                 self.squareMap.SetSelected( activated_event.node )
-            if selected:
-                self.OnSquareSelected( selected_event )
-            
-                index = self.listControl.NodeToIndex( selected_event.node )
-                self.listControl.Focus( index )
-                self.listControl.Select( index, True )
+                self.listControl.SetSelected( activated_event.node )
         finally:
             self.restoringHistory = False
 
@@ -513,6 +510,7 @@ class MainFrame( wx.Frame ):
         self.adapter,tree = self.RootNode( )
         self.activated_node = tree
         self.squareMap.SetModel( tree, self.adapter )
+        self.RecordHistory()
     def RootNode( self ):
         """Return our current root node and appropriate adapter for it"""
         if self.directoryView:
