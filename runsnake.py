@@ -1,9 +1,12 @@
 #! /usr/bin/python
 """The main script for the RunSnakeRun profile viewer"""
-import wx, sys, os
+import wx, sys, os, logging 
+from gettext import gettext as _
 import pstats
 from squaremap import squaremap
 from runsnakerun import pstatsloader
+
+log = logging.getLogger( 'runsnake.main' )
 
 
 ID_OPEN = wx.NewId()
@@ -65,7 +68,7 @@ class ProfileView( wx.ListCtrl ):
         style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_VRULES|wx.LC_SINGLE_SEL, 
         validator=wx.DefaultValidator, 
         columns = None,
-        name="ProfileView",
+        name=_("ProfileView"),
     ):
         wx.ListCtrl.__init__( self, parent, id, pos, size, style, validator, name )
         if columns is not None:
@@ -96,7 +99,7 @@ class ProfileView( wx.ListCtrl ):
         try:
             node = self.sorted[ event.GetIndex() ]
         except IndexError, err: 
-            print 'invalid index', event.GetIndex()
+            log.warn( _('Invalid index in node activated: %(index)s'), index=event.GetIndex())
         else:
             wx.PostEvent( 
                 self, 
@@ -108,7 +111,7 @@ class ProfileView( wx.ListCtrl ):
         try:
             node = self.sorted[ event.GetIndex() ]
         except IndexError, err: 
-            print 'invalid index', event.GetIndex()
+            log.warn( _('Invalid index in node selected: %(index)s'), index=event.GetIndex())
         else:
             wx.PostEvent( 
                 self, 
@@ -121,7 +124,7 @@ class ProfileView( wx.ListCtrl ):
             try:
                 node = self.sorted[ item ]
             except IndexError, err:
-                print 'invalid index', item 
+                log.warn( _('Invalid index in mouse move: %(index)s'), index=event.GetIndex())
             else:
                 wx.PostEvent( 
                     self, 
@@ -223,54 +226,54 @@ class ProfileView( wx.ListCtrl ):
             
     columns = [
         ColumnDefinition(
-            name = 'Name',
+            name = _('Name'),
             attribute = 'name',
             defaultOrder = True,
         ),
         ColumnDefinition(
-            name = 'Calls',
+            name = _('Calls'),
             attribute = 'calls',
         ),
         ColumnDefinition(
-            name = 'RCalls',
+            name = _('RCalls'),
             attribute = 'recursive',
         ),
         ColumnDefinition(
-            name = 'Local',
+            name = _('Local'),
             attribute = 'local',
             format = '%0.5f',
             percentPossible = True,
         ),
         ColumnDefinition(
-            name = '/Call',
+            name = _('/Call'),
             attribute = 'localPer',
             format = '%0.5f',
         ),
         ColumnDefinition(
-            name = 'Cum',
+            name = _('Cum'),
             attribute = 'cummulative',
             format = '%0.5f',
             percentPossible = True,
         ),
         ColumnDefinition(
-            name = '/Call',
+            name = _('/Call'),
             attribute = 'cummulativePer',
             format = '%0.5f',
         ),
         ColumnDefinition(
-            name = 'Directory',
+            name = _('Directory'),
             attribute = 'directory',
             sortOn = ('directory','filename','lineno'),
             defaultOrder = True,
         ),
         ColumnDefinition(
-            name = 'File',
+            name = _('File'),
             attribute = 'filename',
             sortOn = ('filename','lineno','directory',),
             defaultOrder = True,
         ),
         ColumnDefinition(
-            name = 'Line',
+            name = _('Line'),
             attribute = 'lineno',
             sortOn = ('filename','lineno','directory'),
             defaultOrder = True,
@@ -288,11 +291,11 @@ class MainFrame( wx.Frame ):
     selected_node = None
     def __init__( 
         self, parent=None, id=-1, 
-        title="Run Snake Run", 
+        title=_("Run Snake Run"), 
         pos=wx.DefaultPosition, 
         size=wx.DefaultSize,
         style=wx.DEFAULT_FRAME_STYLE|wx.CLIP_CHILDREN,
-        name= "RunSnakeRun",
+        name= _("RunSnakeRun"),
     ):
         """Initialise the Frame"""
         wx.Frame.__init__( self, parent, id, title, pos, size, style, name )
@@ -342,10 +345,10 @@ class MainFrame( wx.Frame ):
             self.callerListControl,
             self.allCallerListControl,
         ]
-        self.tabs.AddPage( self.calleeListControl, 'Callees', True )
-        self.tabs.AddPage( self.allCalleeListControl, 'All Callees', False )
-        self.tabs.AddPage( self.callerListControl, 'Callers', False )
-        self.tabs.AddPage( self.allCallerListControl, 'All Callers', False )
+        self.tabs.AddPage( self.calleeListControl, _('Callees'), True )
+        self.tabs.AddPage( self.allCalleeListControl, _('All Callees'), False )
+        self.tabs.AddPage( self.callerListControl, _('Callers'), False )
+        self.tabs.AddPage( self.allCallerListControl, _('All Callers'), False )
         self.rightSplitter.SetSashSize( 10 )
         self.Maximize(True)
         # calculate size as proportional value for initial display...
@@ -361,28 +364,30 @@ class MainFrame( wx.Frame ):
         for control in self.ProfileListControls:
             squaremap.EVT_SQUARE_ACTIVATED( control, self.OnNodeActivated )
             squaremap.EVT_SQUARE_HIGHLIGHTED( control, self.OnSquareHighlightedList )
+        # TODO: create toolbar 
+        # TODO: create keyboard accelerators
     def CreateMenuBar( self ):
         """Create our menu-bar for triggering operations"""
         menubar = wx.MenuBar()
         menu = wx.Menu( )
-        menu.Append( ID_OPEN, '&Open', 'Open a new profile file' )
+        menu.Append( ID_OPEN, _('&Open'), _('Open a new profile file') )
         menu.AppendSeparator()
-        menu.Append( ID_EXIT, '&Close', 'Close this RunSnakeRun window' )
-        menubar.Append( menu, '&File'  )
+        menu.Append( ID_EXIT, _('&Close'), _('Close this RunSnakeRun window') )
+        menubar.Append( menu, _('&File')  )
         menu = wx.Menu( )
         self.packageMenuItem = menu.AppendCheckItem( 
-            ID_PACKAGE_VIEW, '&Package View', 'View time spent by package/module' 
+            ID_PACKAGE_VIEW, _('&Package View'), _('View time spent by package/module')
         )
         self.percentageMenuItem = menu.AppendCheckItem( 
-            ID_PERCENTAGE_VIEW, 'Pe&rcentage View', 'View time spent as percent of overall time' 
+            ID_PERCENTAGE_VIEW, _('Pe&rcentage View'), _('View time spent as percent of overall time') 
         )
         self.rootViewItem = menu.Append( 
-            ID_ROOT_VIEW, '&Root View', 'View the root of the tree' 
+            ID_ROOT_VIEW, _('&Root View'), _('View the root of the tree') 
         )
         self.backViewItem = menu.Append( 
-            ID_BACK_VIEW, '&Back', 'Go back in your viewing history' 
+            ID_BACK_VIEW, _('&Back'), _('Go back in your viewing history')
         )
-        menubar.Append( menu, '&View'  )
+        menubar.Append( menu, _('&View')  )
         self.SetMenuBar( menubar )
         
         wx.EVT_MENU( self, ID_EXIT, lambda evt: self.Close(True) )
@@ -502,7 +507,10 @@ class MainFrame( wx.Frame ):
 
     def load( self, filename ):
         """Load our hotshot dataset (iteratively)"""
-        self.SetModel( pstatsloader.PStatsLoader( filename ) )
+        try:
+            self.SetModel( pstatsloader.PStatsLoader( filename ) )
+        except (IOError,OSError,ValueError), err:
+            self.SetStatusText( _('Failure during load of %(filename)r: %(err)s')%dict( filename=filename, err=err ) )
     def SetModel( self, loader ):
         """Set our overall model (a loader object) and populate sub-controls"""
         self.loader = loader
@@ -544,4 +552,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig( level=logging.INFO )
     main()
