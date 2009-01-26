@@ -1,6 +1,8 @@
 """Module to load cProfile/profile records as a tree of records"""
 import pstats, os
 
+TREE_CALLS, TREE_FILES = range( 2 )
+
 class PStatsLoader( object ):
     """Load profiler statistic from """
     def __init__( self, filename ):
@@ -141,13 +143,14 @@ class PStatGroup( BaseStat ):
     """A node/record that holds a group of children but isn't a raw-record based group"""
     # if LOCAL_ONLY then only take the raw-record's local values, not cummulative values
     LOCAL_ONLY = False
-    def __init__( self, directory='', filename='', name='', children=None, local_children=None ):
+    def __init__( self, directory='', filename='', name='', children=None, local_children=None, tree=TREE_CALLS ):
         self.directory = directory
         self.filename = filename
         self.name = ''
         self.children = children or []
         self.parents = []
         self.local_children = local_children or []
+        self.tree = tree
     def __repr__( self ):
         return '%s( %r,%r,%s )'%(self.__class__.__name__,self.directory, self.filename, self.name)
     def finalize( self, already_done=None ):
@@ -202,8 +205,8 @@ class PStatLocation( PStatGroup ):
     our totals are otherwise just the sum of our children.
     """
     LOCAL_ONLY = True
-    def __init__( self, directory, filename):
-        super( PStatLocation, self ).__init__( directory=directory, filename=filename, name='package' )
+    def __init__( self, directory, filename, tree=TREE_FILES):
+        super( PStatLocation, self ).__init__( directory=directory, filename=filename, name='package', tree=tree )
     def filter_children( self ):
         """Filter our children into regular and local children sets"""
         real_children = []

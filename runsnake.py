@@ -15,6 +15,7 @@ ID_PACKAGE_VIEW = wx.NewId()
 ID_PERCENTAGE_VIEW = wx.NewId()
 ID_ROOT_VIEW = wx.NewId()
 ID_BACK_VIEW = wx.NewId()
+ID_UP_VIEW = wx.NewId()
 
 class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
@@ -32,6 +33,8 @@ class PStatsAdapter( squaremap.DefaultAdapter ):
         if node.cummulative:
             return node.local/float( node.cummulative )
         return 0.0
+    def parents( self, node ):
+        return getattr(node,'parents', [])
 
 class DirectoryViewAdapter( PStatsAdapter ):
     """Provides a directory-view-only adapter for PStats objects"""
@@ -289,6 +292,12 @@ class MainFrame( wx.Frame ):
     historyIndex = -1
     activated_node = None 
     selected_node = None
+    TBFLAGS = ( 
+        wx.TB_HORIZONTAL
+        #| wx.NO_BORDER
+        | wx.TB_FLAT
+    )
+
     def __init__( 
         self, parent=None, id=-1, 
         title=_("Run Snake Run"), 
@@ -306,6 +315,7 @@ class MainFrame( wx.Frame ):
     def CreateControls( self ):
         """Create our sub-controls"""
         self.CreateMenuBar()
+        self.SetupToolBar()
         self.CreateStatusBar()
         self.leftSplitter = wx.SplitterWindow(
             self
@@ -376,16 +386,19 @@ class MainFrame( wx.Frame ):
         menubar.Append( menu, _('&File')  )
         menu = wx.Menu( )
         self.packageMenuItem = menu.AppendCheckItem( 
-            ID_PACKAGE_VIEW, _('&Package View'), _('View time spent by package/module')
+            ID_PACKAGE_VIEW, _('&File View'), _('View time spent by package/module')
         )
         self.percentageMenuItem = menu.AppendCheckItem( 
-            ID_PERCENTAGE_VIEW, _('Pe&rcentage View'), _('View time spent as percent of overall time') 
+            ID_PERCENTAGE_VIEW, _('&Percentage View'), _('View time spent as percent of overall time') 
         )
         self.rootViewItem = menu.Append( 
-            ID_ROOT_VIEW, _('&Root View'), _('View the root of the tree') 
+            ID_ROOT_VIEW, _('&Root View (Home)'), _('View the root of the tree') 
         )
         self.backViewItem = menu.Append( 
             ID_BACK_VIEW, _('&Back'), _('Go back in your viewing history')
+        )
+        self.upViewItem = menu.Append( 
+            ID_UP_VIEW, _('&Up'), _('Go "up" to the parent of this node with the largest cummulative total')
         )
         menubar.Append( menu, _('&View')  )
         self.SetMenuBar( menubar )
@@ -394,8 +407,44 @@ class MainFrame( wx.Frame ):
         wx.EVT_MENU( self, ID_OPEN, self.OnOpenFile )
         wx.EVT_MENU( self, ID_PACKAGE_VIEW, self.OnPackageView )
         wx.EVT_MENU( self, ID_PERCENTAGE_VIEW, self.OnPercentageView )
+        wx.EVT_MENU( self, ID_UP_VIEW, self.OnUpView )
         wx.EVT_MENU( self, ID_ROOT_VIEW, self.OnRootView )
         wx.EVT_MENU( self, ID_BACK_VIEW, self.OnBackView )
+    
+    def SetupToolBar( self ):
+        """Create the toolbar for common actions"""
+        tb = self.CreateToolBar( self.TBFLAGS )
+        tsize = (24,24)
+        open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, tsize)
+        tb.AddLabelTool(ID_OPEN, "Open", open_bmp, shortHelp="Open", longHelp="Open a (c)Profile trace file")
+        tb.AddSeparator()
+#        self.Bind(wx.EVT_TOOL, self.OnOpenFile, id=ID_OPEN)
+        self.rootViewTool = tb.AddLabelTool(
+            ID_ROOT_VIEW, _("Root View"),
+            wx.ArtProvider.GetBitmap(wx.ART_GO_HOME, wx.ART_TOOLBAR, tsize),
+            shortHelp=_("Display the root of the current view tree (home view)")
+        )
+        self.rootViewTool = tb.AddLabelTool(
+            ID_BACK_VIEW, _("Back"), 
+            wx.ArtProvider.GetBitmap(wx.ART_GO_BACK, wx.ART_TOOLBAR, tsize),
+            shortHelp=_("Back to the previously activated node in the call tree")
+        )
+        self.upViewTool = tb.AddLabelTool(
+            ID_UP_VIEW, _("Up"),
+            wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, tsize),
+            shortHelp=_("Go one level up the call tree (highest-percentage parent)")
+        )
+        tb.AddSeparator()
+        # TODO: figure out why the control is sizing the label incorrectly on Linux
+        self.percentageViewTool = wx.CheckBox( tb, -1, _("Percent    ") )
+        self.percentageViewTool.SetToolTip( wx.ToolTip(_("Toggle display of percentages in list views")) )
+        tb.AddControl( self.percentageViewTool )
+        wx.EVT_CHECKBOX( self.percentageViewTool, self.percentageViewTool.GetId(), self.OnPercentageView )
+        
+        self.packageViewTool = wx.CheckBox( tb, -1, _("File View    ") )
+        self.packageViewTool.SetToolTip( wx.ToolTip(_("Switch between call-hierarchy and package/module/function hierarchy")) )
+        tb.AddControl( self.packageViewTool )
+        wx.EVT_CHECKBOX( self.packageViewTool, self.packageViewTool.GetId(), self.OnPackageView )
     
     def OnOpenFile( self, event ):
         """Request to open a new profile file"""
@@ -416,19 +465,44 @@ class MainFrame( wx.Frame ):
         """Set whether to use directory/package based view"""
         self.directoryView = not self.directoryView
         self.packageMenuItem.Check( self.directoryView )
+        self.packageViewTool.SetValue( self.directoryView )
         if self.loader:
             self.SetModel( self.loader )
         self.RecordHistory()
     def OnPercentageView( self, event ):
         """Handle percentage-view event from menu/toolbar"""
-        self.SetPercentage( not self.percentageView )
+        self.SetPercentageView( not self.percentageView )
     def SetPercentageView( self, percentageView ):
         """Set whether to display percentage or absolute values"""
         self.percentageView = percentageView
         self.percentageMenuItem.Check( self.percentageView )
+        self.percentageViewTool.SetValue( self.percentageView )
         total = self.loader.tree.cummulative
         for control in self.ProfileListControls:
             control.SetPercentage( self.percentageView, total )
+    
+    def OnUpView( self, event ):
+        """Request to move up the hierarchy to highest-weight parent"""
+        node = self.activated_node 
+        if node:
+            if self.directoryView:
+                tree = pstatsloader.TREE_FILES 
+            else:
+                tree = pstatsloader.TREE_CALLS
+            parents = [
+                parent for parent in 
+                self.adapter.parents( node )
+                if getattr(parent,'tree',pstatsloader.TREE_CALLS) == tree
+            ]
+            if parents:
+                parents.sort( lambda a,b: cmp( self.adapter.value( node, a), self.adapter.value(node, b )) )
+                class event:
+                    node = parents[-1]
+                self.OnNodeActivated( event )
+            else:
+                self.SetStatusText( _( 'No parents for the currently selected node: %(node_name)s')%dict( node_name=self.adapter.label( node ) ))
+        else:
+            self.SetStatusText( _( 'No currently selected node' ))
     
     def OnBackView( self, event ):
         """Request to move backward in the history"""
@@ -436,7 +510,7 @@ class MainFrame( wx.Frame ):
         try:
             self.RestoreHistory( self.history[ self.historyIndex ] )
         except IndexError, err:
-            pass # tell user about the problem...
+            self.SetStatusText( _('No further history available'))
     
     def OnRootView( self, event ):
         """Reset view to the root of the tree"""
@@ -448,7 +522,6 @@ class MainFrame( wx.Frame ):
         """Double-click or enter on a node in some control..."""
         self.activated_node = self.selected_node = event.node 
         self.squareMap.SetModel( event.node, self.adapter )
-        self.OnSquareSelected( event )
         self.RecordHistory()
         
     def OnSquareHighlightedMap( self, event ):
