@@ -15,7 +15,7 @@ if __name__ == "__main__":
 			"""Topic :: Software Development :: Libraries :: Python Modules""",
 			"""Intended Audience :: Developers""",
 		],
-		'keywords': 'hotshot,profile,gui,wxPython',
+		'keywords': 'profile,gui,wxPython,squaremap',
 		'long_description' : """GUI Viewer for Python profiling runs
 
 Provides explorability and overall visualization of the call tree
@@ -25,7 +25,7 @@ and package/module structures.""",
 	### Now the actual set up call
 	setup (
 		name = "RunSnakeRun",
-		version = '2.0.0',
+		version = '2.0.0a1',
 		url = "http://www.vrplumber.com/programming/runsnakerun/",
 		download_url = "http://www.vrplumber.com/programming/runsnakerun/",
 		description = "GUI Viewer for Python profiling runs",
