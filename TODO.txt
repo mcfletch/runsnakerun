@@ -1,0 +1,5 @@
+Pending issues:
+
+ * chooses wrong root when looking at CherryPy log files
+ * needs better display of node-name for square-map
+
