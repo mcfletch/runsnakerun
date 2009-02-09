@@ -109,9 +109,9 @@ class PStatRow( BaseStat ):
             nc, 
             cc,
             tt,
-            tt/cc,
+            tt/(cc or 0.00000000000001),
             ct,
-            ct/nc,
+            ct/(nc or 0.00000000000001),
             dirname,
             basename,
             func,
@@ -133,7 +133,10 @@ class PStatRow( BaseStat ):
     def child_cumulative_time( self, child ):
         total = self.cummulative
         if total:
-            (cc,nc,tt,ct) = child.callers[ self.key ]
+            try:
+                (cc,nc,tt,ct) = child.callers[ self.key ]
+            except TypeError, err:
+                ct = child.callers[ self.key ]
             return float(ct)/total
         return 0
     
