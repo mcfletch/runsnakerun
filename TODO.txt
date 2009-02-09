@@ -1,5 +1,8 @@
 Pending issues:
 
- * chooses wrong root when looking at CherryPy log files
+ * chooses wrong root when looking at CherryPy log files, should always have root that includes all others
  * needs better display of node-name for square-map
-
+ * re-enable HotSpot support?
+ * provide a lsprofcall import module
+ * show directory/module nodes in left-most view when in directory mode
+ * better handling of 0-value nodes
