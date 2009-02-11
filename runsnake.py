@@ -76,7 +76,7 @@ class ProfileView( wx.ListCtrl ):
         wx.ListCtrl.__init__( self, parent, id, pos, size, style, validator, name )
         if columns is not None:
             self.columns = columns
-        self.sortOrder = [ (self.columns[2].defaultOrder,self.columns[2]), ]
+        self.sortOrder = [ (self.columns[5].defaultOrder,self.columns[5]), ]
         self.sorted = []
         self.CreateControls( )
     
