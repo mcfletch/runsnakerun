@@ -64,6 +64,9 @@ class ProfileView( wx.ListCtrl ):
     indicated = -1
     total = 0
     percentageView = False
+    activated_node = None 
+    selected_node = None
+    indicated_node = None
     def __init__( 
         self, parent,
         id=-1, 
@@ -116,10 +119,11 @@ class ProfileView( wx.ListCtrl ):
         except IndexError, err: 
             log.warn( _('Invalid index in node selected: %(index)s'), index=event.GetIndex())
         else:
-            wx.PostEvent( 
-                self, 
-                squaremap.SquareSelectionEvent( node=node, point=None, map=None ) 
-            )
+            if node is not self.selected_node:
+                wx.PostEvent( 
+                    self, 
+                    squaremap.SquareSelectionEvent( node=node, point=None, map=None ) 
+                )
     def OnMouseMove( self, event ):
         point = event.GetPosition()
         item,where = self.HitTest( point )
@@ -136,11 +140,13 @@ class ProfileView( wx.ListCtrl ):
     
     def SetIndicated( self, node ):
         """Set this node to indicated status"""
+        self.indicated_node = node
         self.indicated = self.NodeToIndex( node )
         self.Refresh(False)
         return self.indicated
     def SetSelected( self, node ):
         """Set our selected node"""
+        self.selected_node = node
         index = self.NodeToIndex( node )
         if index != -1:
             self.Focus( index )
