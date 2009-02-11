@@ -12,7 +12,7 @@ except ImportError, err:
 
 version = [
     (line.split('=')[1]).strip().strip('"').strip("'")
-    for line in open('version.py')
+    for line in open('__init__.py')
     if line.startswith( '__version__' )
 ][0]
 

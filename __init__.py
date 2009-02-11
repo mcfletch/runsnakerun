@@ -1,2 +1,2 @@
 """The RunSnakeRun GUI Profiler utility"""
-from runsnakerun.version import __version__
+__version__ = '2.0.0b1'
