@@ -5,7 +5,16 @@ Run:
 	python setup.py install
 to install the package from the source archive.
 """
-from setuptools import setup
+try:
+    from setuptools import setup
+except ImportError, err:
+    from distutils.core import setup
+
+version = [
+    (line.split('=')[1]).strip().strip('"').strip("'")
+    for line in open('version.py')
+    if line.startswith( '__version__' )
+][0]
 
 if __name__ == "__main__":
 	extraArguments = {
@@ -25,7 +34,7 @@ and package/module structures.""",
 	### Now the actual set up call
 	setup (
 		name = "RunSnakeRun",
-		version = '2.0.0a1',
+		version = version,
 		url = "http://www.vrplumber.com/programming/runsnakerun/",
 		download_url = "http://www.vrplumber.com/programming/runsnakerun/",
 		description = "GUI Viewer for Python profiling runs",

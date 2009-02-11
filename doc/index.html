@@ -18,12 +18,9 @@ all the bells-and-whistles of a program like KCacheGrind, it's intended
 to allow for profiling your Python programs, and just your Python
 programs. &nbsp;What it does provide:</p><ul><li>sortable data-grid views for raw profile information</li><ul><li>identity: function name, file-name, directory name</li><li>time-spent: cummulative, cummulative-per, local and local-per time</li></ul><ul><li>overall data-grid view</li><li>(all) callers-of-this-function, (all) callees-of-this-function views</li></ul><li>squaremap view of call tree</li><ul><li>size proportional to amount of time spent by the given parent in the given function</li></ul><li>squaremap view of packages/modules/functions</li><ul><li>size proportional to time spent in each package/module/function</li></ul><li>basic navigation (home, back, up)</li></ul><h2><a name="install"></a>Installation<br>
 </h2>
-<p>If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install with:</p><pre>easy_install RunSnakeRun<br>easy_install wxPython</pre><p>As shown, you will require a modern <a href="http://www.wxpython.org/">wxPython</a>
-and Python installation. &nbsp;We don't automatically install this with
-easy_install, as that can cause problems for those who have manually
-installed the packages or who are behind corporate firewalls.</p><p>You can manually <a href="#download">download the package</a> and run:</p>
-<pre>python setup.py install</pre>
-<p>to install the package. &nbsp;This will setup a script named "runsnake" on Linux machines which launches the profiler.</p>
+<p>You will need to have all of wxPython, SquareMap and RunSnakeRun installed to use RunSnakeRun.</p><p>You will likely want to use your platform wxPython package. &nbsp;If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p><pre>easy_install SquareMap<br>easy_install RunSnakeRun<br></pre><p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
+and Python installation. &nbsp;The setup will create a script named
+"runsnake" on Linux machines which launches the profile viewer.</p>
 <h2><a name="usage"></a>Usage</h2><p>To use cProfile to capture your application's profile data:</p><pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
 </p>
 <pre>python runsnake.py OpenGLContext.profile<br></pre>
@@ -45,10 +42,10 @@ equal functions next to each other (blanks for functions that don't
 exist in both runs)</li></ul><p>If you have an idea, feel free
 to check out the code and&nbsp;implement the new&nbsp;feature. &nbsp;I'm certainly willing
 to entertain new features or bug-fix requests as well. &nbsp;The code
-is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute.</p>
+is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge directly.</p>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
-  <li>2.0.0a1 -- Eliminate support for (obsolete) Hotshot
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.0b1.zip">2.0.0b1</a> -- packaging fixes, UI fixes</li><li>2.0.0a1 -- Eliminate support for (obsolete) Hotshot
 profiles, add squaremap visualization and callee/caller views, lots of
 UI work to make the application more usable, preliminary i18n work
 (just gettext markup)</li><li><a href="RunSnakeRun-1.0.4.tar.gz">1.0.4</a> -- Add
@@ -68,6 +65,6 @@ stack-exhaustion</li>
   <li><a href="RunSnakeRun-1.0.0.tar.gz">1.0.0</a> -- Initial release,
 no fancy features, just the raw functionality</li>
 </ul>
-<p class="footer">Copyright 2005-2008 Mike Fletcher<br>
+<p class="footer">Copyright 2005-2009 Mike Fletcher<br>
 </p>
 </body></html>
