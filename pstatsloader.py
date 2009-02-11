@@ -1,5 +1,6 @@
 """Module to load cProfile/profile records as a tree of records"""
-import pstats, os
+import pstats, os, logging 
+log = logging.getLogger( 'runsnake.pstatsloader' )
 
 TREE_CALLS, TREE_FILES = range( 2 )
 
@@ -15,7 +16,10 @@ class PStatsLoader( object ):
         """Build a squaremap-compatible model from a pstats class"""
         rows = self.rows
         for func, raw in stats.iteritems():
-            rows[func] =  PStatRow( func,raw )
+            try:
+                rows[func] =  PStatRow( func,raw )
+            except ValueError, err:
+                log.info( 'Null row: %s', func )
         for row in rows.itervalues():
             row.weave( rows )
         roots = []
@@ -23,10 +27,12 @@ class PStatsLoader( object ):
             if not value.parents:
                 roots.append( value )
         if len(roots) == 1:
+            print 'single tree root', roots[0]
             return roots[0]
         elif roots:
             root = PStatGroup( '/', 'PYTHONPATH', children= roots )
             root.finalize()
+            self.rows[ root.key ] = root
             return root
         raise RuntimeError( 'No top-level function???' )
     def load_location( self ):
@@ -101,6 +107,8 @@ class PStatRow( BaseStat ):
             dirname = ''
             basename = file
         nc, cc, tt, ct, callers = raw
+        if nc == cc == tt == ct == 0:
+            raise ValueError( 'Null stats row' )
         (
             self.calls, self.recursive, self.local, self.localPer,
             self.cummulative, self.cummulativePer, self.directory,
@@ -150,6 +158,7 @@ class PStatGroup( BaseStat ):
         self.directory = directory
         self.filename = filename
         self.name = ''
+        self.key = (directory,filename,name)
         self.children = children or []
         self.parents = []
         self.local_children = local_children or []
