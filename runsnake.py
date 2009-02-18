@@ -593,17 +593,17 @@ class MainFrame( wx.Frame ):
     def SetModel( self, loader ):
         """Set our overall model (a loader object) and populate sub-controls"""
         self.loader = loader
-        self.listControl.integrateRecords( self.loader.rows.values())
-        self.adapter,tree = self.RootNode( )
+        self.adapter,tree,rows = self.RootNode( )
+        self.listControl.integrateRecords( rows.values())
         self.activated_node = tree
         self.squareMap.SetModel( tree, self.adapter )
         self.RecordHistory()
     def RootNode( self ):
         """Return our current root node and appropriate adapter for it"""
         if self.directoryView:
-            return DirectoryViewAdapter(), self.loader.location_tree
+            return DirectoryViewAdapter(), self.loader.location_tree, self.loader.location_rows
         else:
-            return PStatsAdapter(), self.loader.tree
+            return PStatsAdapter(), self.loader.tree, self.loader.rows
         
 
 class RunSnakeRunApp(wx.App):

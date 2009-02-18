@@ -11,6 +11,7 @@ class PStatsLoader( object ):
         self.rows = {}
         self.stats = pstats.Stats( filename )
         self.tree = self.load( self.stats.stats )
+        self.location_rows = {}
         self.location_tree = l = self.load_location( )
     def load( self, stats ):
         """Build a squaremap-compatible model from a pstats class"""
@@ -30,7 +31,7 @@ class PStatsLoader( object ):
             print 'single tree root', roots[0]
             return roots[0]
         elif roots:
-            root = PStatGroup( '/', 'PYTHONPATH', children= roots )
+            root = PStatGroup( '/', 'PYTHONPATH', children= roots, name="<sys.path>" )
             root.finalize()
             self.rows[ root.key ] = root
             return root
@@ -40,6 +41,7 @@ class PStatsLoader( object ):
         directories = {}
         files = {}
         root = PStatLocation( '/', 'PYTHONPATH' )
+        self.location_rows = self.rows.copy()
         for child in self.rows.values():
             current = directories.get( child.directory )
             directory, filename = child.directory, child.filename
@@ -48,12 +50,14 @@ class PStatsLoader( object ):
                     current = root
                 else:
                     current = PStatLocation( directory, '' )
+                    self.location_rows[ current.key ] = current
                 directories[ directory ] = current 
             if filename == '~':
                 filename = '<built-in>'
             file_current = files.get( (directory,filename) )
             if file_current is None:
                 file_current = PStatLocation( directory, filename )
+                self.location_rows[ file_current.key ] = file_current
                 files[ (directory,filename) ] = file_current 
                 current.children.append( file_current )
             file_current.children.append( child )
