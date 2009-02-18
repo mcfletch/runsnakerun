@@ -229,7 +229,11 @@ class ProfileView( wx.ListCtrl ):
             if column.percentPossible and self.percentageView and self.total:
                 value = value/float( self.total ) * 100.00
             if column.format:
-                return column.format%(value,)
+                try:
+                    return column.format%(value,)
+                except Exception, err: 
+                    print 'column %s could not format %r value: %s'%( column.name, type(value), value)
+                    return str(value)
             else:
                 return str( value )
             
