@@ -1,2 +1,2 @@
 """The RunSnakeRun GUI Profiler utility"""
-__version__ = '2.0.0b1'
+__version__ = '2.0.0b2'

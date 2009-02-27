@@ -94,6 +94,8 @@ def loadHotshot( filename, yieldCount=10000 ):
         if (not i%yieldCount) and i:
             yield i, files, functions
         if givesDelta( what ):
+            key = fileno,lineno 
+            print 'lineno', lineno, tdelta, getattr(getFunction( key ),'name','')
             if what == whatEnter:
                 key = (fileno,lineno)
                 function = getFunction( key )

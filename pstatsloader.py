@@ -27,6 +27,8 @@ class PStatsLoader( object ):
         for key,value in rows.items():
             if not value.parents:
                 roots.append( value )
+            #print key,
+            #print '  ', value.parents
         if len(roots) == 1:
             print 'single tree root', roots[0]
             return roots[0]

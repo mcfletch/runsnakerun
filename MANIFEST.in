@@ -6,4 +6,5 @@ include setup.py
 recursive-include doc *.html
 recursive-include doc *.png
 recursive-include doc *.css
-recurisve-exlclude *.gz
+recursive-exclude *.gz
+recursive-exclude *.profile

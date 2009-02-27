@@ -27,14 +27,17 @@ def a( count=5 ):
         time.sleep( 0.05 )
         return a( count - 1 )
 
+
 if __name__ == "__main__":
     import pprint 
     command = '''x()'''
     profiler = hotshot.Profile( "hotshot.profile", lineevents=0 )
     profiler.runctx( command, globals(), locals())
+    print dir(profiler)
     profiler.close()
     
     profiler = cProfile.Profile( subcalls=True )
     profiler.runctx( command, globals(), locals())
     stats = profiler.getstats()
     profiler.dump_stats( 'cprofile.profile' )
+    
