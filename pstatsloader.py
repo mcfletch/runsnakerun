@@ -6,10 +6,10 @@ TREE_CALLS, TREE_FILES = range( 2 )
 
 class PStatsLoader( object ):
     """Load profiler statistic from """
-    def __init__( self, filename ):
-        self.filename = filename 
+    def __init__( self, *filenames ):
+        self.filename = filenames
         self.rows = {}
-        self.stats = pstats.Stats( filename )
+        self.stats = pstats.Stats( *filenames )
         self.tree = self.load( self.stats.stats )
         self.location_rows = {}
         self.location_tree = l = self.load_location( )

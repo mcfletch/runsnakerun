@@ -458,17 +458,16 @@ class MainFrame( wx.Frame ):
     
     def OnOpenFile( self, event ):
         """Request to open a new profile file"""
-        dialog = wx.FileDialog( self, style=wx.OPEN )
+        dialog = wx.FileDialog( self, style=wx.OPEN|wx.FD_MULTIPLE )
         if dialog.ShowModal( ) == wx.ID_OK:
-            path = dialog.GetPath()
-            if os.path.exists( path ):
-                if self.loader:
-                    # we've already got a displayed data-set, open new window...
-                    frame = MainFrame()
-                    frame.Show( True )
-                    frame.load( path )
-                else:
-                    self.load( path )
+            paths = dialog.GetPaths()
+            if self.loader:
+                # we've already got a displayed data-set, open new window...
+                frame = MainFrame()
+                frame.Show( True )
+                frame.load( *paths )
+            else:
+                self.load( *paths )
     def OnPackageView( self, event ):
         self.SetPackageView( not self.directoryView )
     def SetPackageView( self, directoryView ):
@@ -588,12 +587,17 @@ class MainFrame( wx.Frame ):
         finally:
             self.restoringHistory = False
 
-    def load( self, filename ):
+    def load( self, *filenames ):
         """Load our hotshot dataset (iteratively)"""
         try:
-            self.SetModel( pstatsloader.PStatsLoader( filename ) )
+            self.SetModel( pstatsloader.PStatsLoader( *filenames ) )
         except (IOError,OSError,ValueError), err:
-            self.SetStatusText( _('Failure during load of %(filename)r: %(err)s')%dict( filename=filename, err=err ) )
+            self.SetStatusText( 
+                _('Failure during load of %(filenames)s: %(err)s'
+            )%dict( 
+                filenames=" ".join( [repr(x) for x in filenames] ), 
+                err=err 
+            ) )
     def SetModel( self, loader ):
         """Set our overall model (a loader object) and populate sub-controls"""
         self.loader = loader
@@ -620,7 +624,7 @@ class RunSnakeRunApp(wx.App):
         frame.Show(True)
         self.SetTopWindow(frame)
         if sys.argv[1:]:
-            wx.CallAfter( frame.load, sys.argv[1] )
+            wx.CallAfter( frame.load, sys.argv[1:] )
         return True
 
 usage = """runsnake.py profilefile
