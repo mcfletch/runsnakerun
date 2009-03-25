@@ -339,7 +339,7 @@ class MainFrame( wx.Frame ):
         self.squareMap = squaremap.SquareMap(
             self.rightSplitter, 
             padding = 6,
-            labels = False,
+            labels = True,
             adapter = self.adapter,
         )
         self.tabs = wx.Notebook(
@@ -624,7 +624,7 @@ class RunSnakeRunApp(wx.App):
         frame.Show(True)
         self.SetTopWindow(frame)
         if sys.argv[1:]:
-            wx.CallAfter( frame.load, sys.argv[1:] )
+            wx.CallAfter( frame.load, *sys.argv[1:] )
         return True
 
 usage = """runsnake.py profilefile
