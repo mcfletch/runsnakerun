@@ -5,6 +5,10 @@ from gettext import gettext as _
 import pstats
 from squaremap import squaremap
 from runsnakerun import pstatsloader
+if sys.platform == 'win32':
+    windows = True 
+else:
+    windows = False
 
 log = logging.getLogger( 'runsnake.main' )
 
@@ -16,6 +20,8 @@ ID_PERCENTAGE_VIEW = wx.NewId()
 ID_ROOT_VIEW = wx.NewId()
 ID_BACK_VIEW = wx.NewId()
 ID_UP_VIEW = wx.NewId()
+ID_DEEPER_VIEW = wx.NewId()
+ID_SHALLOWER_VIEW = wx.NewId()
 
 class PStatsAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
@@ -27,8 +33,8 @@ class PStatsAdapter( squaremap.DefaultAdapter ):
         return parent.child_cumulative_time( node )
     def label( self, node ):
         if isinstance( node, pstatsloader.PStatGroup ):
-            return '%s / %s'%( node.directory, node.filename )
-        return '%s:%s (%s)'%(node.filename,node.lineno,node.name)
+            return '%s / %s'%( node.filename, node.directory )
+        return '%s@%s:%s [%ss]'%(node.name, node.filename,node.lineno,round(node.cummulative, 3))
     def empty( self, node ):
         if node.cummulative:
             return node.local/float( node.cummulative )
@@ -52,6 +58,7 @@ class ColumnDefinition( object ):
     format = None
     defaultOrder = False
     percentPossible = False
+    targetWidth = None
     def __init__( self, **named ):
         for key,value in named.items():
             setattr( self, key, value )
@@ -98,7 +105,10 @@ class ProfileView( wx.ListCtrl ):
         for i,column in enumerate( self.columns ):
             column.index = i
             self.InsertColumn( i, column.name )
-            self.SetColumnWidth( i, wx.LIST_AUTOSIZE )
+            if not windows or column.targetWidth is None:
+                self.SetColumnWidth( i, wx.LIST_AUTOSIZE )
+            else:
+                self.SetColumnWidth( i, column.targetWidth )
         self.SetItemCount(0)
     def OnNodeActivated( self, event ):
         """We have double-clicked for hit enter on a node refocus squaremap to this node"""
@@ -242,54 +252,64 @@ class ProfileView( wx.ListCtrl ):
             name = _('Name'),
             attribute = 'name',
             defaultOrder = True,
+            targetWidth = 50,
         ),
         ColumnDefinition(
             name = _('Calls'),
             attribute = 'calls',
+            targetWidth = 50,
         ),
         ColumnDefinition(
             name = _('RCalls'),
             attribute = 'recursive',
+            targetWidth = 40,
         ),
         ColumnDefinition(
             name = _('Local'),
             attribute = 'local',
-            format = '%0.5f',
+            format = '%0.2f',
             percentPossible = True,
+            targetWidth = 50,
         ),
         ColumnDefinition(
             name = _('/Call'),
             attribute = 'localPer',
             format = '%0.5f',
+            targetWidth = 50,
         ),
         ColumnDefinition(
             name = _('Cum'),
             attribute = 'cummulative',
-            format = '%0.5f',
+            format = '%0.2f',
             percentPossible = True,
+            targetWidth = 50,
         ),
         ColumnDefinition(
             name = _('/Call'),
             attribute = 'cummulativePer',
             format = '%0.5f',
-        ),
-        ColumnDefinition(
-            name = _('Directory'),
-            attribute = 'directory',
-            sortOn = ('directory','filename','lineno'),
-            defaultOrder = True,
+            targetWidth = 50,
         ),
         ColumnDefinition(
             name = _('File'),
             attribute = 'filename',
             sortOn = ('filename','lineno','directory',),
             defaultOrder = True,
+            targetWidth = 70,
         ),
         ColumnDefinition(
             name = _('Line'),
             attribute = 'lineno',
             sortOn = ('filename','lineno','directory'),
             defaultOrder = True,
+            targetWidth = 30,
+        ),
+        ColumnDefinition(
+            name = _('Directory'),
+            attribute = 'directory',
+            sortOn = ('directory','filename','lineno'),
+            defaultOrder = True,
+            targetWidth = 90,
         ),
     ]
 
@@ -410,6 +430,14 @@ class MainFrame( wx.Frame ):
         self.upViewItem = menu.Append( 
             ID_UP_VIEW, _('&Up'), _('Go "up" to the parent of this node with the largest cummulative total')
         )
+        
+        self.deeperViewItem = menu.Append( 
+            ID_DEEPER_VIEW, _('&Deeper'), _('View deeper squaremap views')
+        )
+        self.shallowerViewItem = menu.Append( 
+            ID_SHALLOWER_VIEW, _('&Shallower'), _('View shallower squaremap views')
+        )
+        
         menubar.Append( menu, _('&View')  )
         self.SetMenuBar( menubar )
         
@@ -418,6 +446,8 @@ class MainFrame( wx.Frame ):
         wx.EVT_MENU( self, ID_PACKAGE_VIEW, self.OnPackageView )
         wx.EVT_MENU( self, ID_PERCENTAGE_VIEW, self.OnPercentageView )
         wx.EVT_MENU( self, ID_UP_VIEW, self.OnUpView )
+        wx.EVT_MENU( self, ID_DEEPER_VIEW, self.OnDeeperView )
+        wx.EVT_MENU( self, ID_SHALLOWER_VIEW, self.OnShallowerView )
         wx.EVT_MENU( self, ID_ROOT_VIEW, self.OnRootView )
         wx.EVT_MENU( self, ID_BACK_VIEW, self.OnBackView )
     
@@ -468,6 +498,21 @@ class MainFrame( wx.Frame ):
                 frame.load( *paths )
             else:
                 self.load( *paths )
+    def OnShallowerView( self, event ):
+        if not self.squareMap.max_depth:
+            new_depth = self.squareMap.max_depth_seen or 0 - 5
+        else:
+            new_depth = self.squareMap.max_depth - 5
+        self.squareMap.max_depth = max((1,new_depth))
+        self.squareMap.Refresh()
+    def OnDeeperView( self, event ):
+        if not self.squareMap.max_depth:
+            new_depth = 5
+        else:
+            new_depth = self.squareMap.max_depth + 5
+        self.squareMap.max_depth = max((self.squareMap.max_depth_seen or 0,new_depth))
+        self.squareMap.Refresh()
+        
     def OnPackageView( self, event ):
         self.SetPackageView( not self.directoryView )
     def SetPackageView( self, directoryView ):
