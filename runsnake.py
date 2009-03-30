@@ -267,7 +267,7 @@ class ProfileView( wx.ListCtrl ):
         ColumnDefinition(
             name = _('Local'),
             attribute = 'local',
-            format = '%0.2f',
+            format = '%0.5f',
             percentPossible = True,
             targetWidth = 50,
         ),
@@ -280,7 +280,7 @@ class ProfileView( wx.ListCtrl ):
         ColumnDefinition(
             name = _('Cum'),
             attribute = 'cummulative',
-            format = '%0.2f',
+            format = '%0.5f',
             percentPossible = True,
             targetWidth = 50,
         ),
@@ -431,13 +431,15 @@ class MainFrame( wx.Frame ):
             ID_UP_VIEW, _('&Up'), _('Go "up" to the parent of this node with the largest cummulative total')
         )
         
-        self.deeperViewItem = menu.Append( 
-            ID_DEEPER_VIEW, _('&Deeper'), _('View deeper squaremap views')
-        )
-        self.shallowerViewItem = menu.Append( 
-            ID_SHALLOWER_VIEW, _('&Shallower'), _('View shallower squaremap views')
-        )
-        
+        # This stuff isn't really all that useful for profiling,
+        # it's more about how to generate graphics to describe profiling...
+#        self.deeperViewItem = menu.Append( 
+#            ID_DEEPER_VIEW, _('&Deeper'), _('View deeper squaremap views')
+#        )
+#        self.shallowerViewItem = menu.Append( 
+#            ID_SHALLOWER_VIEW, _('&Shallower'), _('View shallower squaremap views')
+#        )
+#        wx.ToolTip.Enable( True )
         menubar.Append( menu, _('&View')  )
         self.SetMenuBar( menubar )
         
@@ -583,6 +585,10 @@ class MainFrame( wx.Frame ):
     def OnSquareHighlightedMap( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )
         self.listControl.SetIndicated( event.node )
+        text = self.squareMap.adapter.label( event.node )
+        self.squareMap.SetToolTipString( text )
+        self.SetStatusText( text )
+
     def OnSquareHighlightedList( self, event ):
         self.SetStatusText( self.adapter.label( event.node ) )
         self.squareMap.SetHighlight( event.node, propagate=False  )
