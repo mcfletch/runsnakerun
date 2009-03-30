@@ -455,6 +455,7 @@ class MainFrame( wx.Frame ):
         """Create the toolbar for common actions"""
         tb = self.CreateToolBar( self.TBFLAGS )
         tsize = (24,24)
+        tb.ToolBitmapSize = tsize
         open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, tsize)
         tb.AddLabelTool(ID_OPEN, "Open", open_bmp, shortHelp="Open", longHelp="Open a (c)Profile trace file")
         tb.AddSeparator()
@@ -485,6 +486,7 @@ class MainFrame( wx.Frame ):
         self.packageViewTool.SetToolTip( wx.ToolTip(_("Switch between call-hierarchy and package/module/function hierarchy")) )
         tb.AddControl( self.packageViewTool )
         wx.EVT_CHECKBOX( self.packageViewTool, self.packageViewTool.GetId(), self.OnPackageView )
+        tb.Realize()
     
     def OnOpenFile( self, event ):
         """Request to open a new profile file"""
