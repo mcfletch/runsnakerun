@@ -21,3 +21,5 @@ RunSnakeRun-2.0.0a1.tar.gz
 RunSnakeRun-2.0.0b1.tar.gz
 RunSnakeRun-2.0.0b2.tar.gz
 dist
+build
+RunSnakeRun.egg-info

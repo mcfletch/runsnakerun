@@ -644,6 +644,7 @@ class MainFrame( wx.Frame ):
         """Load our hotshot dataset (iteratively)"""
         try:
             self.SetModel( pstatsloader.PStatsLoader( *filenames ) )
+            self.SetTitle( _("Run Snake Run: %(filenames)s")%{'filenames': ', '.join(filenames )[:120]} )
         except (IOError,OSError,ValueError), err:
             self.SetStatusText( 
                 _('Failure during load of %(filenames)s: %(err)s'
