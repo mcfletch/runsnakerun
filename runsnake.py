@@ -41,6 +41,20 @@ class PStatsAdapter( squaremap.DefaultAdapter ):
         return 0.0
     def parents( self, node ):
         return getattr(node,'parents', [])
+    color_mapping = None
+    def background_color( self, node, depth ):
+        """Create a (unique-ish) background color for each node"""
+        if self.color_mapping is None:
+            self.color_mapping = {}
+        color = self.color_mapping.get( node.key )
+        if color is None:
+            depth = len(self.color_mapping)
+            red = (depth * 10)%255
+            green = 200-((depth * 5)%200)
+            blue = (depth * 25)%200
+            self.color_mapping[node.key] = color = wx.Color( red, green, blue )
+        return color
+
 
 class DirectoryViewAdapter( PStatsAdapter ):
     """Provides a directory-view-only adapter for PStats objects"""
