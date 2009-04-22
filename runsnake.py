@@ -242,7 +242,9 @@ class ProfileView( wx.ListCtrl ):
                 try:
                     return column.format%(value,)
                 except Exception, err: 
-                    print 'column %s could not format %r value: %s'%( column.name, type(value), value)
+                    log.warn( 'Column %s could not format %r value: %s', 
+                        column.name, type(value), value
+                    )
                     return str(value)
             else:
                 return str( value )
