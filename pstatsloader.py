@@ -1,6 +1,7 @@
 """Module to load cProfile/profile records as a tree of records"""
 import pstats, os, logging 
 log = logging.getLogger( 'runsnake.pstatsloader' )
+#log.setLevel( logging.DEBUG )
 
 TREE_CALLS, TREE_FILES = range( 2 )
 
@@ -26,11 +27,12 @@ class PStatsLoader( object ):
         roots = []
         for key,value in rows.items():
             if not value.parents:
+                log.debug( 'Found node root: %s', value )
                 roots.append( value )
             #print key,
             #print '  ', value.parents
         if len(roots) == 1:
-            print 'single tree root', roots[0]
+            log.debug( 'Single root', roots[0] )
             return roots[0]
         elif roots:
             root = PStatGroup( '/', 'PYTHONPATH', children= roots, name="<sys.path>" )
