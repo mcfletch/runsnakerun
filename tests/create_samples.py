@@ -31,7 +31,9 @@ def a( count=5 ):
 if __name__ == "__main__":
     import pprint 
     command = '''x()'''
-    profiler = hotshot.Profile( "hotshot.profile", lineevents=1 )
+    profiler = hotshot.Profile( 
+        "hotshot.profile", lineevents=True, linetimings=True 
+    )
     profiler.runctx( command, globals(), locals())
     print dir(profiler)
     profiler.close()
@@ -48,9 +50,10 @@ if __name__ == "__main__":
         pass 
     else:
         profiler  = line_profiler.LineProfiler()
+#        profiler.add_function( x )
+        for func in (a,x,y,z):
+            profiler.add_function( func )
         profiler.runctx( command, globals(), locals() )
         profiler.dump_stats( 'line_profiler.profile' )
-        import pdb
-        pdb.set_trace()
         
     
