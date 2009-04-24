@@ -167,6 +167,8 @@ def loadHotshot2( filename ):
     defineFunction = _hotshot.WHAT_DEFINE_FUNC
     whatEnter = _hotshot.WHAT_ENTER
     whatExit = _hotshot.WHAT_EXIT
+    whatLine = _hotshot.WHAT_LINENO
+    whatLineTime = _hotshot.WHAT_LINE_TIMES
     stack = ()
     files = {}
     functions = {}
@@ -190,6 +192,8 @@ def loadHotshot2( filename ):
             functions[ (fileno,lineno) ] = record
             if file is not None:
                 file.functions[ lineno ] = record
+        elif what == whatLineTime:
+            print 'line time',(tdelta,fileno,lineno)
         else:
             print 'unrecognised what', what
             for name in [n for n in dir(_hotshot) if n.startswith( 'WHAT_')]:
@@ -236,21 +240,21 @@ def asTree( heatmap ):
 
 if __name__ == "__main__":
     import pprint
-    startTime = time.time()
-    for i, files, functions in loadHotshot( sys.argv[1], 100000 ):
-        t2 = time.time()
-        print '%s records in %ss: %s records/second'%(
-            i, t2-startTime, i/((t2-startTime) or 1),
-        )
-    completion = time.time()
-    print 'FUNCTIONS'
-    functionValues = functions.items()
-    functionValues.sort()
-    for (fileno,lineno),value in functionValues:
-        key = (fileno,lineno)
-        print files.get(fileno).filename, lineno,
-        print value.calls, value.recursive, value.local, value.cummulative
-    print 'read %i records in %s seconds'%( i, completion-startTime )
+#    startTime = time.time()
+#    for i, files, functions in loadHotshot( sys.argv[1], 100000 ):
+#        t2 = time.time()
+#        print '%s records in %ss: %s records/second'%(
+#            i, t2-startTime, i/((t2-startTime) or 1),
+#        )
+#    completion = time.time()
+#    print 'FUNCTIONS'
+#    functionValues = functions.items()
+#    functionValues.sort()
+#    for (fileno,lineno),value in functionValues:
+#        key = (fileno,lineno)
+#        print files.get(fileno).filename, lineno,
+#        print value.calls, value.recursive, value.local, value.cummulative
+#    print 'read %i records in %s seconds'%( i, completion-startTime )
 
     t1 = time.time()
     pprint.pprint( loadHotshot2( sys.argv[1] ) )
