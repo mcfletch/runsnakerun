@@ -1,4 +1,4 @@
-import pdb, sys, time
+import pdb, sys, time, thread, threading
 
 class CodeInfo( object ):
     """Code-object information for multiple calls of code"""
@@ -74,7 +74,8 @@ class SimpleProfiler( object ):
         self.last_time = None
     def describe( self, frame ):
         return frame.f_lineno,(frame.f_code.co_name, frame.f_code.co_firstlineno)
-    def __call__( self, frame, event, arg ):
+    def __call__( self, frame, event, arg):
+        # Obviously this would need a real high-precision timer...
         t = time.time()
         if self.last_time:
             delta = t - self.last_time 
@@ -87,20 +88,20 @@ class SimpleProfiler( object ):
             self.frame_info[ self.frame_depth ] = frame_info
         elif event in ('return','exception','c_return','c_exception'):
             frame_info = self.frame_info[ self.frame_depth ]
-            if frame_info.open_line is not None:
-                frame_info.add_line( frame_info.open_line, self.internal_time )
-            frame_delta = self.internal_time - frame_info.start_time
-            print 'frame depth', self.frame_depth
-            for i in range( self.frame_depth ):
-                info = self.frame_info[i]
-                if i < len(self.frame_info):
-                    other = self.frame_info[i+1]
-                else:
-                    other = None
-                if info is None:
-                    print i,self.frame_info[:i+1]
-                info.add_cummulative( frame_delta, other )
-            frame_info.add_local( frame_delta )
+            if frame_info:
+                if frame_info.open_line is not None:
+                    frame_info.add_line( frame_info.open_line, self.internal_time )
+                frame_delta = self.internal_time - frame_info.start_time
+                for i in range( self.frame_depth ):
+                    info = self.frame_info[i]
+                    if i < len(self.frame_info):
+                        other = self.frame_info[i+1]
+                    else:
+                        other = None
+                    if info is None:
+                        print i,self.frame_info[:i+1]
+                    info.add_cummulative( frame_delta, other )
+                frame_info.add_local( frame_delta )
             self.frame_info[ self.frame_depth ] = None
             self.frame_depth -= 1
             if self.frame_depth >= 0:
@@ -109,16 +110,15 @@ class SimpleProfiler( object ):
                     frame_info.add_line( frame_info.open_line, self.internal_time )
         elif event in ('line',):
             frame_info = self.frame_info[ self.frame_depth ]
-            if frame_info.open_line is not None:
-                frame_info.add_line( frame_info.open_line, self.internal_time )
-            frame_info.start_line( frame.f_lineno, self.internal_time )
+            if frame_info:
+                if frame_info.open_line is not None:
+                    frame_info.add_line( frame_info.open_line, self.internal_time )
+                frame_info.start_line( frame.f_lineno, self.internal_time )
         
-        print self.frame_depth,event,self.describe( frame ), self.describe( frame.f_back )
         self.last_time = time.time()
         return self
     def do_line_time( self, frame ):
-        
-            frame_info.add_line( frame.f_lineno, line_delta )
+        frame_info.add_line( frame.f_lineno, line_delta )
     
     def code_info_for( self, code ):
         current = self.code_info.get(code)
@@ -127,13 +127,16 @@ class SimpleProfiler( object ):
         return current
 
 def test():
-    23L**1000000000
+    23L**10000
+    time.sleep( 3.0 )
     r()
+    
 def r( depth = 5 ):
     if depth < 0:
         return None 
     else:
         z = '22344'* 100000
+        time.sleep( .5 )
         return r( depth - 1 )
 
 if __name__ == "__main__":
