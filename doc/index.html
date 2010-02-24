@@ -1,11 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html lang="en-ca"><head>
+
   <link rel="icon" type="image/png" href="/maps/favicon.png">
-  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python Hotshot Profile Viewer</title>
   
-  <title>RunSnakeRun Python Hotshot Profile Viewer</title><link rel="stylesheet" type="text/css" href="toolkit.css">
-  <meta name="author" content="Mike C. Fletcher"></head>
-<body style="direction: ltr;">
+  <link rel="stylesheet" type="text/css" href="toolkit.css">
+  <meta name="author" content="Mike C. Fletcher"></head><body style="direction: ltr;">
 <h1>RunSnakeRun<br>
 </h1>
 <p class="introduction">RunSnakeRun is a small GUI utility that allows
@@ -42,9 +42,15 @@ is reasonably stable. &nbsp;I don't tend to do much work on it, as it
 tends to just work. &nbsp;My current wish list for the project follows:</p><p>If you have an idea, feel free
 to check out the code and&nbsp;implement the new&nbsp;feature. &nbsp;I'm certainly willing
 to entertain new features or bug-fix requests as well. &nbsp;The code
-is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li><li>rework squaremap to be more robust for large profiles</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>storage of preferences such as column widths</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
+is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li>
+  <li>source-code view<br>
+  </li>
+<li>rework squaremap to be more robust for large profiles</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>storage of preferences such as column widths</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
 tool-set for profiling, you may want to have any or all of these other
-tools available for your profiling needs:</p><ul><li>Robert Kern's <a href="http://pypi.python.org/pypi/line_profiler/">line_profiler</a> -- Cython based Python profiler with line timings</li><li>KCacheGrind -- KDE viewer for CacheGrind C-level profiler or converted Python profiles (via <a href="http://pypi.python.org/pypi/pyprof2calltree/">pyprof2calltree</a>),
+tools available for your profiling needs:</p><ul><li><a href="http://code.google.com/p/jrfonseca/wiki/Gprof2Dot">Gprof2Dot</a> -- Converts various Profile formats into dot-format graphs<br>
+</li>
+  <li>Robert Kern's <a href="http://pypi.python.org/pypi/line_profiler/">line_profiler</a> -- Cython based Python profiler with line timings</li>
+<li>KCacheGrind -- KDE viewer for CacheGrind C-level profiler or converted Python profiles (via <a href="http://pypi.python.org/pypi/pyprof2calltree/">pyprof2calltree</a>),
 KCacheGrind is basically what RunSnakeRun started off trying to imitate
 save that RunSnakeRun was intended to be Python specific and
 cross-platform</li><li><a href="http://pypi.python.org/pypi/profilehooks">profilehooks</a> -- specify which function to profile by using a decorator on a particular function</li></ul>
