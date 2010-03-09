@@ -42,7 +42,8 @@ class PStatsAdapter(squaremap.DefaultAdapter):
     def label(self, node):
         if isinstance(node, pstatsloader.PStatGroup):
             return '%s / %s' % (node.filename, node.directory)
-        return '%s@%s:%s [%ss]' % (node.name, node.filename, node.lineno, round(node.cummulative, 3))
+        return '%s@%s:%s [%ss]' % (node.name, node.filename, node.lineno,
+                                   round(node.cummulative, 3))
 
     def empty(self, node):
         if node.cummulative:
@@ -116,7 +117,8 @@ class ProfileView(wx.ListCtrl):
         columns=None,
         name=_("ProfileView"),
     ):
-        wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator, name)
+        wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator,
+                             name)
         if columns is not None:
             self.columns = columns
         self.sortOrder = [ (self.columns[5].defaultOrder, self.columns[5]), ]
@@ -149,11 +151,13 @@ class ProfileView(wx.ListCtrl):
         try:
             node = self.sorted[event.GetIndex()]
         except IndexError, err:
-            log.warn(_('Invalid index in node activated: %(index)s'), index=event.GetIndex())
+            log.warn(_('Invalid index in node activated: %(index)s'),
+                     index=event.GetIndex())
         else:
             wx.PostEvent(
                 self,
-                squaremap.SquareActivationEvent(node=node, point=None, map=None)
+                squaremap.SquareActivationEvent(node=node, point=None,
+                                                map=None)
             )
 
     def OnNodeSelected(self, event):
@@ -161,12 +165,14 @@ class ProfileView(wx.ListCtrl):
         try:
             node = self.sorted[event.GetIndex()]
         except IndexError, err:
-            log.warn(_('Invalid index in node selected: %(index)s'), index=event.GetIndex())
+            log.warn(_('Invalid index in node selected: %(index)s'),
+                     index=event.GetIndex())
         else:
             if node is not self.selected_node:
                 wx.PostEvent(
                     self,
-                    squaremap.SquareSelectionEvent(node=node, point=None, map=None)
+                    squaremap.SquareSelectionEvent(node=node, point=None,
+                                                   map=None)
                 )
 
     def OnMouseMove(self, event):
@@ -176,11 +182,13 @@ class ProfileView(wx.ListCtrl):
             try:
                 node = self.sorted[item]
             except IndexError, err:
-                log.warn(_('Invalid index in mouse move: %(index)s'), index=event.GetIndex())
+                log.warn(_('Invalid index in mouse move: %(index)s'),
+                         index=event.GetIndex())
             else:
                 wx.PostEvent(
                     self,
-                    squaremap.SquareHighlightEvent(node=node, point=point, map=None)
+                    squaremap.SquareHighlightEvent(node=node, point=point,
+                                                   map=None)
                 )
 
     def SetIndicated(self, node):
@@ -217,7 +225,8 @@ class ProfileView(wx.ListCtrl):
         if column.sortOn:
             # multiple sorts for the click...
             columns = [self.columnByAttribute(attr) for attr in column.sortOn]
-            diff = [(a, b) for a, b in zip(self.sortOrder, columns) if b is not a[1]]
+            diff = [(a, b) for a, b in zip(self.sortOrder, columns)
+                    if b is not a[1]]
             if not diff:
                 self.sortOrder[0] = (not self.sortOrder[0][0], column)
             else:
@@ -444,15 +453,20 @@ class MainFrame(wx.Frame):
         width, height = wx.GetDisplaySize()
         rightsplit = 2 * (height // 3)
         leftsplit = width // 3
-        self.rightSplitter.SplitHorizontally(self.squareMap, self.tabs, rightsplit)
-        self.leftSplitter.SplitVertically(self.listControl, self.rightSplitter, leftsplit)
-        squaremap.EVT_SQUARE_HIGHLIGHTED(self.squareMap, self.OnSquareHighlightedMap)
-        squaremap.EVT_SQUARE_SELECTED(self.listControl, self.OnSquareSelectedList)
+        self.rightSplitter.SplitHorizontally(self.squareMap, self.tabs,
+                                             rightsplit)
+        self.leftSplitter.SplitVertically(self.listControl, self.rightSplitter,
+                                          leftsplit)
+        squaremap.EVT_SQUARE_HIGHLIGHTED(self.squareMap,
+                                         self.OnSquareHighlightedMap)
+        squaremap.EVT_SQUARE_SELECTED(self.listControl,
+                                      self.OnSquareSelectedList)
         squaremap.EVT_SQUARE_SELECTED(self.squareMap, self.OnSquareSelectedMap)
         squaremap.EVT_SQUARE_ACTIVATED(self.squareMap, self.OnNodeActivated)
         for control in self.ProfileListControls:
             squaremap.EVT_SQUARE_ACTIVATED(control, self.OnNodeActivated)
-            squaremap.EVT_SQUARE_HIGHLIGHTED(control, self.OnSquareHighlightedList)
+            squaremap.EVT_SQUARE_HIGHLIGHTED(control,
+                                             self.OnSquareHighlightedList)
         # TODO: create toolbar
         # TODO: create keyboard accelerators
 
@@ -466,19 +480,23 @@ class MainFrame(wx.Frame):
         menubar.Append(menu, _('&File'))
         menu = wx.Menu()
         self.packageMenuItem = menu.AppendCheckItem(
-            ID_PACKAGE_VIEW, _('&File View'), _('View time spent by package/module')
+            ID_PACKAGE_VIEW, _('&File View'),
+            _('View time spent by package/module')
         )
         self.percentageMenuItem = menu.AppendCheckItem(
-            ID_PERCENTAGE_VIEW, _('&Percentage View'), _('View time spent as percent of overall time')
+            ID_PERCENTAGE_VIEW, _('&Percentage View'),
+            _('View time spent as percent of overall time')
         )
         self.rootViewItem = menu.Append(
-            ID_ROOT_VIEW, _('&Root View (Home)'), _('View the root of the tree')
+            ID_ROOT_VIEW, _('&Root View (Home)'),
+            _('View the root of the tree')
         )
         self.backViewItem = menu.Append(
             ID_BACK_VIEW, _('&Back'), _('Go back in your viewing history')
         )
         self.upViewItem = menu.Append(
-            ID_UP_VIEW, _('&Up'), _('Go "up" to the parent of this node with the largest cummulative total')
+            ID_UP_VIEW, _('&Up'),
+            _('Go "up" to the parent of this node with the largest cummulative total')
         )
 
         # This stuff isn't really all that useful for profiling,
@@ -519,8 +537,10 @@ class MainFrame(wx.Frame):
         tb = self.CreateToolBar(self.TBFLAGS)
         tsize = (24, 24)
         tb.ToolBitmapSize = tsize
-        open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, tsize)
-        tb.AddLabelTool(ID_OPEN, "Open", open_bmp, shortHelp="Open", longHelp="Open a (c)Profile trace file")
+        open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR,
+                                            tsize)
+        tb.AddLabelTool(ID_OPEN, "Open", open_bmp, shortHelp="Open",
+                        longHelp="Open a (c)Profile trace file")
         tb.AddSeparator()
 #        self.Bind(wx.EVT_TOOL, self.OnOpenFile, id=ID_OPEN)
         self.rootViewTool = tb.AddLabelTool(
@@ -541,14 +561,18 @@ class MainFrame(wx.Frame):
         tb.AddSeparator()
         # TODO: figure out why the control is sizing the label incorrectly on Linux
         self.percentageViewTool = wx.CheckBox(tb, -1, _("Percent    "))
-        self.percentageViewTool.SetToolTip(wx.ToolTip(_("Toggle display of percentages in list views")))
+        self.percentageViewTool.SetToolTip(wx.ToolTip(
+            _("Toggle display of percentages in list views")))
         tb.AddControl(self.percentageViewTool)
-        wx.EVT_CHECKBOX(self.percentageViewTool, self.percentageViewTool.GetId(), self.OnPercentageView)
+        wx.EVT_CHECKBOX(self.percentageViewTool,
+                        self.percentageViewTool.GetId(), self.OnPercentageView)
 
         self.packageViewTool = wx.CheckBox(tb, -1, _("File View    "))
-        self.packageViewTool.SetToolTip(wx.ToolTip(_("Switch between call-hierarchy and package/module/function hierarchy")))
+        self.packageViewTool.SetToolTip(wx.ToolTip(
+            _("Switch between call-hierarchy and package/module/function hierarchy")))
         tb.AddControl(self.packageViewTool)
-        wx.EVT_CHECKBOX(self.packageViewTool, self.packageViewTool.GetId(), self.OnPackageView)
+        wx.EVT_CHECKBOX(self.packageViewTool, self.packageViewTool.GetId(),
+                        self.OnPackageView)
         tb.Realize()
 
     def OnOpenFile(self, event):
@@ -577,7 +601,8 @@ class MainFrame(wx.Frame):
             new_depth = 5
         else:
             new_depth = self.squareMap.max_depth + 5
-        self.squareMap.max_depth = max((self.squareMap.max_depth_seen or 0, new_depth))
+        self.squareMap.max_depth = max((self.squareMap.max_depth_seen or 0,
+                                        new_depth))
         self.squareMap.Refresh()
 
     def OnPackageView(self, event):
@@ -619,12 +644,14 @@ class MainFrame(wx.Frame):
                 if getattr(parent, 'tree', pstatsloader.TREE_CALLS) == tree
             ]
             if parents:
-                parents.sort(lambda a, b: cmp(self.adapter.value(node, a), self.adapter.value(node, b)))
+                parents.sort(lambda a, b: cmp(self.adapter.value(node, a),
+                                              self.adapter.value(node, b)))
                 class event:
                     node = parents[-1]
                 self.OnNodeActivated(event)
             else:
-                self.SetStatusText(_('No parents for the currently selected node: %(node_name)s') % dict(node_name=self.adapter.label(node)))
+                self.SetStatusText(_('No parents for the currently selected node: %(node_name)s')
+                                   % dict(node_name=self.adapter.label(node)))
         else:
             self.SetStatusText(_('No currently selected node'))
 
@@ -735,7 +762,8 @@ class MainFrame(wx.Frame):
         """Load our hotshot dataset (iteratively)"""
         try:
             self.SetModel(pstatsloader.PStatsLoader(*filenames))
-            self.SetTitle(_("Run Snake Run: %(filenames)s") % {'filenames': ', '.join(filenames)[:120]})
+            self.SetTitle(_("Run Snake Run: %(filenames)s")
+                          % {'filenames': ', '.join(filenames)[:120]})
         except (IOError, OSError, ValueError), err:
             self.SetStatusText(
                 _('Failure during load of %(filenames)s: %(err)s'
@@ -756,9 +784,10 @@ class MainFrame(wx.Frame):
     def RootNode(self):
         """Return our current root node and appropriate adapter for it"""
         if self.directoryView:
-            return DirectoryViewAdapter(), self.loader.location_tree, self.loader.location_rows
+            return (DirectoryViewAdapter(), self.loader.location_tree,
+                    self.loader.location_rows)
         else:
-            return PStatsAdapter(), self.loader.tree, self.loader.rows
+            return (PStatsAdapter(), self.loader.tree, self.loader.rows)
 
 
 class RunSnakeRunApp(wx.App):
