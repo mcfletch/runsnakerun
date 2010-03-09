@@ -9,6 +9,7 @@ from gettext import gettext as _
 import pstats
 from squaremap import squaremap
 from runsnakerun import pstatsloader
+
 if sys.platform == 'win32':
     windows = True
 else:
@@ -27,7 +28,9 @@ ID_UP_VIEW = wx.NewId()
 ID_DEEPER_VIEW = wx.NewId()
 ID_SHALLOWER_VIEW = wx.NewId()
 
+
 class PStatsAdapter(squaremap.DefaultAdapter):
+
     def value(self, node, parent=None):
         if isinstance(parent, pstatsloader.PStatGroup):
             if parent.cummulative:
@@ -35,17 +38,22 @@ class PStatsAdapter(squaremap.DefaultAdapter):
             else:
                 return 0
         return parent.child_cumulative_time(node)
+
     def label(self, node):
         if isinstance(node, pstatsloader.PStatGroup):
             return '%s / %s' % (node.filename, node.directory)
         return '%s@%s:%s [%ss]' % (node.name, node.filename, node.lineno, round(node.cummulative, 3))
+
     def empty(self, node):
         if node.cummulative:
             return node.local / float(node.cummulative)
         return 0.0
+
     def parents(self, node):
         return getattr(node, 'parents', [])
+
     color_mapping = None
+
     def background_color(self, node, depth):
         """Create a (unique-ish) background color for each node"""
         if self.color_mapping is None:
@@ -62,13 +70,16 @@ class PStatsAdapter(squaremap.DefaultAdapter):
 
 class DirectoryViewAdapter(PStatsAdapter):
     """Provides a directory-view-only adapter for PStats objects"""
+
     def children(self, node):
         if isinstance(node, pstatsloader.PStatGroup):
             return node.children
         return []
 
+
 class ColumnDefinition(object):
     """Definition of a given column for display"""
+
     index = None
     name = None
     attribute = None
@@ -77,21 +88,25 @@ class ColumnDefinition(object):
     defaultOrder = False
     percentPossible = False
     targetWidth = None
+
     def __init__(self, **named):
         for key, value in named.items():
             setattr(self, key, value)
+
     def get(self, function):
         """Get the value for this column from the function"""
         return getattr(function, self.attribute, '')
 
 class ProfileView(wx.ListCtrl):
     """A sortable profile list control"""
+
     indicated = -1
     total = 0
     percentageView = False
     activated_node = None
     selected_node = None
     indicated_node = None
+
     def __init__(
         self, parent,
         id=-1,
@@ -128,6 +143,7 @@ class ProfileView(wx.ListCtrl):
             else:
                 self.SetColumnWidth(i, column.targetWidth)
         self.SetItemCount(0)
+
     def OnNodeActivated(self, event):
         """We have double-clicked for hit enter on a node refocus squaremap to this node"""
         try:
@@ -152,6 +168,7 @@ class ProfileView(wx.ListCtrl):
                     self,
                     squaremap.SquareSelectionEvent(node=node, point=None, map=None)
                 )
+
     def OnMouseMove(self, event):
         point = event.GetPosition()
         item, where = self.HitTest(point)
@@ -172,6 +189,7 @@ class ProfileView(wx.ListCtrl):
         self.indicated = self.NodeToIndex(node)
         self.Refresh(False)
         return self.indicated
+
     def SetSelected(self, node):
         """Set our selected node"""
         self.selected_node = node
@@ -192,6 +210,7 @@ class ProfileView(wx.ListCtrl):
             if column.attribute == name:
                 return column
         return None
+
     def OnReorder(self, event):
         """Given a request to reorder, tell us to reorder"""
         column = self.columns[event.GetColumn()]
@@ -221,6 +240,7 @@ class ProfileView(wx.ListCtrl):
     def reorder(self):
         """Force a reorder of the displayed items"""
         self.sorted.sort(self.compareFunction)
+
     def compareFunction(self, first, second):
         """Compare two functions according to our current sort order"""
         for ascending, column in self.sortOrder:
@@ -232,19 +252,23 @@ class ProfileView(wx.ListCtrl):
                 else:
                     return diff
         return 0
+
     def integrateRecords(self, functions):
         """Integrate records from the loader"""
         self.SetItemCount(len(functions))
         self.sorted = functions[:]
         self.reorder()
         self.Refresh()
+
     indicated_attribute = wx.ListItemAttr()
     indicated_attribute.SetBackgroundColour('#00ff00')
+
     def OnGetItemAttr(self, item):
         """Retrieve ListItemAttr for the given item (index)"""
         if self.indicated > -1 and item == self.indicated:
             return self.indicated_attribute
         return None
+
     def OnGetItemText(self, item, col):
         """Retrieve text for the item and column respectively"""
         # TODO: need to format for rjust and the like...
@@ -336,6 +360,7 @@ class ProfileView(wx.ListCtrl):
 
 class MainFrame(wx.Frame):
     """The root frame for the display of a single data-set"""
+
     loader = None
     percentageView = False
     directoryView = False
@@ -362,6 +387,7 @@ class MainFrame(wx.Frame):
         self.adapter = PStatsAdapter()
         self.CreateControls()
         self.history = [] # set of (activated_node, selected_node) pairs...
+
     def CreateControls(self):
         """Create our sub-controls"""
         self.CreateMenuBar()
@@ -429,6 +455,7 @@ class MainFrame(wx.Frame):
             squaremap.EVT_SQUARE_HIGHLIGHTED(control, self.OnSquareHighlightedList)
         # TODO: create toolbar
         # TODO: create keyboard accelerators
+
     def CreateMenuBar(self):
         """Create our menu-bar for triggering operations"""
         menubar = wx.MenuBar()
@@ -536,6 +563,7 @@ class MainFrame(wx.Frame):
                 frame.load(*paths)
             else:
                 self.load(*paths)
+
     def OnShallowerView(self, event):
         if not self.squareMap.max_depth:
             new_depth = self.squareMap.max_depth_seen or 0 - 5
@@ -543,6 +571,7 @@ class MainFrame(wx.Frame):
             new_depth = self.squareMap.max_depth - 5
         self.squareMap.max_depth = max((1, new_depth))
         self.squareMap.Refresh()
+
     def OnDeeperView(self, event):
         if not self.squareMap.max_depth:
             new_depth = 5
@@ -553,6 +582,7 @@ class MainFrame(wx.Frame):
 
     def OnPackageView(self, event):
         self.SetPackageView(not self.directoryView)
+
     def SetPackageView(self, directoryView):
         """Set whether to use directory/package based view"""
         self.directoryView = not self.directoryView
@@ -561,9 +591,11 @@ class MainFrame(wx.Frame):
         if self.loader:
             self.SetModel(self.loader)
         self.RecordHistory()
+
     def OnPercentageView(self, event):
         """Handle percentage-view event from menu/toolbar"""
         self.SetPercentageView(not self.percentageView)
+
     def SetPercentageView(self, percentageView):
         """Set whether to display percentage or absolute values"""
         self.percentageView = percentageView
@@ -670,6 +702,7 @@ class MainFrame(wx.Frame):
         self.allCallerListControl.integrateRecords(event.node.ancestors())
 
     restoringHistory = False
+
     def RecordHistory(self):
         """Add the given node to the history-set"""
         if not self.restoringHistory:
@@ -683,6 +716,7 @@ class MainFrame(wx.Frame):
                 self.history.append(record)
             del self.history[:-200]
             self.historyIndex = -1
+
     def RestoreHistory(self, record):
         self.restoringHistory = True
         try:
@@ -709,6 +743,7 @@ class MainFrame(wx.Frame):
                 filenames=" ".join([repr(x) for x in filenames]),
                 err=err
             ))
+
     def SetModel(self, loader):
         """Set our overall model (a loader object) and populate sub-controls"""
         self.loader = loader
@@ -717,6 +752,7 @@ class MainFrame(wx.Frame):
         self.activated_node = tree
         self.squareMap.SetModel(tree, self.adapter)
         self.RecordHistory()
+
     def RootNode(self):
         """Return our current root node and appropriate adapter for it"""
         if self.directoryView:
@@ -727,6 +763,7 @@ class MainFrame(wx.Frame):
 
 class RunSnakeRunApp(wx.App):
     """Basic application for holding the viewing Frame"""
+
     def OnInit(self):
         """Initialise the application"""
         wx.InitAllImageHandlers()
@@ -737,15 +774,16 @@ class RunSnakeRunApp(wx.App):
             wx.CallAfter(frame.load, *sys.argv[1:])
         return True
 
+
 usage = """runsnake.py profilefile
 
 profilefile -- a file generated by a HotShot profile run from Python
 """
+
 def main():
     """Mainloop for the application"""
     app = RunSnakeRunApp(0)
     app.MainLoop()
-
 
 
 if __name__ == "__main__":
