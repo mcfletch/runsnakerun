@@ -5,6 +5,7 @@ Run:
     python setup.py install
 to install the package from the source archive.
 """
+import os
 try:
     from setuptools import setup
 except ImportError, err:
@@ -12,7 +13,7 @@ except ImportError, err:
 
 version = [
     (line.split('=')[1]).strip().strip('"').strip("'")
-    for line in open('__init__.py')
+    for line in open(os.path.join('runsnakerun', '__init__.py'))
     if line.startswith( '__version__' )
 ][0]
 
@@ -42,7 +43,7 @@ and package/module structures.""",
         author_email = "mcfletch@vrplumber.com",
         license = "BSD",
         package_dir = {
-            'runsnakerun':'.',
+            'runsnakerun':'runsnakerun',
         },
         packages = [
             'runsnakerun',
