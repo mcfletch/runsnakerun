@@ -41,6 +41,9 @@ and package/module structures.""",
         description = "GUI Viewer for Python profiling runs",
         author = "Mike C. Fletcher",
         author_email = "mcfletch@vrplumber.com",
+        install_requires = [
+            'SquareMap',
+        ],
         license = "BSD",
         package_dir = {
             'runsnakerun':'runsnakerun',
