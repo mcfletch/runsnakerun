@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en-ca"><head>
+<html dir="ltr" lang="en-ca"><head>
+
 
   <link rel="icon" type="image/png" href="/maps/favicon.png">
-  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python Hotshot Profile Viewer</title>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python (c)Profile Viewer</title>
   
   <link rel="stylesheet" type="text/css" href="toolkit.css">
   <meta name="author" content="Mike C. Fletcher"></head><body style="direction: ltr;">
@@ -21,7 +22,7 @@ programs. &nbsp;What it does provide:</p><ul><li>sortable data-grid views for ra
 <p>You will need to have all of wxPython, SquareMap and RunSnakeRun
 installed to use RunSnakeRun. &nbsp;You may also need the
 "python-profile" package for your platform, which provides the pstats
-view.</p><p>You will likely want to use your platform wxPython package. &nbsp;If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p><pre>easy_install SquareMap<br>easy_install RunSnakeRun<br></pre><p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
+view.</p><p>You will likely want to use your platform wxPython package. &nbsp;If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p><pre>easy_install RunSnakeRun<br></pre><p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
 and Python installation. &nbsp;The setup will create a script named
 "runsnake" on Linux machines which launches the profile viewer.</p>
 <h2><a name="usage"></a>Usage</h2><p>To use cProfile to capture your application's profile data:</p><pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
@@ -56,9 +57,16 @@ save that RunSnakeRun was intended to be Python specific and
 cross-platform</li><li><a href="http://pypi.python.org/pypi/profilehooks">profilehooks</a> -- specify which function to profile by using a decorator on a particular function</li></ul>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.0b6.tar.gz">2.0.0b6</a> -- Fixes and enhancements by Marius Gedminas
+(percent-in-tooltips, code restructuring, home-button fix), display
+source-code for functions when selected, make SquareMap an explicit
+dependency, more robust selection of "root" nodes (better first-view
+selection)<br>
+</li>
   <li>2.0.0b5 -- Add names of loaded files to the window title,
 use same colour for each node, make colours cycle across far wider
-range of colours, bug-fixes</li><li><a href="http://pypi.python.org/pypi/RunSnakeRun/2.0.0b4">2.0.0b4</a> -- Win32 bug-fixes, drawing of labels on squaremap where there's enough space</li><li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.0b1.zip">2.0.0b1</a> -- packaging fixes, UI fixes</li><li>2.0.0a1 -- Eliminate support for (obsolete) Hotshot
+range of colours, bug-fixes</li>
+<li><a href="http://pypi.python.org/pypi/RunSnakeRun/2.0.0b4">2.0.0b4</a> -- Win32 bug-fixes, drawing of labels on squaremap where there's enough space</li><li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.0b1.zip">2.0.0b1</a> -- packaging fixes, UI fixes</li><li>2.0.0a1 -- Eliminate support for (obsolete) Hotshot
 profiles, add squaremap visualization and callee/caller views, lots of
 UI work to make the application more usable, preliminary i18n work
 (just gettext markup)</li><li><a href="RunSnakeRun-1.0.4.tar.gz">1.0.4</a> -- Add
