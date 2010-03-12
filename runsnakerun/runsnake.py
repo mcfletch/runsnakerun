@@ -692,7 +692,7 @@ class MainFrame(wx.Frame):
             try:
                 data = open(path).read()
             except Exception, err:
-                # TODO: load from zips/eggs...
+                # TODO: load from zips/eggs? What about .pyc issues?
                 return None
             else:
                 self.sourceCodeControl.SetText(data)
