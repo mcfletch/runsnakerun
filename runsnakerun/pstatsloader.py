@@ -31,6 +31,11 @@ class PStatsLoader( object ):
         """Attempt to find/create a reasonable root node from list/set of rows
 
         rows -- key: PStatRow mapping
+
+        TODO: still need more robustness here, particularly in the case of
+        threaded programs.  Should be tracing back each row to root, breaking
+        cycles by sorting on cummulative time, and then collecting the traced
+        roots (or, if they are all on the same root, use that).
         """
         maxes = sorted( rows.values(), key = lambda x: x.cummulative )
         if not maxes:
