@@ -46,9 +46,9 @@ class PStatsAdapter(squaremap.DefaultAdapter):
         if isinstance(node, pstatsloader.PStatGroup):
             return '%s / %s' % (node.filename, node.directory)
         if self.percentageView and self.total:
-            time = '%d%%' % (node.cummulative * 100 / self.total)
+            time = '%0.2f%%' % round(node.cummulative * 100.0 / self.total, 2)
         else:
-            time = '%ss' % round(node.cummulative, 3)
+            time = '%0.3fs' % round(node.cummulative, 3)
         return '%s@%s:%s [%s]' % (node.name, node.filename, node.lineno, time)
 
     def empty(self, node):
@@ -688,7 +688,7 @@ class MainFrame(wx.Frame):
         self.squareMap.SetModel(event.node, self.adapter)
         if editor:
             if self.SourceShowFile(event.node):
-                if event.node.lineno:
+                if hasattr(event.node,'lineno'):
                     self.sourceCodeControl.GotoLine(event.node.lineno)
         self.RecordHistory()
 
