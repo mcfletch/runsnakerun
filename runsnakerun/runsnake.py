@@ -31,6 +31,9 @@ ID_SHALLOWER_VIEW = wx.NewId()
 
 class PStatsAdapter(squaremap.DefaultAdapter):
 
+    percentageView = False
+    total = 0
+
     def value(self, node, parent=None):
         if isinstance(parent, pstatsloader.PStatGroup):
             if parent.cummulative:
@@ -42,8 +45,11 @@ class PStatsAdapter(squaremap.DefaultAdapter):
     def label(self, node):
         if isinstance(node, pstatsloader.PStatGroup):
             return '%s / %s' % (node.filename, node.directory)
-        return '%s@%s:%s [%ss]' % (node.name, node.filename, node.lineno,
-                                   round(node.cummulative, 3))
+        if self.percentageView and self.total:
+            time = '%d%%' % (node.cummulative * 100 / self.total)
+        else:
+            time = '%ss' % round(node.cummulative, 3)
+        return '%s@%s:%s [%s]' % (node.name, node.filename, node.lineno, time)
 
     def empty(self, node):
         if node.cummulative:
@@ -67,6 +73,12 @@ class PStatsAdapter(squaremap.DefaultAdapter):
             blue = (depth * 25) % 200
             self.color_mapping[node.key] = color = wx.Color(red, green, blue)
         return color
+
+    def SetPercentage(self, percent, total):
+        """Set whether to display percentage values (and total for doing so)"""
+        self.percentageView = percent
+        self.total = total
+
 
 
 class DirectoryViewAdapter(PStatsAdapter):
@@ -629,6 +641,7 @@ class MainFrame(wx.Frame):
         total = self.loader.tree.cummulative
         for control in self.ProfileListControls:
             control.SetPercentage(self.percentageView, total)
+        self.adapter.SetPercentage(self.percentageView, total)
 
     def OnUpView(self, event):
         """Request to move up the hierarchy to highest-weight parent"""
@@ -784,10 +797,15 @@ class MainFrame(wx.Frame):
     def RootNode(self):
         """Return our current root node and appropriate adapter for it"""
         if self.directoryView:
-            return (DirectoryViewAdapter(), self.loader.location_tree,
-                    self.loader.location_rows)
+            adapter = DirectoryViewAdapter()
+            tree = self.loader.location_tree
+            rows = self.loader.location_rows
         else:
-            return (PStatsAdapter(), self.loader.tree, self.loader.rows)
+            adapter = PStatsAdapter()
+            tree = self.loader.tree
+            rows = self.loader.rows
+        adapter.SetPercentage(self.percentageView, self.loader.tree.cummulative)
+        return adapter, tree, rows
 
 
 class RunSnakeRunApp(wx.App):
