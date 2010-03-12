@@ -665,7 +665,7 @@ class MainFrame(wx.Frame):
 
     def OnRootView(self, event):
         """Reset view to the root of the tree"""
-        self.adapter, tree = self.RootNode()
+        self.adapter, tree, rows = self.RootNode()
         self.squareMap.SetModel(tree, self.adapter)
         self.RecordHistory()
 
