@@ -1,7 +1,8 @@
 """Module to load cProfile/profile records as a tree of records"""
-import pstats, os, logging 
+import pstats, os, logging
 log = logging.getLogger( 'runsnake.pstatsloader' )
 #log.setLevel( logging.DEBUG )
+from gettext import gettext as _
 
 TREE_CALLS, TREE_FILES = range( 2 )
 
@@ -19,27 +20,38 @@ class PStatsLoader( object ):
         rows = self.rows
         for func, raw in stats.iteritems():
             try:
-                rows[func] =  PStatRow( func,raw )
+                rows[func] = row = PStatRow( func,raw )
             except ValueError, err:
                 log.info( 'Null row: %s', func )
         for row in rows.itervalues():
             row.weave( rows )
-        roots = []
+        return self.find_root( rows )
+
+    def find_root( self, rows ):
+        """Attempt to find/create a reasonable root node from list/set of rows
+
+        rows -- key: PStatRow mapping
+        """
+        maxes = sorted( rows.values(), key = lambda x: x.cummulative )
+        if not maxes:
+            raise RuntimeError( """Null results!""" )
+        root = maxes[-1]
+        roots = [root]
         for key,value in rows.items():
             if not value.parents:
                 log.debug( 'Found node root: %s', value )
-                roots.append( value )
-            #print key,
-            #print '  ', value.parents
-        if len(roots) == 1:
-            log.debug( 'Single root', roots[0] )
-            return roots[0]
-        elif roots:
-            root = PStatGroup( '/', 'PYTHONPATH', children= roots, name="<sys.path>" )
+                if value not in roots:
+                    roots.append( value )
+        if len(roots) > 1:
+            root = PStatGroup(
+                directory='*',
+                filename='*',
+                name=_("<profiling run>"),
+                children= roots,
+            )
             root.finalize()
             self.rows[ root.key ] = root
-            return root
-        raise RuntimeError( 'No top-level function???' )
+        return root
     def load_location( self ):
         """Build a squaremap-compatible model for location-based hierarchy"""
         directories = {}
@@ -55,14 +67,14 @@ class PStatsLoader( object ):
                 else:
                     current = PStatLocation( directory, '' )
                     self.location_rows[ current.key ] = current
-                directories[ directory ] = current 
+                directories[ directory ] = current
             if filename == '~':
                 filename = '<built-in>'
             file_current = files.get( (directory,filename) )
             if file_current is None:
                 file_current = PStatLocation( directory, filename )
                 self.location_rows[ file_current.key ] = file_current
-                files[ (directory,filename) ] = file_current 
+                files[ (directory,filename) ] = file_current
                 current.children.append( file_current )
             file_current.children.append( child )
         # now link the directories...
@@ -79,13 +91,13 @@ class PStatsLoader( object ):
                 if parent:
                     if value is not parent:
                         parent.children.append( value )
-                        found = True 
-                        break 
+                        found = True
+                        break
             if not found:
                 root.children.append( value )
         # lastly, finalize all of the directory records...
         root.finalize()
-        return root 
+        return root
 
 class BaseStat( object ):
     def recursive_distinct( self, already_done=None, attribute='children' ):
@@ -93,11 +105,11 @@ class BaseStat( object ):
             already_done = {}
         for child in getattr(self,attribute,()):
             if not already_done.has_key( child ):
-                already_done[child] = True 
-                yield child 
+                already_done[child] = True
+                yield child
                 for descendent in child.recursive_distinct( already_done=already_done, attribute=attribute ):
                     yield descendent
-    
+
     def descendants( self ):
         return list( self.recursive_distinct( attribute='children' ))
     def ancestors( self ):
@@ -122,7 +134,7 @@ class PStatRow( BaseStat ):
             self.cummulative, self.cummulativePer, self.directory,
             self.filename, self.name, self.lineno
         ) = (
-            nc, 
+            nc,
             cc,
             tt,
             tt/(cc or 0.00000000000001),
@@ -138,7 +150,7 @@ class PStatRow( BaseStat ):
         return 'PStatRow( %r,%r,%r,%r, %s )'%(self.directory, self.filename, self.lineno, self.name, len(self.children))
     def add_child( self, child ):
         self.children.append( child )
-    
+
     def weave( self, rows ):
         for caller,data in self.callers.iteritems():
             # data is (cc,nc,tt,ct)
@@ -155,9 +167,9 @@ class PStatRow( BaseStat ):
                 ct = child.callers[ self.key ]
             return float(ct)/total
         return 0
-    
-        
-    
+
+
+
 class PStatGroup( BaseStat ):
     """A node/record that holds a group of children but isn't a raw-record based group"""
     # if LOCAL_ONLY then only take the raw-record's local values, not cummulative values
@@ -178,7 +190,7 @@ class PStatGroup( BaseStat ):
         if already_done is None:
             already_done = {}
         if already_done.has_key( self ):
-            return True 
+            return True
         already_done[self] = True
         self.filter_children()
         children = self.children
@@ -209,18 +221,18 @@ class PStatGroup( BaseStat ):
                 value = sum([ getattr( child, field, 0 ) for child in children] )
                 setattr( self, field, value )
             if self.calls:
-                self.localPer = self.local / self.calls 
+                self.localPer = self.local / self.calls
         else:
             self.local = 0
             self.calls = 0
             self.localPer = 0
-        
+
 
 class PStatLocation( PStatGroup ):
     """A row that represents a hierarchic structure other than call-patterns
-    
+
     This is used to create a file-based hierarchy for the views
-    
+
     Children with the name <module> are our "empty" space,
     our totals are otherwise just the sum of our children.
     """
@@ -236,7 +248,7 @@ class PStatLocation( PStatGroup ):
             else:
                 real_children.append( child )
         self.children = real_children
-        
+
 
 
 if __name__ == "__main__":
