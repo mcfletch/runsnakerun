@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=RunSnakeRun
+GenericName=Python profile viewer
+Comment=Viewer for Python profile data
+Exec=runsnake
+Icon=
+Terminal=false
+Type=Application
+Categories=Development;
