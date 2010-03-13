@@ -2,6 +2,7 @@ include MANIFEST.in
 include license.txt
 include readme.txt
 include setup.py
+include *.desktop
 
 recursive-include doc *.html
 recursive-include doc *.png
