@@ -71,7 +71,7 @@ class PStatsAdapter(squaremap.DefaultAdapter):
             red = (depth * 10) % 255
             green = 200 - ((depth * 5) % 200)
             blue = (depth * 25) % 200
-            self.color_mapping[node.key] = color = wx.Color(red, green, blue)
+            self.color_mapping[node.key] = color = wx.Colour(red, green, blue)
         return color
 
     def SetPercentage(self, percent, total):
