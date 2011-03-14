@@ -70,6 +70,8 @@ def recurse_module( record, index, shared, already_seen=None, stop_types=None ):
         if not record['refs']:
             record['rsize'] = 0
         else:
+            # TODO: track shared versus owned cost separately...
+            # TODO: provide a flag to coalesce based on e.g. type at each level or throughout...
             record['rsize'] = sum([
                 (
                     child.get('totsize',0)/shared.get( child['address'], 1) or 1
