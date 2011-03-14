@@ -185,17 +185,25 @@ def load( filename ):
             modules.add( struct['address'] )
         elif struct['type'] == 'type':
             types[struct['name']] = struct
+    # expand module dictionaries
+    simplify_dicts = set( ['module','type','classobj'])
+    to_delete = []
+    for to_simplify in index.itervalues():
+        if to_simplify['type'] in simplify_dicts:
+            if len(to_simplify['refs']) == 1:
+                child = index.get( to_simplify['refs'][0] )
+                if child is not None and child['type'] == 'dict':
+                    #if shared.get(child['address'],0) == 1:
+                    to_simplify['refs'] = child['refs']
+                    to_simplify['size'] += child['size']
+                    to_delete.append( child['address'] )
+    for item in to_delete:
+        del index[item]
+            
     modules = [
         x for x in index.itervalues() 
         if x['type'] == 'module'
     ]
-    # expand module dictionaries
-    for module in modules:
-        if len(module['refs']) == 1:
-            child = index.get( module['refs'][0] )
-            if child is not None and child['type'] == 'dict':
-                module['refs'] = child['refs']
-                del index[child['address']]
     
     records = []
     size_info = {}
@@ -227,10 +235,11 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         return node['totsize']
     def label( self, node ):
         """Return textual description of this node"""
+        length = '%s items'%len( node.get('children',()))
         return ":".join([
             n for n in [
-                node.get(k) for k in ['type','name','module']
-            ] if n 
+                node.get(k) for k in ['type','name','value','module']
+            ] + [length] if n 
         ])
     def overall( self, node ):
         """Calculate overall size of the node including children and empty space"""
