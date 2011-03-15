@@ -48,56 +48,64 @@ def recurse( record, index, stop_types=None,already_seen=None, type_group=False 
         already_seen.add(record['address'])
         if 'refs' in record:
             if type_group:
-                for typ in children_by_type( record, index ):
-                    if typ['type'] not in stop_types:
+                for typ in children_by_type( record, index, stop_types=stop_types ):
+                    if typ['name'] not in stop_types:
                         for child in typ['children']:
-                            for descendant in recurse( child, index, stop_types, already_seen=already_seen, type_group=type_group ):
+                            for descendant in recurse( 
+                                child, index, stop_types, 
+                                already_seen=already_seen, type_group=type_group,
+                            ):
                                 if descendant['type'] not in stop_types:
                                     yield descendant
                         if len(typ['children']) > 5:
                             yield typ 
             else:
-                for child in children( record, index ):
-                    if child['type'] not in stop_types:
-                        for descendant in recurse( child, index, stop_types, already_seen=already_seen, type_group=type_group ):
-                            if descendant['type'] not in stop_types:
-                                yield descendant
+                for child in children( record, index, stop_types=stop_types ):
+                    for descendant in recurse( 
+                        child, index, stop_types, 
+                        already_seen=already_seen, type_group=type_group,
+                    ):
+                        yield descendant
         yield record 
 
-def children( record, index, key='refs' ):
+def children( record, index, key='refs', stop_types=None ):
     """Retrieve children records for given record"""
     for ref in record.get( key,[]):
         try:
             if isinstance( ref, dict ):
-                yield ref 
+                record = ref 
             else:
-                yield index[ref]
+                record = index[ref]
         except KeyError, err:
             pass 
+        else:
+            if (not stop_types) or (record['type'] not in stop_types):
+                yield record 
+            else:
+                print 'skipping', record['type']
 
-def children_by_type( record, index, key='refs' ):
+def children_by_type( record, index, key='refs', stop_types=None ):
     """Get children grouped by type 
     
     returns (typ,[children]) for all children 
     """
     types = {}
-    for child in children( record, index, key ):
-        if child['type'] not in types:
-            typ = index.get( child['type'] )
-            if typ is None:
-                typ = {
-                    'address':None,
-                    'type': child['type'] + ' (unknown)',
-                }
-            types[child['type']] = typ = {
-                'address': typ['address'],
-                'type': 'references to %s'%(typ['type'],),
-                'name': typ.get('name'),
-                'size': 0, # just a collection here...
-                'parents': [record['address']],
-                'children': [],
-                'refs': [],
+    for child in children( record, index, key, stop_types=stop_types ):
+        typ = index.get( child['type'] )
+        if typ is None:
+            typ = {
+                'address':None,
+                'type': child['type'],
             }
+        types[child['type']] = typ = {
+            'address': typ['address'],
+            'type': 'type',
+            'name': child['type'],
+            'size': 0, # just a collection here...
+            'parents': [record['address']],
+            'children': [],
+            'refs': [],
+        }
         types[child['type']]['children'].append( child )
     return types.values()
     
@@ -120,7 +128,7 @@ def group_types( children, types ):
         value['totsize'] = value['size'] + value['rsize']
     return sorted( values, key = lambda m: m.get('totsize',0))
 
-def recurse_module( overall_record, index, shared, types=None, stop_types=None, already_seen=None, size_info=None ):
+def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, size_info=None ):
     """Creates a has-a recursive-cost hierarchy
     
     Mutates objects in-place to produce a hierarchy of memory usage based on 
@@ -152,7 +160,7 @@ def recurse_module( overall_record, index, shared, types=None, stop_types=None, 
         else:
             # TODO: track shared versus owned cost separately...
             # TODO: provide a flag to coalesce based on e.g. type at each level or throughout...
-            rinfo['children'] = rinfo_children = list ( children( record, size_info ) )
+            rinfo['children'] = rinfo_children = list ( children( record, size_info, stop_types=stop_types ) )
             rinfo['rsize'] = sum([
                 (
                     child.get('totsize',0)/len(shared.get( child['address'], [])) or 1
@@ -167,10 +175,8 @@ def recurse_module( overall_record, index, shared, types=None, stop_types=None, 
 
 def load( filename ):
     index = {} # address: structure
-    back_refs = {} # referred: [referencer,referencer,...]
-    shared = dict()
+    shared = dict() # address: [parent addresses,...]
     modules = set()
-    types = {}
     
     for line in open( filename ):
         struct = json.loads( line.strip())
@@ -183,18 +189,20 @@ def load( filename ):
             shared[ref].append( struct['address'])
         if struct['type'] == 'module':
             modules.add( struct['address'] )
-        elif struct['type'] == 'type':
-            types[struct['name']] = struct
-    # expand module dictionaries
+        elif struct['type'] in ( 'type', 'classobj'):
+            index[struct['name']] = struct
+    
+    # eliminate module/type/class dictionaries
     simplify_dicts = set( ['module','type','classobj'])
     to_delete = []
     for to_simplify in index.itervalues():
         if to_simplify['type'] in simplify_dicts:
-            if len(to_simplify['refs']) == 1:
-                child = index.get( to_simplify['refs'][0] )
+            refs = to_simplify['refs']
+            to_simplify['refs'] = []
+            for ref in refs:
+                child = index.get( ref )
                 if child is not None and child['type'] == 'dict':
-                    #if shared.get(child['address'],0) == 1:
-                    to_simplify['refs'] = child['refs']
+                    to_simplify['refs'].extend(child['refs'])
                     to_simplify['size'] += child['size']
                     to_delete.append( child['address'] )
     for item in to_delete:
@@ -210,7 +218,9 @@ def load( filename ):
     for m in modules:
         if m.get('name') != 'sys':
             records.append( recurse_module(
-                m, index, shared, types=None, stop_types=set(['module']), size_info=size_info
+                m, index, shared, stop_types=set([
+                    'module',
+                ]), size_info=size_info
             ))
     size_info = [x for x in size_info.values() if x['type'] == 'module']
     size_info.sort( key = lambda m: m.get('totsize',0))
@@ -262,13 +272,17 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         """Create a (unique-ish) background color for each node"""
         if self.color_mapping is None:
             self.color_mapping = {}
-        color = self.color_mapping.get(node['type'])
+        if node['type'] == 'type':
+            key = node['name']
+        else:
+            key = node['type']
+        color = self.color_mapping.get(key)
         if color is None:
             depth = len(self.color_mapping)
             red = (depth * 10) % 255
             green = 200 - ((depth * 5) % 200)
             blue = (depth * 25) % 200
-            self.color_mapping[node['type']] = color = wx.Colour(red, green, blue)
+            self.color_mapping[key] = color = wx.Colour(red, green, blue)
         return color
 
 
