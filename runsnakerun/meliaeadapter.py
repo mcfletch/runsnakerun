@@ -53,11 +53,23 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         return result 
     def label( self, node ):
         """Return textual description of this node"""
-        return ":".join([
-            n for n in [
-                node.get(k) for k in ['type','name','value','module']
-            ] + [mb(node['totsize'])] if n 
-        ])
+        result = []
+        if node.get('type'):
+            result.append( node['type'] )
+        if node.get('name' ):
+            result.append( node['name'] )
+        elif node.get('value') is not None:
+            result.append( str(node['value'])[:32])
+        if 'module' in node and not node['module'] in result:
+            result.append( ' in %s'%( node['module'] ))
+        if node.get( 'size' ):
+            result.append( '%s'%( mb( node['size'] )))
+        if node.get( 'totsize' ):
+            result.append( '(%s)'%( mb( node['size'] )))
+        parent_count = len( node.get('parents',()))
+        if parent_count > 1:
+            result.append( '/%s refs'%( parent_count ))
+        return " ".join(result)
     def overall( self, node ):
         return node['totsize']
     def empty( self, node ):
@@ -95,7 +107,8 @@ class TestApp(wx.App):
         frame.CreateStatusBar()
 
         model = model = self.get_model( sys.argv[1])
-        self.sq = squaremap.SquareMap( frame, model=model, adapter = MeliaeAdapter())
+        self.sq = squaremap.SquareMap( 
+            frame, model=model, adapter = MeliaeAdapter(), padding=2, margin=1)
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.sq, self.OnSquareSelected )
         frame.Show(True)
         self.SetTopWindow(frame)
