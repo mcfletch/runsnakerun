@@ -19,16 +19,13 @@ Trees:
             
 
 """
-import wx, sys, os, logging
-import wx.lib.newevent
-log = logging.getLogger( 'squaremap' )
-#log.setLevel( logging.DEBUG )
+import logging, sys
+log = logging.getLogger( __name__ )
 try:
     import json 
 except ImportError, err:
     import simplejson as json
 import sys
-from squaremap import squaremap
 
 def recurse( record, index, stop_types=None,already_seen=None, type_group=False ):
     """Depth first traversal of a tree, all children are yielded before parent
@@ -126,7 +123,7 @@ def group_types( children, types ):
         value['totsize'] = value['size'] + value['rsize']
     return sorted( values, key = lambda m: m.get('totsize',0))
 
-def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, size_info=None ):
+def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, size_info=None, min_size=32 ):
     """Creates a has-a recursive-cost hierarchy
     
     Mutates objects in-place to produce a hierarchy of memory usage based on 
@@ -150,7 +147,7 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
         size_info[record['address']] = rinfo = {
             'address':record['address'],'type':record['type'],'name':record.get('name'),
             'size':record['size'],'module':overall_record['name'],
-            'parents': shared.get(record['address'],[]),
+            'parents': record['parents'],
         }
         if not record['refs']:
             rinfo['rsize'] = 0
@@ -167,9 +164,58 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
             ], 0 )
         rinfo['totsize'] = record['size'] + rinfo['rsize']
     for key,record in size_info.items():
-        record['parents'] = list(children( record, size_info, 'parents' ))
+        # clear out children references if they are not reasonably sized...
+        if record['totsize'] < min_size and record['children']:
+            del record['children'][:]
+            print 'ignoring', record['totsize'], 'in', record['type'], record.get('name')
+        #record['parents'] = list(children( record, size_info, 'parents' ))
     
     return size_info
+
+def rewrite_refs( targets, old,new, index ):
+    def rewritten( n ):
+        if n == old:
+            return new
+        return n
+    for parent in targets:
+        if not isinstance( parent, dict ):
+            try:
+                parent = index[parent]
+            except KeyError, err:
+                continue 
+        parent['refs'] = [rewritten(n) for n in parent['refs']]
+
+def simplify_dicts( index, shared ):
+    """eliminate module/type/class dictionaries"""
+    simplify_dicts = set( ['module','type','classobj'])
+    to_delete = []
+    
+    for to_simplify in index.itervalues():
+        to_simplify['parents'] = shared.get( to_simplify['address'], [] )
+        if to_simplify['type'] in simplify_dicts:
+            
+            refs = to_simplify['refs']
+            to_simplify['refs'] = []
+            for ref in refs:
+                child = index.get( ref )
+                if child is not None and child['type'] == 'dict':
+                    child_referrers = shared.get(child['address'],[])
+                    if len(child_referrers) == 1:
+                        to_simplify['refs'].extend(child['refs'])
+                        to_simplify['size'] += child['size']
+                        # anything referencing module dict is now referencing module
+                        to_simplify['parents'].extend(child_referrers)
+                        
+                        rewrite_refs( 
+                            child_referrers, 
+                            child['address'], to_simplify['address'], 
+                            index = index 
+                        )
+                        to_delete.append( child['address'] )
+    for item in to_delete:
+        del index[item]
+    
+    return index
 
 def load( filename ):
     index = {} # address: structure
@@ -190,21 +236,7 @@ def load( filename ):
         elif struct['type'] in ( 'type', 'classobj'):
             index[struct['name']] = struct
     
-    # eliminate module/type/class dictionaries
-    simplify_dicts = set( ['module','type','classobj'])
-    to_delete = []
-    for to_simplify in index.itervalues():
-        if to_simplify['type'] in simplify_dicts:
-            refs = to_simplify['refs']
-            to_simplify['refs'] = []
-            for ref in refs:
-                child = index.get( ref )
-                if child is not None and child['type'] == 'dict':
-                    to_simplify['refs'].extend(child['refs'])
-                    to_simplify['size'] += child['size']
-                    to_delete.append( child['address'] )
-    for item in to_delete:
-        del index[item]
+    simplify_dicts( index,shared )
             
     modules = [
         x for x in index.itervalues() 
@@ -233,87 +265,3 @@ def load( filename ):
         'address': None,
     }
 
-class MeliaeAdapter( squaremap.DefaultAdapter ):
-    """Default adapter class for adapting node-trees to SquareMap API"""
-    def children( self, node ):
-        """Retrieve the set of nodes which are children of this node"""
-        return node['children']
-    def value( self, node, parent=None ):
-        """Return value used to compare size of this node"""
-        return node['totsize']
-    def label( self, node ):
-        """Return textual description of this node"""
-        length = '%s items'%len( node.get('children',()))
-        return ":".join([
-            n for n in [
-                node.get(k) for k in ['type','name','value','module']
-            ] + [length] if n 
-        ])
-    def overall( self, node ):
-        """Calculate overall size of the node including children and empty space"""
-        return node.get('totsize',0)
-    def children_sum( self, children,node ):
-        """Calculate children's total sum"""
-        return node.get('rsize',0)
-    def empty( self, node ):
-        """Calculate empty space as a fraction of total space"""
-        overall = self.overall( node )
-        if overall:
-            return (overall - self.children_sum( self.children(node), node))/float(overall)
-        return 0
-    def parents( self, node ):
-        """Retrieve/calculate the set of parents for the given node"""
-        return node.get('parents',[])
-
-    color_mapping = None
-    def background_color(self, node, depth):
-        """Create a (unique-ish) background color for each node"""
-        if self.color_mapping is None:
-            self.color_mapping = {}
-        if node['type'] == 'type':
-            key = node['name']
-        else:
-            key = node['type']
-        color = self.color_mapping.get(key)
-        if color is None:
-            depth = len(self.color_mapping)
-            red = (depth * 10) % 255
-            green = 200 - ((depth * 5) % 200)
-            blue = (depth * 25) % 200
-            self.color_mapping[key] = color = wx.Colour(red, green, blue)
-        return color
-
-
-class TestApp(wx.App):
-    """Basic application for holding the viewing Frame"""
-    def OnInit(self):
-        """Initialise the application"""
-        wx.InitAllImageHandlers()
-        self.frame = frame = wx.Frame( None,
-        )
-        frame.CreateStatusBar()
-
-        model = model = self.get_model( sys.argv[1])
-        self.sq = squaremap.SquareMap( frame, model=model, adapter = MeliaeAdapter())
-        squaremap.EVT_SQUARE_HIGHLIGHTED( self.sq, self.OnSquareSelected )
-        frame.Show(True)
-        self.SetTopWindow(frame)
-        return True
-    def get_model( self, path ):
-        return load( path )
-    def OnSquareSelected( self, event ):
-        text = self.sq.adapter.label( event.node )
-        self.frame.SetToolTipString( text )
-
-usage = 'meliaeloader.py somefile'
-
-def main():
-    """Mainloop for the application"""
-    if not sys.argv[1:]:
-        print usage
-    else:
-        app = TestApp(0)
-        app.MainLoop()
-
-if __name__ == "__main__":
-    main()
