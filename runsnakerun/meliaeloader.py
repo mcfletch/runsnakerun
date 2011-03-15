@@ -81,8 +81,6 @@ def children( record, index, key='refs', stop_types=None ):
         else:
             if (not stop_types) or (record['type'] not in stop_types):
                 yield record 
-            else:
-                print 'skipping', record['type']
 
 def children_by_type( record, index, key='refs', stop_types=None ):
     """Get children grouped by type 
