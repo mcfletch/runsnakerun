@@ -7,7 +7,7 @@ if sys.platform == 'win32':
 else:
     windows = False
 
-log = logging.getLogger('runsnake.listviews')
+log = logging.getLogger(__name__)
 
 class ColumnDefinition(object):
     """Definition of a given column for display using attribute access"""

@@ -8,7 +8,7 @@ except ImportError, err:
 from gettext import gettext as _
 import pstats
 from squaremap import squaremap
-from runsnakerun import pstatsloader
+from runsnakerun import pstatsloader,pstatsadapter
 from runsnakerun import listviews
 
 if sys.platform == 'win32':
@@ -16,8 +16,7 @@ if sys.platform == 'win32':
 else:
     windows = False
 
-log = logging.getLogger('runsnake.main')
-
+log = logging.getLogger(__name__)
 
 ID_OPEN = wx.NewId()
 ID_EXIT = wx.NewId()
@@ -30,64 +29,6 @@ ID_DEEPER_VIEW = wx.NewId()
 ID_SHALLOWER_VIEW = wx.NewId()
 
 
-class PStatsAdapter(squaremap.DefaultAdapter):
-
-    percentageView = False
-    total = 0
-
-    def value(self, node, parent=None):
-        if isinstance(parent, pstatsloader.PStatGroup):
-            if parent.cummulative:
-                return node.cummulative / parent.cummulative
-            else:
-                return 0
-        return parent.child_cumulative_time(node)
-
-    def label(self, node):
-        if isinstance(node, pstatsloader.PStatGroup):
-            return '%s / %s' % (node.filename, node.directory)
-        if self.percentageView and self.total:
-            time = '%0.2f%%' % round(node.cummulative * 100.0 / self.total, 2)
-        else:
-            time = '%0.3fs' % round(node.cummulative, 3)
-        return '%s@%s:%s [%s]' % (node.name, node.filename, node.lineno, time)
-
-    def empty(self, node):
-        if node.cummulative:
-            return node.local / float(node.cummulative)
-        return 0.0
-
-    def parents(self, node):
-        return getattr(node, 'parents', [])
-
-    color_mapping = None
-
-    def background_color(self, node, depth):
-        """Create a (unique-ish) background color for each node"""
-        if self.color_mapping is None:
-            self.color_mapping = {}
-        color = self.color_mapping.get(node.key)
-        if color is None:
-            depth = len(self.color_mapping)
-            red = (depth * 10) % 255
-            green = 200 - ((depth * 5) % 200)
-            blue = (depth * 25) % 200
-            self.color_mapping[node.key] = color = wx.Colour(red, green, blue)
-        return color
-
-    def SetPercentage(self, percent, total):
-        """Set whether to display percentage values (and total for doing so)"""
-        self.percentageView = percent
-        self.total = total
-
-
-class DirectoryViewAdapter(PStatsAdapter):
-    """Provides a directory-view-only adapter for PStats objects"""
-
-    def children(self, node):
-        if isinstance(node, pstatsloader.PStatGroup):
-            return node.children
-        return []
 
 class ProfileView(listviews.DataView):
     """A sortable profile list control"""
@@ -219,7 +160,7 @@ class MainFrame(wx.Frame):
         """Initialise the Frame"""
         wx.Frame.__init__(self, parent, id, title, pos, size, style, name)
         # TODO: toolbar for back, up, root, directory-view, percentage view
-        self.adapter = PStatsAdapter()
+        self.adapter = pstatsadapter.PStatsAdapter()
         self.CreateControls()
         self.history = [] # set of (activated_node, selected_node) pairs...
 
@@ -609,11 +550,11 @@ class MainFrame(wx.Frame):
     def RootNode(self):
         """Return our current root node and appropriate adapter for it"""
         if self.directoryView:
-            adapter = DirectoryViewAdapter()
+            adapter = pstatsadapter.DirectoryViewAdapter()
             tree = self.loader.location_tree
             rows = self.loader.location_rows
         else:
-            adapter = PStatsAdapter()
+            adapter = pstatsadapter.PStatsAdapter()
             tree = self.loader.tree
             rows = self.loader.rows
         adapter.SetPercentage(self.percentageView, self.loader.tree.cummulative)

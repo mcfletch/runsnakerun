@@ -1,6 +1,6 @@
 """Module to load cProfile/profile records as a tree of records"""
 import pstats, os, logging
-log = logging.getLogger( 'runsnake.pstatsloader' )
+log = logging.getLogger(__name__)
 #log.setLevel( logging.DEBUG )
 from gettext import gettext as _
 
