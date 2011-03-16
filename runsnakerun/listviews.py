@@ -260,6 +260,10 @@ class DataView(wx.ListCtrl):
                     log.warn('Column %s could not format %r value: %s',
                         column.name, type(value), value
                     )
-                    return str(value)
+                    if isinstance(value,(unicode,str)):
+                        return value
+                    return unicode(value)
             else:
-                return str(value)
+                if isinstance(value,(unicode,str)):
+                    return value
+                return unicode(value)
