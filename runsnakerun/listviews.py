@@ -60,12 +60,14 @@ class DataView(wx.ListCtrl):
         style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_VRULES|wx.LC_SINGLE_SEL,
         validator=wx.DefaultValidator,
         columns=None,
+        sortOrder=None,
         name=_("ProfileView"),
     ):
         wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator,
                              name)
         if columns is not None:
             self.columns = columns
+        
         self.sortOrder = [ (self.columns[5].defaultOrder, self.columns[5]), ]
         self.sorted = []
         self.CreateControls()
@@ -167,6 +169,15 @@ class DataView(wx.ListCtrl):
     def OnReorder(self, event):
         """Given a request to reorder, tell us to reorder"""
         column = self.columns[event.GetColumn()]
+        return self.ReorderByColumn( column )
+    def ReorderByColumn( self, column ):
+        """Reorder the set of records by column"""
+        # TODO: store current selection and re-select after sorting...
+        self.SetNewOrder( column )
+        self.reorder()
+        self.Refresh()
+
+    def SetNewOrder( self, column ):
         if column.sortOn:
             # multiple sorts for the click...
             columns = [self.columnByAttribute(attr) for attr in column.sortOn]
@@ -187,9 +198,6 @@ class DataView(wx.ListCtrl):
                     (a, b)
                     for (a, b) in self.sortOrder if b is not column
                 ]
-        # TODO: store current selection and re-select after sorting...
-        self.reorder()
-        self.Refresh()
 
     def reorder(self):
         """Force a reorder of the displayed items"""

@@ -89,11 +89,8 @@ class DirectoryViewAdapter(PStatsAdapter):
             return node.children
         return []
 
-
-
 class ProfileView(listviews.DataView):
     """A sortable profile list control"""
-
     columns = [
         listviews.ColumnDefinition(
             name = _('Name'),
@@ -160,40 +157,40 @@ class ProfileView(listviews.DataView):
         ),
     ]
 
-#class MemoryProfile( ProfileView ):
-#    columns = [
-#        DictColumn(
-#            name = _('Type'),
-#            attribute = 'type',
-#            targetWidth = 20,
-#        ),
-#        DictColumn(
-#            name = _('Name'),
-#            attribute = 'name',
-#            targetWidth = 20,
-#        ),
-#        DictColumn(
-#            name = _('Cum'),
-#            attribute = 'totsize',
-#            targetWidth = 5,
-#            format = '%0.1f',
-#            defaultOrder = True,
-#            percentPossible = True,
-#        ),
-#        DictColumn(
-#            name = _('Local'),
-#            attribute = 'size',
-#            format = '%0.1f',
-#            percentPossible = True,
-#            targetWidth = 5,
-#        ),
-#        DictColumn(
-#            name = _('/Refs'),
-#            attribute = 'parents',
-#            targetWidth = 4,
-#            getter = lambda x: len(x.get('parents',())),
-#        ),
-#    ]
+class MemoryProfile( ProfileView ):
+    columns = [
+        listviews.DictColumn(
+            name = _('Type'),
+            attribute = 'type',
+            targetWidth = 20,
+        ),
+        listviews.DictColumn(
+            name = _('Name'),
+            attribute = 'name',
+            targetWidth = 20,
+        ),
+        listviews.DictColumn(
+            name = _('Cum'),
+            attribute = 'totsize',
+            targetWidth = 5,
+            format = '%0.1f',
+            defaultOrder = True,
+            percentPossible = True,
+        ),
+        listviews.DictColumn(
+            name = _('Local'),
+            attribute = 'size',
+            format = '%0.1f',
+            percentPossible = True,
+            targetWidth = 5,
+        ),
+        listviews.DictColumn(
+            name = _('/Refs'),
+            attribute = 'parents',
+            targetWidth = 4,
+            getter = lambda x: len(x.get('parents',())),
+        ),
+    ]
 
 
 class MainFrame(wx.Frame):
