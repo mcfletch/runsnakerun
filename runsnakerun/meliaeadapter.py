@@ -108,7 +108,9 @@ class TestApp(wx.App):
 
         model = model = self.get_model( sys.argv[1])
         self.sq = squaremap.SquareMap( 
-            frame, model=model, adapter = MeliaeAdapter(), padding=2, margin=1)
+            frame, model=model, adapter = MeliaeAdapter(), padding=2, margin=1,
+            square_style=True
+        )
         squaremap.EVT_SQUARE_HIGHLIGHTED( self.sq, self.OnSquareSelected )
         frame.Show(True)
         self.SetTopWindow(frame)
