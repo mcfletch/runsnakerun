@@ -28,115 +28,109 @@ ID_UP_VIEW = wx.NewId()
 ID_DEEPER_VIEW = wx.NewId()
 ID_SHALLOWER_VIEW = wx.NewId()
 
+PROFILE_VIEW_COLUMNS = [
+    listviews.ColumnDefinition(
+        name = _('Name'),
+        attribute = 'name',
+        defaultOrder = True,
+        targetWidth = 50,
+    ),
+    listviews.ColumnDefinition(
+        name = _('Calls'),
+        attribute = 'calls',
+        targetWidth = 50,
+    ),
+    listviews.ColumnDefinition(
+        name = _('RCalls'),
+        attribute = 'recursive',
+        targetWidth = 40,
+    ),
+    listviews.ColumnDefinition(
+        name = _('Local'),
+        attribute = 'local',
+        format = '%0.5f',
+        percentPossible = True,
+        targetWidth = 50,
+    ),
+    listviews.ColumnDefinition(
+        name = _('/Call'),
+        attribute = 'localPer',
+        format = '%0.5f',
+        targetWidth = 50,
+    ),
+    listviews.ColumnDefinition(
+        name = _('Cum'),
+        attribute = 'cummulative',
+        format = '%0.5f',
+        percentPossible = True,
+        targetWidth = 50,
+    ),
+    listviews.ColumnDefinition(
+        name = _('/Call'),
+        attribute = 'cummulativePer',
+        format = '%0.5f',
+        targetWidth = 50,
+    ),
+    listviews.ColumnDefinition(
+        name = _('File'),
+        attribute = 'filename',
+        sortOn = ('filename', 'lineno', 'directory',),
+        defaultOrder = True,
+        targetWidth = 70,
+    ),
+    listviews.ColumnDefinition(
+        name = _('Line'),
+        attribute = 'lineno',
+        sortOn = ('filename', 'lineno', 'directory'),
+        defaultOrder = True,
+        targetWidth = 30,
+    ),
+    listviews.ColumnDefinition(
+        name = _('Directory'),
+        attribute = 'directory',
+        sortOn = ('directory', 'filename', 'lineno'),
+        defaultOrder = True,
+        targetWidth = 90,
+    ),
+]
 
-
-class ProfileView(listviews.DataView):
-    """A sortable profile list control"""
-    columns = [
-        listviews.ColumnDefinition(
-            name = _('Name'),
-            attribute = 'name',
-            defaultOrder = True,
-            targetWidth = 50,
-        ),
-        listviews.ColumnDefinition(
-            name = _('Calls'),
-            attribute = 'calls',
-            targetWidth = 50,
-        ),
-        listviews.ColumnDefinition(
-            name = _('RCalls'),
-            attribute = 'recursive',
-            targetWidth = 40,
-        ),
-        listviews.ColumnDefinition(
-            name = _('Local'),
-            attribute = 'local',
-            format = '%0.5f',
-            percentPossible = True,
-            targetWidth = 50,
-        ),
-        listviews.ColumnDefinition(
-            name = _('/Call'),
-            attribute = 'localPer',
-            format = '%0.5f',
-            targetWidth = 50,
-        ),
-        listviews.ColumnDefinition(
-            name = _('Cum'),
-            attribute = 'cummulative',
-            format = '%0.5f',
-            percentPossible = True,
-            targetWidth = 50,
-        ),
-        listviews.ColumnDefinition(
-            name = _('/Call'),
-            attribute = 'cummulativePer',
-            format = '%0.5f',
-            targetWidth = 50,
-        ),
-        listviews.ColumnDefinition(
-            name = _('File'),
-            attribute = 'filename',
-            sortOn = ('filename', 'lineno', 'directory',),
-            defaultOrder = True,
-            targetWidth = 70,
-        ),
-        listviews.ColumnDefinition(
-            name = _('Line'),
-            attribute = 'lineno',
-            sortOn = ('filename', 'lineno', 'directory'),
-            defaultOrder = True,
-            targetWidth = 30,
-        ),
-        listviews.ColumnDefinition(
-            name = _('Directory'),
-            attribute = 'directory',
-            sortOn = ('directory', 'filename', 'lineno'),
-            defaultOrder = True,
-            targetWidth = 90,
-        ),
-    ]
-
-class MemoryProfile( ProfileView ):
-    columns = [
-        listviews.DictColumn(
-            name = _('Type'),
-            attribute = 'type',
-            targetWidth = 20,
-        ),
-        listviews.DictColumn(
-            name = _('Name'),
-            attribute = 'name',
-            targetWidth = 20,
-        ),
-        listviews.DictColumn(
-            name = _('Cum'),
-            attribute = 'totsize',
-            targetWidth = 5,
-            format = '%0.1f',
-            defaultOrder = True,
-            percentPossible = True,
-        ),
-        listviews.DictColumn(
-            name = _('Local'),
-            attribute = 'size',
-            format = '%0.1f',
-            percentPossible = True,
-            targetWidth = 5,
-        ),
-        listviews.DictColumn(
-            name = _('/Refs'),
-            attribute = 'parents',
-            targetWidth = 4,
-            getter = lambda x: len(x.get('parents',())),
-        ),
-    ]
+MEMORY_VIEW_COLUMNS = [
+    listviews.DictColumn(
+        name = _('Type'),
+        attribute = 'type',
+        targetWidth = 20,
+    ),
+    listviews.DictColumn(
+        name = _('Name'),
+        attribute = 'name',
+        targetWidth = 20,
+    ),
+    listviews.DictColumn(
+        name = _('Cum'),
+        attribute = 'totsize',
+        targetWidth = 5,
+        format = '%0.1f',
+        defaultOrder = True,
+        percentPossible = True,
+    ),
+    listviews.DictColumn(
+        name = _('Local'),
+        attribute = 'size',
+        format = '%0.1f',
+        percentPossible = True,
+        targetWidth = 5,
+    ),
+    listviews.DictColumn(
+        name = _('/Refs'),
+        attribute = 'parents',
+        targetWidth = 4,
+        getter = lambda x: len(x.get('parents',())),
+    ),
+]
 
 
 class MainFrame(wx.Frame):
     """The root frame for the display of a single data-set"""
-
     loader = None
     percentageView = False
     directoryView = False
@@ -175,8 +169,9 @@ class MainFrame(wx.Frame):
         self.rightSplitter = wx.SplitterWindow(
             self.leftSplitter
         )
-        self.listControl = ProfileView(
+        self.listControl = listviews.DataView(
             self.leftSplitter,
+            columns = PROFILE_VIEW_COLUMNS,
         )
         self.squareMap = squaremap.SquareMap(
             self.rightSplitter,
@@ -188,17 +183,21 @@ class MainFrame(wx.Frame):
             self.rightSplitter,
         )
 
-        self.calleeListControl = ProfileView(
+        self.calleeListControl = listviews.DataView(
             self.tabs,
+            columns = PROFILE_VIEW_COLUMNS,
         )
-        self.allCalleeListControl = ProfileView(
+        self.allCalleeListControl = listviews.DataView(
             self.tabs,
+            columns = PROFILE_VIEW_COLUMNS,
         )
-        self.allCallerListControl = ProfileView(
+        self.allCallerListControl = listviews.DataView(
             self.tabs,
+            columns = PROFILE_VIEW_COLUMNS,
         )
-        self.callerListControl = ProfileView(
+        self.callerListControl = listviews.DataView(
             self.tabs,
+            columns = PROFILE_VIEW_COLUMNS,
         )
         self.CreateSourceWindow(self.tabs)
         self.ProfileListControls = [

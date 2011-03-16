@@ -84,6 +84,14 @@ class DataView(wx.ListCtrl):
         wx.EVT_LIST_ITEM_SELECTED(self, self.GetId(), self.OnNodeSelected)
         wx.EVT_MOTION(self, self.OnMouseMove)
         wx.EVT_LIST_ITEM_ACTIVATED(self, self.GetId(), self.OnNodeActivated)
+        self.CreateColumns()
+    def CreateColumns( self ):
+        """Create/recreate our column definitions from current self.columns"""
+        self.SetItemCount(0)
+        # clear any current columns...
+        for i in range( self.GetColumnCount())[::-1]:
+            self.DeleteColumn( i )
+        # now create
         for i, column in enumerate(self.columns):
             column.index = i
             self.InsertColumn(i, column.name)
@@ -91,7 +99,7 @@ class DataView(wx.ListCtrl):
                 self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
             else:
                 self.SetColumnWidth(i, column.targetWidth)
-        self.SetItemCount(0)
+        
 
     def OnNodeActivated(self, event):
         """We have double-clicked for hit enter on a node refocus squaremap to this node"""
