@@ -19,7 +19,7 @@ Trees:
             
 
 """
-import logging, sys
+import logging, sys, weakref
 log = logging.getLogger( __name__ )
 try:
     import json 
@@ -86,21 +86,22 @@ def children_by_type( record, index, key='refs', stop_types=None ):
     """
     types = {}
     for child in children( record, index, key, stop_types=stop_types ):
-        typ = index.get( child['type'] )
-        if typ is None:
-            typ = {
-                'address':None,
-                'type': child['type'],
+        if child['type'] not in types:
+            typ = index.get( child['type'] )
+            if typ is None:
+                typ = {
+                    'address':index[None](index),
+                    'type': child['type'],
+                }
+            types[child['type']] = typ = {
+                'address': typ['address'],
+                'type': 'type',
+                'name': child['type'],
+                'size': 0, # just a collection here...
+                'parents': [record['address']],
+                'children': [],
+                'refs': [],
             }
-        types[child['type']] = typ = {
-            'address': typ['address'],
-            'type': 'type',
-            'name': child['type'],
-            'size': 0, # just a collection here...
-            'parents': [record['address']],
-            'children': [],
-            'refs': [],
-        }
         types[child['type']]['children'].append( child )
     return types.values()
     
@@ -123,7 +124,7 @@ def group_types( children, types ):
         value['totsize'] = value['size'] + value['rsize']
     return sorted( values, key = lambda m: m.get('totsize',0))
 
-def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, size_info=None, min_size=32 ):
+def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, size_info=None, min_size=0 ):
     """Creates a has-a recursive-cost hierarchy
     
     Mutates objects in-place to produce a hierarchy of memory usage based on 
@@ -149,6 +150,8 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
             'size':record['size'],'module':overall_record['name'],
             'parents': record['parents'],
         }
+        if 'value' in record:
+            rinfo['value'] = record['value']
         if not record['refs']:
             rinfo['rsize'] = 0
             rinfo['children'] = []
@@ -190,7 +193,9 @@ def simplify_dicts( index, shared ):
     simplify_dicts = set( ['module','type','classobj'])
     to_delete = []
     
-    for to_simplify in index.itervalues():
+    for to_simplify in iterindex(index):
+        if not isinstance( to_simplify, dict ):
+            continue
         to_simplify['parents'] = shared.get( to_simplify['address'], [] )
         if to_simplify['type'] in simplify_dicts:
             
@@ -217,8 +222,25 @@ def simplify_dicts( index, shared ):
     
     return index
 
+class syntheticaddress( object ):
+    current = -1
+    def __call__( self, target ):
+        while self.current in target:
+            self.current -= 1
+        target[self.current] = True
+        return self.current 
+
+def iterindex( index ):
+    for (k,v) in index.iteritems():
+        if (
+            isinstance(v,dict) and 
+            isinstance(k,(int,long))
+        ):
+            yield v
 def load( filename ):
-    index = {} # address: structure
+    index = {
+        None: syntheticaddress(),
+    } # address: structure
     shared = dict() # address: [parent addresses,...]
     modules = set()
     
@@ -239,8 +261,8 @@ def load( filename ):
     simplify_dicts( index,shared )
             
     modules = [
-        x for x in index.itervalues() 
-        if x['type'] == 'module'
+        v for v in iterindex( index )
+        if v['type'] == 'module'
     ]
     
     records = []
@@ -252,16 +274,31 @@ def load( filename ):
                     'module',
                 ]), size_info=size_info
             ))
-    size_info = [x for x in size_info.values() if x['type'] == 'module']
-    size_info.sort( key = lambda m: m.get('totsize',0))
-    all_modules = sum([x['totsize'] for x in size_info],0)
-    return {
+    root_address = index[None]( index )
+    module_info = [x for x in size_info.itervalues() if x['type'] == 'module']
+    module_info.sort( key = lambda m: m.get('totsize',0))
+    for module in module_info:
+        module['parents'].append( root_address )
+    all_modules = sum([x['totsize'] for x in module_info],0)
+    root = {
         'type':'dump',
         'name': filename,
-        'children': size_info,
+        'children': module_info,
         'totsize': all_modules,
         'rsize': all_modules,
         'size': 0,
-        'address': None,
+        'address': root_address,
     }
+    size_info[root_address] = root
+    index_ref = Ref( size_info )
+    root_ref = Ref( root )
+    for item in size_info.itervalues():
+        item['index'] = index_ref 
+        item['root'] = root_ref
+    return root, size_info
 
+class Ref(object):
+    def __init__( self, target ):
+        self.target = target
+    def __call__( self ):
+        return self.target

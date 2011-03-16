@@ -8,7 +8,7 @@ except ImportError, err:
 from gettext import gettext as _
 import pstats
 from squaremap import squaremap
-from runsnakerun import pstatsloader,pstatsadapter
+from runsnakerun import pstatsloader,pstatsadapter, meliaeloader, meliaeadapter
 from runsnakerun import listviews
 
 if sys.platform == 'win32':
@@ -19,6 +19,7 @@ else:
 log = logging.getLogger(__name__)
 
 ID_OPEN = wx.NewId()
+ID_OPEN_MEMORY = wx.NewId()
 ID_EXIT = wx.NewId()
 ID_PACKAGE_VIEW = wx.NewId()
 ID_PERCENTAGE_VIEW = wx.NewId()
@@ -94,6 +95,19 @@ PROFILE_VIEW_COLUMNS = [
     ),
 ]
 
+MAX_NAME_LEN = 64
+
+def mem_name( x ):
+    if x.get('name'):
+        return x['name']
+    value = x.get('value')
+    if value:
+        if isinstance(value,(str,unicode)) and len(value) > MAX_NAME_LEN:
+            return value[:MAX_NAME_LEN-3]+'...'
+        else:
+            return value 
+    return ''
+
 MEMORY_VIEW_COLUMNS = [
     listviews.DictColumn(
         name = _('Type'),
@@ -104,6 +118,7 @@ MEMORY_VIEW_COLUMNS = [
         name = _('Name'),
         attribute = 'name',
         targetWidth = 20,
+        getter = mem_name,
     ),
     listviews.DictColumn(
         name = _('Cum'),
@@ -121,10 +136,23 @@ MEMORY_VIEW_COLUMNS = [
         targetWidth = 5,
     ),
     listviews.DictColumn(
+        name = _('Children'),
+        attribute = 'rsize',
+        format = '%0.1f',
+        percentPossible = True,
+        targetWidth = 5,
+    ),
+    listviews.DictColumn(
         name = _('/Refs'),
         attribute = 'parents',
         targetWidth = 4,
         getter = lambda x: len(x.get('parents',())),
+    ),
+    listviews.DictColumn(
+        name = _('Refs/'),
+        attribute = 'children',
+        targetWidth = 4,
+        getter = lambda x: len(x.get('children',())),
     ),
 ]
 
@@ -238,7 +266,8 @@ class MainFrame(wx.Frame):
         """Create our menu-bar for triggering operations"""
         menubar = wx.MenuBar()
         menu = wx.Menu()
-        menu.Append(ID_OPEN, _('&Open'), _('Open a new profile file'))
+        menu.Append(ID_OPEN, _('&Open Profile'), _('Open a cProfile file'))
+        menu.Append(ID_OPEN_MEMORY, _('Open &Memory'), _('Open a Meliae memory-dump file'))
         menu.AppendSeparator()
         menu.Append(ID_EXIT, _('&Close'), _('Close this RunSnakeRun window'))
         menubar.Append(menu, _('&File'))
@@ -277,6 +306,7 @@ class MainFrame(wx.Frame):
 
         wx.EVT_MENU(self, ID_EXIT, lambda evt: self.Close(True))
         wx.EVT_MENU(self, ID_OPEN, self.OnOpenFile)
+        wx.EVT_MENU(self, ID_OPEN_MEMORY, self.OnOpenMemory)
         wx.EVT_MENU(self, ID_PACKAGE_VIEW, self.OnPackageView)
         wx.EVT_MENU(self, ID_PERCENTAGE_VIEW, self.OnPercentageView)
         wx.EVT_MENU(self, ID_UP_VIEW, self.OnUpView)
@@ -351,6 +381,18 @@ class MainFrame(wx.Frame):
                 frame.load(*paths)
             else:
                 self.load(*paths)
+    def OnOpenMemory(self, event):
+        """Request to open a new profile file"""
+        dialog = wx.FileDialog(self, style=wx.OPEN)
+        if dialog.ShowModal() == wx.ID_OK:
+            path = dialog.GetPath()
+            if self.loader:
+                # we've already got a displayed data-set, open new window...
+                frame = MainFrame()
+                frame.Show(True)
+                frame.load_memory(path)
+            else:
+                self.load_memory(path)
 
     def OnShallowerView(self, event):
         if not self.squareMap.max_depth:
@@ -399,15 +441,18 @@ class MainFrame(wx.Frame):
         """Request to move up the hierarchy to highest-weight parent"""
         node = self.activated_node
         if node:
-            if self.directoryView:
-                tree = pstatsloader.TREE_FILES
+            if self.memoryView:
+                parents = self.adapter.parents(node)
             else:
-                tree = pstatsloader.TREE_CALLS
-            parents = [
-                parent for parent in
-                self.adapter.parents(node)
-                if getattr(parent, 'tree', pstatsloader.TREE_CALLS) == tree
-            ]
+                if self.directoryView:
+                    tree = pstatsloader.TREE_FILES
+                else:
+                    tree = pstatsloader.TREE_CALLS
+                parents = [
+                    parent for parent in
+                    self.adapter.parents(node)
+                    if getattr(parent, 'tree', pstatsloader.TREE_CALLS) == tree
+                ]
             if parents:
                 parents.sort(lambda a, b: cmp(self.adapter.value(node, a),
                                               self.adapter.value(node, b)))
@@ -446,22 +491,16 @@ class MainFrame(wx.Frame):
 
     def SourceShowFile(self, node):
         """Show the given file in the source-code view (attempt it anyway)"""
-        if not node.directory:
-            # TODO: any cases other than built-ins?
-            return None
-        if node.filename == '~':
-            # TODO: look up C/Cython/whatever source???
-            return None
-        path = os.path.join(node.directory, node.filename)
-        if self.sourceFileShown != path:
+        filename = self.adapter.filename( node )
+        if filename and self.sourceFileShown != filename:
             try:
-                data = open(path).read()
+                data = open(filename).read()
             except Exception, err:
                 # TODO: load from zips/eggs? What about .pyc issues?
                 return None
             else:
                 self.sourceCodeControl.SetText(data)
-        return path
+        return filename
 
     def OnSquareHighlightedMap(self, event):
         self.SetStatusText(self.adapter.label(event.node))
@@ -488,10 +527,10 @@ class MainFrame(wx.Frame):
     def OnSquareSelected(self, event):
         """Update all views to show selection children/parents"""
         self.selected_node = event.node
-        self.calleeListControl.integrateRecords(event.node.children)
-        self.callerListControl.integrateRecords(event.node.parents)
-        self.allCalleeListControl.integrateRecords(event.node.descendants())
-        self.allCallerListControl.integrateRecords(event.node.ancestors())
+        self.calleeListControl.integrateRecords(self.adapter.children( event.node) )
+        self.callerListControl.integrateRecords(self.adapter.parents( event.node) )
+        #self.allCalleeListControl.integrateRecords(event.node.descendants())
+        #self.allCallerListControl.integrateRecords(event.node.ancestors())
 
     restoringHistory = False
 
@@ -529,13 +568,18 @@ class MainFrame(wx.Frame):
             self.SetModel(pstatsloader.PStatsLoader(*filenames))
             self.SetTitle(_("Run Snake Run: %(filenames)s")
                           % {'filenames': ', '.join(filenames)[:120]})
-        except (IOError, OSError, ValueError), err:
+        except (IOError, OSError, ValueError,MemoryError), err:
             self.SetStatusText(
                 _('Failure during load of %(filenames)s: %(err)s'
             ) % dict(
                 filenames=" ".join([repr(x) for x in filenames]),
                 err=err
             ))
+    def load_memory(self, filename ):
+        self.memoryView = True
+        for view in self.ProfileListControls:
+            view.SetColumns( MEMORY_VIEW_COLUMNS )
+        self.SetModel( meliaeloader.load( filename ) )
 
     def SetModel(self, loader):
         """Set our overall model (a loader object) and populate sub-controls"""
@@ -548,15 +592,19 @@ class MainFrame(wx.Frame):
 
     def RootNode(self):
         """Return our current root node and appropriate adapter for it"""
-        if self.directoryView:
-            adapter = pstatsadapter.DirectoryViewAdapter()
-            tree = self.loader.location_tree
-            rows = self.loader.location_rows
+        if self.memoryView:
+            adapter = meliaeadapter.MeliaeAdapter()
+            tree,rows = self.loader 
         else:
-            adapter = pstatsadapter.PStatsAdapter()
-            tree = self.loader.tree
-            rows = self.loader.rows
-        adapter.SetPercentage(self.percentageView, self.loader.tree.cummulative)
+            if self.directoryView:
+                adapter = pstatsadapter.DirectoryViewAdapter()
+                tree = self.loader.location_tree
+                rows = self.loader.location_rows
+            else:
+                adapter = pstatsadapter.PStatsAdapter()
+                tree = self.loader.tree
+                rows = self.loader.rows
+            adapter.SetPercentage(self.percentageView, self.loader.tree.cummulative)
         return adapter, tree, rows
 
 

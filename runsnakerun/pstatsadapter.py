@@ -53,6 +53,16 @@ class PStatsAdapter(squaremap.DefaultAdapter):
         self.percentageView = percent
         self.total = total
 
+    def filename( self, node ):
+        """Extension to squaremap api to provide "what file is this" information"""
+        if not node.directory:
+            # TODO: any cases other than built-ins?
+            return None
+        if node.filename == '~':
+            # TODO: look up C/Cython/whatever source???
+            return None
+        return os.path.join(node.directory, node.filename)
+        
 
 class DirectoryViewAdapter(PStatsAdapter):
     """Provides a directory-view-only adapter for PStats objects"""

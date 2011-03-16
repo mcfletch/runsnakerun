@@ -99,7 +99,10 @@ class DataView(wx.ListCtrl):
                 self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
             else:
                 self.SetColumnWidth(i, column.targetWidth)
-        
+    def SetColumns( self, columns ):
+        """Set columns to a set of values other than the originals and recreates column controls"""
+        self.columns = columns 
+        self.CreateColumns()
 
     def OnNodeActivated(self, event):
         """We have double-clicked for hit enter on a node refocus squaremap to this node"""

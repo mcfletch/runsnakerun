@@ -21,7 +21,7 @@ Planned:
             
 
 """
-import wx, sys, os, logging
+import wx, sys, os, logging, imp
 import wx.lib.newevent
 log = logging.getLogger( __name__ )
 import sys
@@ -73,11 +73,16 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
     def overall( self, node ):
         return node['totsize']
     def empty( self, node ):
-        """Calculate overall size of the node including children and empty space"""
-        return node['size']/float(node['totsize'])
+        if node['totsize']:
+            return node['size']/float(node['totsize'])
+        else:
+            return 0
     def parents( self, node ):
         """Retrieve/calculate the set of parents for the given node"""
-        return node.get('parents',[])
+        if 'index' in node:
+            index = node['index']()
+            return list(meliaeloader.children( node, index, 'parents' ))
+        return []
 
     color_mapping = None
     def background_color(self, node, depth):
@@ -96,6 +101,19 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
             blue = (depth * 25) % 200
             self.color_mapping[key] = color = wx.Colour(red, green, blue)
         return color
+    def filename( self, node ):
+        if 'module' in node and not 'filename' in node:
+            try:
+                fp, pathname, description = imp.find_module(node['module'])
+            except (ImportError), err:
+                node['filename'] = None
+            else:
+                if fp:
+                    fp.close()
+                node['filename'] = pathname
+        elif not 'filename' in node:
+            return None 
+        return node['filename']
 
 class TestApp(wx.App):
     """Basic application for holding the viewing Frame"""
@@ -116,7 +134,7 @@ class TestApp(wx.App):
         self.SetTopWindow(frame)
         return True
     def get_model( self, path ):
-        return meliaeloader.load( path )
+        return meliaeloader.load( path )[0] # tree-only
     def OnSquareSelected( self, event ):
         text = self.sq.adapter.label( event.node )
         self.frame.SetToolTipString( text )
