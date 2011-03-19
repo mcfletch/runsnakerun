@@ -11,13 +11,6 @@ Trees:
         
         * module 
             * instance-tree
-
-    * is-a
-        * class/type root 
-            * instances contribute to their type 
-                * summary-by-type 
-            
-
 """
 import logging, sys, weakref
 log = logging.getLogger( __name__ )
@@ -188,14 +181,49 @@ def rewrite_refs( targets, old,new, index ):
                 continue 
         parent['refs'] = [rewritten(n) for n in parent['refs']]
 
-def simplify_dicts( index, shared ):
-    """eliminate module/type/class dictionaries"""
+def simplify_index( index, shared ):
+    """Eliminate "noise" records from the index 
+    
+    index -- overall index of objects (including metadata such as type records)
+    shared -- parent-count mapping for records in index
+    
+    module/type/class dictionaries
+    """
+    # things which will have their dictionaries compressed out
     simplify_dicts = set( ['module','type','classobj'])
-    to_delete = []
+    # things which will be themselves eliminated, adding their uniqueness to their parents
+    compress_whole = set( ['int','long','str','unicode'] )
+    to_delete = set()
+    
+    # compress out objects which are to be entirely compressed
+    for to_simplify in iterindex(index):
+        if not isinstance( to_simplify, dict ):
+            continue
+        if to_simplify['type'] in compress_whole:
+            # don't compress out these values if they hold references to something...
+            if not to_simplify['refs']:
+                # okay, so we are "just data", add our uniqueness to our parent...
+                our_type = index.get( to_simplify['type'] )
+                if our_type:
+                    # we have a global reference for this type...
+                    address = to_simplify['address']
+                    our_type['size'] = our_type.setdefault('size',0) + to_simplify['size']
+                    shared.setdefault(our_type['address'],[]).extend( 
+                        shared.get(address,()) 
+                    )
+                    child_referrers = shared.get(address,[])
+                    rewrite_refs( 
+                        child_referrers, 
+                        to_simplify['address'], our_type['address'], 
+                        index = index 
+                    )
+                    to_delete.add( address )
     
     for to_simplify in iterindex(index):
         if not isinstance( to_simplify, dict ):
             continue
+        if to_simplify['address'] in to_delete:
+            continue 
         to_simplify['parents'] = shared.get( to_simplify['address'], [] )
         if to_simplify['type'] in simplify_dicts:
             
@@ -216,11 +244,14 @@ def simplify_dicts( index, shared ):
                             child['address'], to_simplify['address'], 
                             index = index 
                         )
-                        to_delete.append( child['address'] )
+                        to_delete.add( child['address'] )
     for item in to_delete:
         del index[item]
+        del shared[item]
     
     return index
+
+
 
 class syntheticaddress( object ):
     current = -1
@@ -258,7 +289,7 @@ def load( filename ):
         elif struct['type'] in ( 'type', 'classobj'):
             index[struct['name']] = struct
     
-    simplify_dicts( index,shared )
+    simplify_index( index,shared )
             
     modules = [
         v for v in iterindex( index )

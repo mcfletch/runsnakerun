@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 """The main script for the RunSnakeRun profile viewer"""
 import wx, sys, os, logging
 try:
