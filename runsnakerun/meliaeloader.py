@@ -112,7 +112,7 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
         overall_record, index, 
         stop_types=stop_types, 
         already_seen=already_seen, 
-        type_group=False,
+        type_group=True,
     ):
         if record['address'] in size_info:
             continue 
