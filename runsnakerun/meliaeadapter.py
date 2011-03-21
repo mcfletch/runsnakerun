@@ -45,11 +45,11 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
     """Default adapter class for adapting node-trees to SquareMap API"""
     def children( self, node ):
         """Retrieve the set of nodes which are children of this node"""
-        return node['children']
+        return node.get('children',[])
     def value( self, node, parent=None ):
         """Return value used to compare size of this node"""
         # this is the *weighted* size/contribution of the node 
-        result = int(node['totsize']/float( len(node.get('parents',())) or 1))
+        result = int(node.get('totsize',0)/float( len(node.get('parents',())) or 1))
         return result 
     def label( self, node ):
         """Return textual description of this node"""
@@ -59,21 +59,21 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         if node.get('name' ):
             result.append( node['name'] )
         elif node.get('value') is not None:
-            result.append( str(node['value'])[:32])
+            result.append( unicode(node['value'])[:32])
         if 'module' in node and not node['module'] in result:
             result.append( ' in %s'%( node['module'] ))
         if node.get( 'size' ):
             result.append( '%s'%( mb( node['size'] )))
         if node.get( 'totsize' ):
-            result.append( '(%s)'%( mb( node['size'] )))
+            result.append( '(%s)'%( mb( node['totsize'] )))
         parent_count = len( node.get('parents',()))
         if parent_count > 1:
             result.append( '/%s refs'%( parent_count ))
         return " ".join(result)
     def overall( self, node ):
-        return node['totsize']
+        return node.get('totsize',0)
     def empty( self, node ):
-        if node['totsize']:
+        if node.get('totsize'):
             return node['size']/float(node['totsize'])
         else:
             return 0
