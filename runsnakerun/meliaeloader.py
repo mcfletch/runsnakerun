@@ -237,7 +237,6 @@ def simplify_index( index, shared ):
             continue 
         to_simplify['parents'] = shared.get( to_simplify['address'], [] )
         if to_simplify['type'] in simplify_dicts:
-            
             refs = to_simplify['refs']
             to_simplify['refs'] = []
             for ref in refs:
@@ -250,19 +249,15 @@ def simplify_index( index, shared ):
                         # we were the only thing referencing dict, so we don't need to 
                         # rework it's parent references (we don't want to be our own parent)
                         
-                        rewrite_refs( 
-                            child_referrers, 
-                            child['address'], to_simplify['address'], 
-                            index = index 
-                        )
                         # TODO: now rewrite grandchildren to point to root obj instead of dict
                         for grandchild in child['refs']:
                             parent_set = shared.get( grandchild, ())
-                            shared[grandchild] = rewrite_references( 
-                                parent_set, 
-                                child,
-                                to_simplify,
-                            )
+                            if parent_set:
+                                shared[grandchild][:] = rewrite_references( 
+                                    parent_set, 
+                                    child,
+                                    to_simplify,
+                                )
                         to_delete.add( child['address'] )
     for item in to_delete:
         del index[item]

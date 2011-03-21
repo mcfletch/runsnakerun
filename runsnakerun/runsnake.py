@@ -441,8 +441,15 @@ class MainFrame(wx.Frame):
         """Request to move up the hierarchy to highest-weight parent"""
         node = self.activated_node
         if node:
+            selected_parent = None
             if self.memoryView:
                 parents = self.adapter.parents(node)
+                if node['type'] == 'type':
+                    module = ".".join( node['name'].split( '.' )[:-1] )
+                    if module:
+                        for mod in parents:
+                            if mod['type'] == 'module' and mod['name'] == module:
+                                selected_parent = mod 
             else:
                 if self.directoryView:
                     tree = pstatsloader.TREE_FILES
@@ -454,10 +461,12 @@ class MainFrame(wx.Frame):
                     if getattr(parent, 'tree', pstatsloader.TREE_CALLS) == tree
                 ]
             if parents:
-                parents.sort(lambda a, b: cmp(self.adapter.value(node, a),
-                                              self.adapter.value(node, b)))
+                if not selected_parent:
+                    parents.sort(lambda a, b: cmp(self.adapter.value(node, a),
+                                                  self.adapter.value(node, b)))
+                    selected_parent = parents[-1]
                 class event:
-                    node = parents[-1]
+                    node = selected_parent
                 self.OnNodeActivated(event)
             else:
                 self.SetStatusText(_('No parents for the currently selected node: %(node_name)s')
