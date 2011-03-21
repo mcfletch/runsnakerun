@@ -595,7 +595,9 @@ class MainFrame(wx.Frame):
         if self.memoryView:
             adapter = meliaeadapter.MeliaeAdapter()
             tree,rows = self.loader 
+            self.squareMap.square_style = True
         else:
+            self.squareMap.square_style = False
             if self.directoryView:
                 adapter = pstatsadapter.DirectoryViewAdapter()
                 tree = self.loader.location_tree
