@@ -1,8 +1,10 @@
-RunSnakeRun, a simple wxPython GUI viewer for Python profile logs
-	Copyright (c) 2005-2009, Michael C. Fletcher All rights reserved.
-
 THIS SOFTWARE IS NOT FAULT TOLERANT AND SHOULD NOT BE USED IN ANY
 SITUATION ENDANGERING HUMAN LIFE OR PROPERTY.
+
+RunSnakeRun, a simple wxPython GUI viewer for Python profile logs
+
+	 Copyright (c) 2005-2011, The Contributors (Listed Below) 
+  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
@@ -16,7 +18,7 @@ are met:
     disclaimer in the documentation and/or other materials
     provided with the distribution.
 
-    The name of Michael C. Fletcher may not be used to endorse or 
+    The names of The Contributors may not be used to endorse or 
     promote products derived from this software without specific 
     prior written permission.
 
@@ -32,3 +34,8 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 OF THE POSSIBILITY OF SUCH DAMAGE. 
+
+The Contributors:
+
+    Mike C. Fletcher <mcfletch@vrplumber.com>
+    Marius Gedminas
