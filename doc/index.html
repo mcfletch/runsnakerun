@@ -14,7 +14,7 @@
 <p class="introduction">RunSnakeRun is a small GUI utility that allows
 you to view (Python) cProfile or Profile profiler dumps in a sortable
 GUI view. &nbsp;It allows you to explore the profiler information using
-a "square map" visualization or sortable tables of data.&nbsp; It also
+a "square map" visualization or sortable tables of data.&nbsp; It also (experimentally)
 allows you to view the output of the Meliae "memory analysis" tool
 using the same basic visualisations.<br>
 </p>
@@ -37,7 +37,11 @@ installed to use RunSnakeRun. &nbsp;You may also need the
 view.</p><p>You will likely want to use your platform wxPython package. &nbsp;If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p><pre>easy_install RunSnakeRun<br></pre><p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
 and Python installation. &nbsp;The setup will create a script named
 "runsnake" on Linux machines which launches the profile viewer.</p>
-<h2><a name="usage"></a>Usage</h2><p>To use cProfile to capture your application's profile data:</p><pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
+<h2><a name="usage"></a>Usage</h2>
+<h3>cProfile Viewing<br>
+</h3>
+<p>To use cProfile to capture your application's profile data:</p>
+<pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
 </p>
 <pre>python runsnake.py OpenGLContext.profile<br></pre>
 <p>There will be a brief delay as the application is created and begins
@@ -50,15 +54,37 @@ that record in the right-side list views. &nbsp;Choose the appropriate
 view on the right via the tabs. &nbsp;You can resize the borders
 between the lists and square-map views. &nbsp;You can select a
 package/module/function hierarchic view via the menus. &nbsp;You can
-also toggle use of percentage displays there.</p><h2><a name="code"></a>Code Access and Contributions</h2><p>RunSnakeRun
+also toggle use of percentage displays there.</p>
+<h3>Meliae Memory Analysis</h3>
+<p><span class="technical"></span>Note: this feature is considered
+experimental, and has not yet proved itself to be particularly useful
+due to the size of the meliae logs and the presence of questionable
+data in them (e.g. objects unreferenced by any module will often make
+up 2MB or more of memory usage, often dwarfing the user-controllable
+memory usage).<br>
+<span class="technical"></span></p>
+<p><a href="https://launchpad.net/meliae">Meliae</a> will need to be installed (and compiled):</p>
+<pre>easy_install meliae<br></pre>
+<p>Now instrument your application to be able to trigger a memory dump at the moment you would like to capture, like so:</p>
+<pre>from meliae import scanner<br>scanner.dump_all_objects( filename ) # you can pass a file-handle if you prefer<br></pre>
+<p>The memory dump will generally be quite large (e.g. 2MB to describe
+an application with 200KB of user-controllable memory usage (i.e. not
+the interpreter itself)) and for any real application will take an
+extremely long time to load.</p>
+<p style="text-align: center;"><img style="width: 973px; height: 821px;" alt="Screenshot of a meliae memory view" src="meliae-sample.png"><br>
+</p>
+<h2><a name="code"></a>Code Access and Contributions</h2><p>RunSnakeRun
 is reasonably stable. &nbsp;I don't tend to do much work on it, as it
-tends to just work. &nbsp;My current wish list for the project follows:</p><p>If you have an idea, feel free
+tends to just work. &nbsp;My (personal) current wish list for the project follows:</p>
+<ul>
+  <li>Make meliae dumps useful</li>
+  <li>Speed up and reduce memory requirements for meliae loading<br>
+  </li>
+</ul>
+<p>If you have an idea, feel free
 to check out the code and&nbsp;implement the new&nbsp;feature. &nbsp;I'm certainly willing
 to entertain new features or bug-fix requests as well. &nbsp;The code
-is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li>
-  <li>source-code view<br>
-  </li>
-<li>rework squaremap to be more robust for large profiles</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>storage of preferences such as column widths</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
+is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>cd squaremap<br>python setup.py develop<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li><li>rework squaremap to be more robust for large profiles</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>storage of preferences such as column widths</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
 tool-set for profiling, you may want to have any or all of these other
 tools available for your profiling needs:</p><ul><li><a href="http://code.google.com/p/jrfonseca/wiki/Gprof2Dot">Gprof2Dot</a> -- Converts various Profile formats into dot-format graphs<br>
 </li>
@@ -69,12 +95,15 @@ save that RunSnakeRun was intended to be Python specific and
 cross-platform</li><li><a href="http://pypi.python.org/pypi/profilehooks">profilehooks</a> -- specify which function to profile by using a decorator on a particular function</li></ul>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b1.tar.gz">2.0.1b1</a> -- Experimental support for meliae loads<br>
+</li>
   <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.0b6.tar.gz">2.0.0b6</a> -- Fixes and enhancements by Marius Gedminas
 (percent-in-tooltips, code restructuring, home-button fix), display
 source-code for functions when selected, make SquareMap an explicit
 dependency, more robust selection of "root" nodes (better first-view
 selection)<br>
-</li>
+  </li>
+
   <li>2.0.0b5 -- Add names of loaded files to the window title,
 use same colour for each node, make colours cycle across far wider
 range of colours, bug-fixes</li>
