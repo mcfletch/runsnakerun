@@ -21,6 +21,8 @@ class ColumnDefinition(object):
     percentPossible = False
     targetWidth = None
     getter = None
+    
+    sortDefault=False
 
     def __init__(self, **named):
         for key, value in named.items():
@@ -68,7 +70,9 @@ class DataView(wx.ListCtrl):
         if columns is not None:
             self.columns = columns
         
-        self.sortOrder = [ (self.columns[5].defaultOrder, self.columns[5]), ]
+        if not sortOrder:
+            sortOrder = [(x.defaultOrder,x) for x in self.columns]
+        self.sortOrder = sortOrder or []
         self.sorted = []
         self.CreateControls()
 

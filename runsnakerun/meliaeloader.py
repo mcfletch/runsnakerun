@@ -72,7 +72,6 @@ def children( record, index, key='refs', stop_types=None ):
                 record = index[ref]
         except KeyError, err:
             print 'no record for %s address'%(key,), ref 
-            print 'record', record 
         else:
             if (not stop_types) or (record['type'] not in stop_types):
                 result.append(  record  )
@@ -198,7 +197,6 @@ def simplify_core( index, shared ):
                     cost = to_simplify['size']/float(len(parents))
                     for parent in parents:
                         parent['size'] = parent['size'] + cost 
-                        
                     rewrite_refs( 
                         parents, 
                         to_simplify['address'], None, 
@@ -219,7 +217,7 @@ def simplify_index( index, shared ):
     
     module/type/class dictionaries
     """
-    simplify_core( index, shared )
+    #simplify_core( index, shared )
     
     # things which will have their dictionaries compressed out
     simplify_dicts = set( ['module','type','classobj'])
@@ -279,7 +277,7 @@ def iterindex( index ):
             isinstance(k,(int,long))
         ):
             yield v
-def load( filename ):
+def load( filename, include_interpreter=False ):
     index = {
     } # address: structure
     shared = dict() # address: [parent addresses,...]
@@ -337,17 +335,25 @@ def load( filename ):
     for module in modules:
         module['parents'].append( root_address )
     
-    # Meliae seems to produce quite a few of these objects which are not 
-    # reachable from any module, but are present in the dump...
-    disconnected = [
-        x for x in iterindex( index )
-        if x.get('totsize') is None 
-    ]
-    for pseudo_module in find_roots( disconnected, index, shared ):
-        pseudo_module['root'] = root_ref
-        pseudo_module['index'] = index_ref 
-        pseudo_module.setdefault('parents',[]).append( root_address )
-        modules.append( pseudo_module )
+    if include_interpreter:
+        # Meliae produces quite a few of these un-referenced records, they aren't normally useful AFAICS
+        # reachable from any module, but are present in the dump...
+        disconnected = [
+            x for x in iterindex( index )
+            if x.get('totsize') is None 
+        ]
+        for pseudo_module in find_roots( disconnected, index, shared ):
+            pseudo_module['root'] = root_ref
+            pseudo_module['index'] = index_ref 
+            pseudo_module.setdefault('parents',[]).append( root_address )
+            modules.append( pseudo_module )
+    else:
+        to_delete = []
+        for v in iterindex(index):
+            if v.get('totsize') is None:
+                to_delete.append( v['address'] )
+        for k in to_delete:
+            del index[k]
 
     all_modules = sum([x.get('totsize',0) for x in modules],0)
 
@@ -363,7 +369,9 @@ def find_roots( disconnected, index, shared ):
     
     Will generate a synthetic root for anything which doesn't have any parents...
     """
+    log.warn( '%s disconnected objects in %s total objects', len(disconnected), len(index))
     natural_roots = [x for x in disconnected if x.get('refs') and not x.get('parents')]
+    log.warn( '%s objects with no parents at all' ,len(natural_roots))
     for natural_root in natural_roots:
         recurse_module(
             natural_root, index, shared, stop_types=set([
