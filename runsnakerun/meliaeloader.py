@@ -40,7 +40,7 @@ def recurse( record, index, stop_types=None,already_seen=None, type_group=False 
     if record['address'] not in already_seen:
         already_seen.add(record['address'])
         if 'refs' in record:
-            if type_group:
+            if type_group and False:
                 for typ in children_by_type( record, index, stop_types=stop_types ):
                     if typ['name'] not in stop_types:
                         for child in typ['children']:
@@ -63,6 +63,7 @@ def recurse( record, index, stop_types=None,already_seen=None, type_group=False 
 
 def children( record, index, key='refs', stop_types=None ):
     """Retrieve children records for given record"""
+    result = []
     for ref in record.get( key,[]):
         try:
             if isinstance( ref, dict ):
@@ -70,10 +71,12 @@ def children( record, index, key='refs', stop_types=None ):
             else:
                 record = index[ref]
         except KeyError, err:
-            pass 
+            print 'no record for %s address'%(key,), ref 
+            print 'record', record 
         else:
             if (not stop_types) or (record['type'] not in stop_types):
-                yield record 
+                result.append(  record  )
+    return result
 
 def children_by_type( record, index, key='refs', stop_types=None ):
     """Get children grouped by type 
@@ -89,7 +92,7 @@ def children_by_type( record, index, key='refs', stop_types=None ):
                     'address':new_address(index),
                     'type': child['type'],
                 }
-            types[child['type']] = typ = {
+            index[typ['address']] = types[child['type']] = typ = {
                 'address': typ['address'],
                 'type': 'type',
                 'name': child['type'],
@@ -102,41 +105,29 @@ def children_by_type( record, index, key='refs', stop_types=None ):
     return types.values()
     
 
-def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, size_info=None, min_size=0 ):
+def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, min_size=0 ):
     """Creates a has-a recursive-cost hierarchy
     
     Mutates objects in-place to produce a hierarchy of memory usage based on 
     reference-holding cost assignment
     """
-    if size_info is None:
-        size_info = {} # address to size-info mapping
-    count = 0
     for record in recurse( 
         overall_record, index, 
         stop_types=stop_types, 
         already_seen=already_seen, 
         type_group=True,
     ):
-        if record['address'] in size_info:
+        # anything with a totsize we've already processed...
+        if record.get('totsize') is not None:
             continue 
-        count += 1
-        if not count % 1000:
-            print 'count', count
-        #print '%(type)s %(name)s'%{ 'type':record.get('type'), 'name': record.get('name') }
-        size_info[record['address']] = rinfo = {
-            'address':record['address'],'type':record['type'],'name':record.get('name'),
-            'size':record['size'],'module':overall_record['name'],
-            'parents': record['parents'],
-        }
-        if 'value' in record:
-            rinfo['value'] = record['value']
+        rinfo = record 
+        rinfo['module'] = overall_record.get('name','<non-module-references>' )
         if not record['refs']:
             rinfo['rsize'] = 0
             rinfo['children'] = []
         else:
-            # TODO: track shared versus owned cost separately...
             # TODO: provide a flag to coalesce based on e.g. type at each level or throughout...
-            rinfo['children'] = rinfo_children = list ( children( record, size_info, stop_types=stop_types ) )
+            rinfo['children'] = rinfo_children = list ( children( record, index, stop_types=stop_types ) )
             rinfo['rsize'] = sum([
                 (
                     child.get('totsize',0.0)/float(len(shared.get( child['address'], [])) or 1)
@@ -144,14 +135,8 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
                 for child in rinfo_children
             ], 0.0 )
         rinfo['totsize'] = record['size'] + rinfo['rsize']
-    for key,record in size_info.iteritems():
-        # clear out children references if they are not reasonably sized...
-        if record['totsize'] < min_size and record['children']:
-            del record['children'][:]
-            print 'ignoring', record['totsize'], 'in', record['type'], record.get('name')
-        #record['parents'] = list(children( record, size_info, 'parents' ))
     
-    return size_info
+    return None
     
 def as_id( x ):
     if isinstance( x, dict ):
@@ -179,9 +164,17 @@ def rewrite_references( sequence, old, new ):
     returns rewritten sequence
     """
     old,new = as_id(old),as_id(new)
+    to_delete = []
     for i,n in enumerate(sequence):
         if n == old:
-            sequence[i] = new 
+            if new is None:
+                to_delete.append( i )
+            else:
+                sequence[i] = new 
+    if to_delete:
+        to_delete.reverse()
+        for i in to_delete:
+            del sequence[i]
     return sequence
 
 def simplify_core( index, shared ):
@@ -198,7 +191,8 @@ def simplify_core( index, shared ):
             if not to_simplify['refs']:
                 # okay, so we are "just data", add our uniqueness to our parent...
                 parent_ids = shared.get( to_simplify['address'])
-                parents = [x for x in [index.get(x) for x in parent_ids] if x]
+                raw_parents = [index.get(x) for x in parent_ids]
+                parents = [x for x in raw_parents if x]
                 if parents and len(parents) == 1:
                     # all our parents are accounted for...
                     cost = to_simplify['size']/float(len(parents))
@@ -291,9 +285,30 @@ def load( filename ):
     shared = dict() # address: [parent addresses,...]
     modules = set()
     
+    root_address = new_address( index )
+    root = {
+        'type':'dump',
+        'name': filename,
+        'children': [],
+        'totsize': 0,
+        'rsize': 0,
+        'size': 0,
+        'address': root_address,
+    }
+    index[root_address] = root
+    index_ref = Ref( index )
+    root_ref = Ref( root )
+    
+    root['root'] = root_ref 
+    root['index'] = index_ref
+    
     for line in open( filename ):
         struct = json_loads( line.strip())
         index[struct['address']] = struct 
+        
+        struct['root'] = root_ref
+        struct['index'] = index_ref
+        
         refs = struct['refs']
         for ref in refs:
             parents = shared.get( ref )
@@ -302,47 +317,72 @@ def load( filename ):
             shared[ref].append( struct['address'])
         if struct['type'] == 'module':
             modules.add( struct['address'] )
-        elif struct['type'] in ( 'type', 'classobj'):
-            index[struct['name']] = struct
     
     simplify_index( index,shared )
-            
-    modules = [
-        v for v in iterindex( index )
-        if v['type'] == 'module'
-    ]
+          
+    modules = []
+    for v in iterindex( index ):
+        v['parents'] = shared.get( v['address'], [] )
+        if v['type'] == 'module':
+            modules.append( v )
     
     records = []
-    size_info = {}
     for m in modules:
-        if m.get('name') != 'sys':
-            records.append( recurse_module(
-                m, index, shared, stop_types=set([
-                    'module',
-                ]), size_info=size_info
-            ))
-    root_address = new_address( index )
-    module_info = [x for x in size_info.itervalues() if x['type'] == 'module']
-    module_info.sort( key = lambda m: m.get('totsize',0))
-    for module in module_info:
+        recurse_module(
+            m, index, shared, stop_types=set([
+                'module',
+            ])
+        )
+    modules.sort( key = lambda m: m.get('totsize',0))
+    for module in modules:
         module['parents'].append( root_address )
-    all_modules = sum([x['totsize'] for x in module_info],0)
-    root = {
-        'type':'dump',
-        'name': filename,
-        'children': module_info,
-        'totsize': all_modules,
-        'rsize': all_modules,
+    
+    # Meliae seems to produce quite a few of these objects which are not 
+    # reachable from any module, but are present in the dump...
+    disconnected = [
+        x for x in iterindex( index )
+        if x.get('totsize') is None 
+    ]
+    for pseudo_module in find_roots( disconnected, index, shared ):
+        pseudo_module['root'] = root_ref
+        pseudo_module['index'] = index_ref 
+        pseudo_module.setdefault('parents',[]).append( root_address )
+        modules.append( pseudo_module )
+
+    all_modules = sum([x.get('totsize',0) for x in modules],0)
+
+    root['totsize'] = all_modules
+    root['rsize'] = all_modules
+    root['size'] = 0
+    root['children'] = modules
+    
+    return root, index
+
+def find_roots( disconnected, index, shared ):
+    """Find appropriate "root" objects from which to recurse the hierarchies
+    
+    Will generate a synthetic root for anything which doesn't have any parents...
+    """
+    natural_roots = [x for x in disconnected if x.get('refs') and not x.get('parents')]
+    for natural_root in natural_roots:
+        recurse_module(
+            natural_root, index, shared, stop_types=set([
+                'module',
+            ])
+        )
+        yield natural_root
+    rest = [x for x in disconnected if x.get( 'totsize' ) is None]
+    un_found = {
+        'type': 'module',
+        'name': '<disconnected objects>',
+        'children': rest,
+        'parents': [ ],
         'size': 0,
-        'address': root_address,
+        'totsize': sum([x['size'] for x in rest],0),
+        'address': new_address( index ),
     }
-    size_info[root_address] = root
-    index_ref = Ref( size_info )
-    root_ref = Ref( root )
-    for item in size_info.itervalues():
-        item['index'] = index_ref 
-        item['root'] = root_ref
-    return root, size_info
+    index[un_found['address']] = un_found
+    yield un_found
 
 class Ref(object):
     def __init__( self, target ):
