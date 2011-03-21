@@ -31,7 +31,7 @@ class ColumnDefinition(object):
         if self.getter:
             value = self.getter( function )
         else:
-            value = getattr(function, self.attribute, '')
+            value = getattr(function, self.attribute, None)
         return value
 
 class DictColumn( ColumnDefinition ):
@@ -39,7 +39,7 @@ class DictColumn( ColumnDefinition ):
         if self.getter:
             value = self.getter( record )
         else:
-            value = record.get(self.attribute, '')
+            value = record.get(self.attribute, None)
         return value
 
 
@@ -251,15 +251,18 @@ class DataView(wx.ListCtrl):
         except IndexError, err:
             return None
         else:
+            if value is None:
+                return u''
             if column.percentPossible and self.percentageView and self.total:
                 value = value / float(self.total) * 100.00
             if column.format:
                 try:
                     return column.format % (value,)
                 except Exception, err:
-                    log.warn('Column %s could not format %r value: %s',
+                    log.warn('Column %s could not format %r value: %r',
                         column.name, type(value), value
                     )
+                    value = column.get(self.sorted[item] )
                     if isinstance(value,(unicode,str)):
                         return value
                     return unicode(value)
