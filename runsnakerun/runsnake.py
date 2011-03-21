@@ -125,8 +125,8 @@ MEMORY_VIEW_COLUMNS = [
         name = _('Cum'),
         attribute = 'totsize',
         targetWidth = 5,
-        format = '%0.1f',
         defaultOrder = True,
+        format = '%0.1f',
         percentPossible = True,
     ),
     listviews.DictColumn(
@@ -501,6 +501,7 @@ class MainFrame(wx.Frame):
         """Double-click or enter on a node in some control..."""
         self.activated_node = self.selected_node = event.node
         self.squareMap.SetModel(event.node, self.adapter)
+        self.squareMap.SetSelected( event.node )
         if editor:
             if self.SourceShowFile(event.node):
                 if hasattr(event.node,'lineno'):
