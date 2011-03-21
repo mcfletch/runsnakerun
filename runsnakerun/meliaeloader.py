@@ -15,9 +15,12 @@ Trees:
 import logging, sys, weakref
 log = logging.getLogger( __name__ )
 try:
-    import json 
+    from _meliaejson import loads as json_loads
 except ImportError, err:
-    import simplejson as json
+    try:
+        from json import loads as json_loads
+    except ImportError, err:
+        from simplejson import loads as json_loads
 import sys
 
 def recurse( record, index, stop_types=None,already_seen=None, type_group=False ):
@@ -186,6 +189,7 @@ def simplify_core( index, shared ):
     compress_whole = set( ['int','long','str','unicode',] )
     to_delete = set()
     # compress out objects which are to be entirely compressed
+    # things which will be eliminated add their uniqueness to their parents
     for to_simplify in iterindex(index):
         if not isinstance( to_simplify, dict ):
             continue
@@ -225,7 +229,6 @@ def simplify_index( index, shared ):
     
     # things which will have their dictionaries compressed out
     simplify_dicts = set( ['module','type','classobj'])
-    # things which will be themselves eliminated, adding their uniqueness to their parents
     
     to_delete = set()
     
@@ -289,7 +292,7 @@ def load( filename ):
     modules = set()
     
     for line in open( filename ):
-        struct = json.loads( line.strip())
+        struct = json_loads( line.strip())
         index[struct['address']] = struct 
         refs = struct['refs']
         for ref in refs:
