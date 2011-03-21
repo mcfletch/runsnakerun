@@ -2,6 +2,8 @@
 <html dir="ltr" lang="en-ca"><head>
 
 
+
+
   <link rel="icon" type="image/png" href="/maps/favicon.png">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python (c)Profile Viewer</title>
   
@@ -12,12 +14,22 @@
 <p class="introduction">RunSnakeRun is a small GUI utility that allows
 you to view (Python) cProfile or Profile profiler dumps in a sortable
 GUI view. &nbsp;It allows you to explore the profiler information using
-a "square map" visualization or sortable tables of data.<br>
+a "square map" visualization or sortable tables of data.&nbsp; It also
+allows you to view the output of the Meliae "memory analysis" tool
+using the same basic visualisations.<br>
 </p>
 <h2>Features</h2><p>RunSnakeRun is a simple program, it doesn't provide
 all the bells-and-whistles of a program like KCacheGrind, it's intended
 to allow for profiling your Python programs, and just your Python
-programs. &nbsp;What it does provide:</p><ul><li>sortable data-grid views for raw profile information</li><ul><li>identity: function name, file-name, directory name</li><li>time-spent: cummulative, cummulative-per, local and local-per time</li></ul><ul><li>overall data-grid view</li><li>(all) callers-of-this-function, (all) callees-of-this-function views</li></ul><li>squaremap view of call tree</li><ul><li>size proportional to amount of time spent by the given parent in the given function</li></ul><li>squaremap view of packages/modules/functions</li><ul><li>size proportional to time spent in each package/module/function</li></ul><li>basic navigation (home, back, up)</li></ul><p>If you are new to profiling you may wish to check out the author's <a href="http://us.pycon.org/2009/conference/schedule/event/15/">presentation at PyCon 2009</a> which tries to explain the use of profiling as a tool.</p><h2><a name="install"></a>Installation<br>
+programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable data-grid views for raw profile information</li><ul><li>identity: function name, file-name, directory name</li><li>time-spent: cummulative, cummulative-per, local and local-per time</li></ul><ul><li>overall data-grid view</li><li>(all) callers-of-this-function, (all) callees-of-this-function views</li></ul><li>squaremap view of call tree</li><ul><li>size proportional to amount of time spent by the given parent in the given function</li></ul><li>squaremap view of packages/modules/functions</li><ul><li>size proportional to time spent in each package/module/function</li></ul><li>basic navigation (home, back, up)</li></ul><p>If you are new to profiling you may wish to check out the author's <a href="http://us.pycon.org/2009/conference/schedule/event/15/">presentation at PyCon 2009</a> which tries to explain the use of profiling as a tool.</p>
+<p>For meliae memory-dump viewing, it provides:</p>
+<ul>
+  <li>sortable data-grid views</li>
+  <li>squaremap of memory-usage</li>
+  <li>basic navigation<br>
+  </li>
+</ul>
+<h2><a name="install"></a>Installation<br>
 </h2>
 <p>You will need to have all of wxPython, SquareMap and RunSnakeRun
 installed to use RunSnakeRun. &nbsp;You may also need the

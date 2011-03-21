@@ -141,7 +141,7 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
                 for child in rinfo_children
             ], 0.0 )
         rinfo['totsize'] = record['size'] + rinfo['rsize']
-    for key,record in size_info.items():
+    for key,record in size_info.iteritems():
         # clear out children references if they are not reasonably sized...
         if record['totsize'] < min_size and record['children']:
             del record['children'][:]
@@ -164,7 +164,7 @@ def rewrite_refs( targets, old,new, index, key='refs' ):
                 parent = index[parent]
             except KeyError, err:
                 continue 
-        parent[key] = rewrite_references( parent[key], old, new )
+        rewrite_references( parent[key], old, new )
 
 def rewrite_references( sequence, old, new ):
     """Rewrite parents to point to new in old
@@ -176,11 +176,10 @@ def rewrite_references( sequence, old, new ):
     returns rewritten sequence
     """
     old,new = as_id(old),as_id(new)
-    def rewritten( n ):
+    for i,n in enumerate(sequence):
         if n == old:
-            return new
-        return n
-    return [ x for x in [rewritten(n) for n in sequence] if n is not None]
+            sequence[i] = new 
+    return sequence
 
 def simplify_core( index, shared ):
     """Eliminate "noise" records for core type (strs, ints, etc)"""
@@ -253,7 +252,7 @@ def simplify_index( index, shared ):
                         for grandchild in child['refs']:
                             parent_set = shared.get( grandchild, ())
                             if parent_set:
-                                shared[grandchild][:] = rewrite_references( 
+                                rewrite_references( 
                                     parent_set, 
                                     child,
                                     to_simplify,
@@ -347,3 +346,9 @@ class Ref(object):
         self.target = target
     def __call__( self ):
         return self.target
+
+
+if __name__ == "__main__":
+    import cProfile, sys
+    cProfile.runctx( "load(sys.argv[1])", globals(),locals(),'melialoader.profile' )
+    
