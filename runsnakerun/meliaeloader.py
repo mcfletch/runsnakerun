@@ -83,7 +83,7 @@ def children_by_type( record, index, key='refs', stop_types=None ):
             typ = index.get( child['type'] )
             if typ is None:
                 typ = {
-                    'address':index[None](index),
+                    'address':new_address(index),
                     'type': child['type'],
                 }
             types[child['type']] = typ = {
@@ -99,24 +99,6 @@ def children_by_type( record, index, key='refs', stop_types=None ):
     return types.values()
     
 
-def group_types( children, types ):
-    """Take a group of children nodes, coalesce into typed groups"""
-    size_info = {}
-    for child in children:
-        typ = size_info.get( child['type'] )
-        if not typ:
-            typ = types.get( child['type'] )
-            if not typ:
-                continue 
-            else:
-                size_info[ child['type']] = typ 
-        # add child to typ...
-        typ['rsize'] += child['rsize']
-    values = size_info.values()
-    for value in values:
-        value['totsize'] = value['size'] + value['rsize']
-    return sorted( values, key = lambda m: m.get('totsize',0))
-
 def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, size_info=None, min_size=0 ):
     """Creates a has-a recursive-cost hierarchy
     
@@ -130,7 +112,7 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
         overall_record, index, 
         stop_types=stop_types, 
         already_seen=already_seen, 
-        type_group=True,
+        type_group=False,
     ):
         if record['address'] in size_info:
             continue 
@@ -154,10 +136,10 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
             rinfo['children'] = rinfo_children = list ( children( record, size_info, stop_types=stop_types ) )
             rinfo['rsize'] = sum([
                 (
-                    child.get('totsize',0)/len(shared.get( child['address'], [])) or 1
+                    child.get('totsize',0.0)/float(len(shared.get( child['address'], [])) or 1)
                 )
                 for child in rinfo_children
-            ], 0 )
+            ], 0.0 )
         rinfo['totsize'] = record['size'] + rinfo['rsize']
     for key,record in size_info.items():
         # clear out children references if they are not reasonably sized...
@@ -167,19 +149,70 @@ def recurse_module( overall_record, index, shared, stop_types=None, already_seen
         #record['parents'] = list(children( record, size_info, 'parents' ))
     
     return size_info
+    
+def as_id( x ):
+    if isinstance( x, dict ):
+        return x['address']
+    else:
+        return x
 
-def rewrite_refs( targets, old,new, index ):
-    def rewritten( n ):
-        if n == old:
-            return new
-        return n
+def rewrite_refs( targets, old,new, index, key='refs' ):
+    """Rewrite key in all targets (from index if necessary) to replace old with new"""
     for parent in targets:
         if not isinstance( parent, dict ):
             try:
                 parent = index[parent]
             except KeyError, err:
                 continue 
-        parent['refs'] = [rewritten(n) for n in parent['refs']]
+        parent[key] = rewrite_references( parent[key], old, new )
+
+def rewrite_references( sequence, old, new ):
+    """Rewrite parents to point to new in old
+    
+    sequence -- sequence of id references 
+    old -- old id 
+    new -- new id
+    
+    returns rewritten sequence
+    """
+    old,new = as_id(old),as_id(new)
+    def rewritten( n ):
+        if n == old:
+            return new
+        return n
+    return [ x for x in [rewritten(n) for n in sequence] if n is not None]
+
+def simplify_core( index, shared ):
+    """Eliminate "noise" records for core type (strs, ints, etc)"""
+    compress_whole = set( ['int','long','str','unicode',] )
+    to_delete = set()
+    # compress out objects which are to be entirely compressed
+    for to_simplify in iterindex(index):
+        if not isinstance( to_simplify, dict ):
+            continue
+        if to_simplify['type'] in compress_whole:
+            # don't compress out these values if they hold references to something...
+            if not to_simplify['refs']:
+                # okay, so we are "just data", add our uniqueness to our parent...
+                parent_ids = shared.get( to_simplify['address'])
+                parents = [x for x in [index.get(x) for x in parent_ids] if x]
+                if parents and len(parents) == 1:
+                    # all our parents are accounted for...
+                    cost = to_simplify['size']/float(len(parents))
+                    for parent in parents:
+                        parent['size'] = parent['size'] + cost 
+                        
+                    rewrite_refs( 
+                        parents, 
+                        to_simplify['address'], None, 
+                        index = index 
+                    )
+                    to_delete.add( to_simplify['address'] )
+    
+    for item in to_delete:
+        del index[item]
+        del shared[item]
+    
 
 def simplify_index( index, shared ):
     """Eliminate "noise" records from the index 
@@ -189,35 +222,13 @@ def simplify_index( index, shared ):
     
     module/type/class dictionaries
     """
+    simplify_core( index, shared )
+    
     # things which will have their dictionaries compressed out
     simplify_dicts = set( ['module','type','classobj'])
     # things which will be themselves eliminated, adding their uniqueness to their parents
-    compress_whole = set( ['int','long','str','unicode'] )
-    to_delete = set()
     
-    # compress out objects which are to be entirely compressed
-    for to_simplify in iterindex(index):
-        if not isinstance( to_simplify, dict ):
-            continue
-        if to_simplify['type'] in compress_whole:
-            # don't compress out these values if they hold references to something...
-            if not to_simplify['refs']:
-                # okay, so we are "just data", add our uniqueness to our parent...
-                our_type = index.get( to_simplify['type'] )
-                if our_type:
-                    # we have a global reference for this type...
-                    address = to_simplify['address']
-                    our_type['size'] = our_type.setdefault('size',0) + to_simplify['size']
-                    shared.setdefault(our_type['address'],[]).extend( 
-                        shared.get(address,()) 
-                    )
-                    child_referrers = shared.get(address,[])
-                    rewrite_refs( 
-                        child_referrers, 
-                        to_simplify['address'], our_type['address'], 
-                        index = index 
-                    )
-                    to_delete.add( address )
+    to_delete = set()
     
     for to_simplify in iterindex(index):
         if not isinstance( to_simplify, dict ):
@@ -236,14 +247,22 @@ def simplify_index( index, shared ):
                     if len(child_referrers) == 1:
                         to_simplify['refs'].extend(child['refs'])
                         to_simplify['size'] += child['size']
-                        # anything referencing module dict is now referencing module
-                        to_simplify['parents'].extend(child_referrers)
+                        # we were the only thing referencing dict, so we don't need to 
+                        # rework it's parent references (we don't want to be our own parent)
                         
                         rewrite_refs( 
                             child_referrers, 
                             child['address'], to_simplify['address'], 
                             index = index 
                         )
+                        # TODO: now rewrite grandchildren to point to root obj instead of dict
+                        for grandchild in child['refs']:
+                            parent_set = shared.get( grandchild, ())
+                            shared[grandchild] = rewrite_references( 
+                                parent_set, 
+                                child,
+                                to_simplify,
+                            )
                         to_delete.add( child['address'] )
     for item in to_delete:
         del index[item]
@@ -253,13 +272,14 @@ def simplify_index( index, shared ):
 
 
 
-class syntheticaddress( object ):
+class _syntheticaddress( object ):
     current = -1
     def __call__( self, target ):
         while self.current in target:
             self.current -= 1
         target[self.current] = True
         return self.current 
+new_address = _syntheticaddress()
 
 def iterindex( index ):
     for (k,v) in index.iteritems():
@@ -270,7 +290,6 @@ def iterindex( index ):
             yield v
 def load( filename ):
     index = {
-        None: syntheticaddress(),
     } # address: structure
     shared = dict() # address: [parent addresses,...]
     modules = set()
@@ -305,7 +324,7 @@ def load( filename ):
                     'module',
                 ]), size_info=size_info
             ))
-    root_address = index[None]( index )
+    root_address = new_address( index )
     module_info = [x for x in size_info.itervalues() if x['type'] == 'module']
     module_info.sort( key = lambda m: m.get('totsize',0))
     for module in module_info:
