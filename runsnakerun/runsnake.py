@@ -28,6 +28,7 @@ ID_BACK_VIEW = wx.NewId()
 ID_UP_VIEW = wx.NewId()
 ID_DEEPER_VIEW = wx.NewId()
 ID_SHALLOWER_VIEW = wx.NewId()
+ID_MORE_SQUARE = wx.NewId()
 
 PROFILE_VIEW_COLUMNS = [
     listviews.ColumnDefinition(
@@ -162,6 +163,7 @@ class MainFrame(wx.Frame):
     loader = None
     percentageView = False
     directoryView = False
+    memoryView = False
     historyIndex = -1
     activated_node = None
     selected_node = None
@@ -206,6 +208,7 @@ class MainFrame(wx.Frame):
             padding = 6,
             labels = True,
             adapter = self.adapter,
+            square_style = True,
         )
         self.tabs = wx.Notebook(
             self.rightSplitter,
@@ -261,7 +264,8 @@ class MainFrame(wx.Frame):
             squaremap.EVT_SQUARE_ACTIVATED(control, self.OnNodeActivated)
             squaremap.EVT_SQUARE_HIGHLIGHTED(control,
                                              self.OnSquareHighlightedList)
-
+        self.moreSquareViewItem.Check(self.squareMap.square_style)
+        
     def CreateMenuBar(self):
         """Create our menu-bar for triggering operations"""
         menubar = wx.MenuBar()
@@ -291,6 +295,10 @@ class MainFrame(wx.Frame):
             ID_UP_VIEW, _('&Up'),
             _('Go "up" to the parent of this node with the largest cummulative total')
         )
+        self.moreSquareViewItem = menu.AppendCheckItem(
+            ID_MORE_SQUARE, _('&Hierarchic Squares'),
+            _('Toggle hierarchic squares in the square-map view')
+        )
 
         # This stuff isn't really all that useful for profiling,
         # it's more about how to generate graphics to describe profiling...
@@ -314,6 +322,7 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, ID_SHALLOWER_VIEW, self.OnShallowerView)
         wx.EVT_MENU(self, ID_ROOT_VIEW, self.OnRootView)
         wx.EVT_MENU(self, ID_BACK_VIEW, self.OnBackView)
+        wx.EVT_MENU(self, ID_MORE_SQUARE, self.OnMoreSquareToggle)
 
     def CreateSourceWindow(self, tabs):
         """Create our source-view window for tabs"""
@@ -540,6 +549,12 @@ class MainFrame(wx.Frame):
         self.callerListControl.integrateRecords(self.adapter.parents( event.node) )
         #self.allCalleeListControl.integrateRecords(event.node.descendants())
         #self.allCallerListControl.integrateRecords(event.node.ancestors())
+    
+    def OnMoreSquareToggle( self, event ):
+        """Toggle the more-square view (better looking, but more likely to filter records)"""
+        self.squareMap.square_style = not self.squareMap.square_style
+        self.squareMap.Refresh()
+        self.moreSquareViewItem.Check(self.squareMap.square_style)
 
     restoringHistory = False
 
@@ -604,9 +619,7 @@ class MainFrame(wx.Frame):
         if self.memoryView:
             adapter = meliaeadapter.MeliaeAdapter()
             tree,rows = self.loader 
-            self.squareMap.square_style = True
         else:
-            self.squareMap.square_style = False
             if self.directoryView:
                 adapter = pstatsadapter.DirectoryViewAdapter()
                 tree = self.loader.location_tree
