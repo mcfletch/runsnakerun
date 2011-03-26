@@ -232,13 +232,12 @@ def simplify_index( index, shared ):
         to_simplify['parents'] = shared.get( to_simplify['address'], [] )
         if to_simplify['type'] in simplify_dicts:
             refs = to_simplify['refs']
-            to_simplify['refs'] = []
             for ref in refs:
                 child = index.get( ref )
                 if child is not None and child['type'] == 'dict':
                     child_referrers = shared.get(child['address'],[])
                     if len(child_referrers) == 1:
-                        to_simplify['refs'].extend(child['refs'])
+                        to_simplify['refs'] = child['refs']
                         to_simplify['size'] += child['size']
                         # we were the only thing referencing dict, so we don't need to 
                         # rework it's parent references (we don't want to be our own parent)
@@ -306,7 +305,7 @@ def load( filename, include_interpreter=False ):
         
         struct['root'] = root_ref
         struct['index'] = index_ref
-        
+
         refs = struct['refs']
         for ref in refs:
             parents = shared.get( ref )
@@ -400,6 +399,8 @@ class Ref(object):
 
 
 if __name__ == "__main__":
-    import cProfile, sys
-    cProfile.runctx( "load(sys.argv[1])", globals(),locals(),'melialoader.profile' )
+    import sys
+    load( sys.argv[1] )
+#    import cProfile, sys
+#    cProfile.runctx( "load(sys.argv[1])", globals(),locals(),'melialoader.profile' )
     
