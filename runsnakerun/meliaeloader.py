@@ -192,7 +192,7 @@ def simplify_core( index, shared ):
                 parent_ids = shared.get( to_simplify['address'])
                 raw_parents = [index.get(x) for x in parent_ids]
                 parents = [x for x in raw_parents if x]
-                if parents and len(parents) == 1:
+                if parents and len(parents) == len(raw_parents):
                     # all our parents are accounted for...
                     cost = to_simplify['size']/float(len(parents))
                     for parent in parents:
@@ -366,7 +366,7 @@ def load( filename, include_interpreter=False ):
         )
         raw_index = sum( [v.get('size') for v in iterindex( index )])
         log.error(
-            "References missing (i.e. not just bookkeeping/accounting errors): %s", raw_total - raw_index 
+            "References missing (i.e. interpreter filter): %s", raw_total - raw_index 
         )
 
     root['totsize'] = all_modules
