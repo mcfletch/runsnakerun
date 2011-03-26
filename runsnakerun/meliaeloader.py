@@ -299,6 +299,8 @@ def load( filename, include_interpreter=False ):
     root['root'] = root_ref 
     root['index'] = index_ref
     
+    raw_total = 0
+    
     for line in open( filename ):
         struct = json_loads( line.strip())
         index[struct['address']] = struct 
@@ -312,11 +314,12 @@ def load( filename, include_interpreter=False ):
             if parents is None:
                 shared[ref] = []
             shared[ref].append( struct['address'])
+        raw_total += struct['size']
         if struct['type'] == 'module':
             modules.add( struct['address'] )
     
     simplify_index( index,shared )
-          
+    
     modules = []
     for v in iterindex( index ):
         v['parents'] = shared.get( v['address'], [] )
@@ -355,6 +358,16 @@ def load( filename, include_interpreter=False ):
             del index[k]
 
     all_modules = sum([x.get('totsize',0) for x in modules],0)
+    
+    diff = raw_total - all_modules
+    if diff:
+        log.error(
+            "Lost %s bytes in processing dump", diff 
+        )
+        raw_index = sum( [v.get('size') for v in iterindex( index )])
+        log.error(
+            "References missing (i.e. not just bookkeeping/accounting errors): %s", raw_total - raw_index 
+        )
 
     root['totsize'] = all_modules
     root['rsize'] = all_modules
@@ -399,6 +412,8 @@ class Ref(object):
 
 
 if __name__ == "__main__":
+    import logging
+    logging.basicConfig( level=logging.DEBUG )
     import sys
     load( sys.argv[1] )
 #    import cProfile, sys
