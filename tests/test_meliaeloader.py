@@ -41,3 +41,23 @@ class MeliaTests( unittest.TestCase ):
             1:{'size': 10,'type':'moo','address':1,'refs':[],'parents':[3]},
         }, index
     
+    def test_group_children( self ):
+        """Do we group large numbers of children properly?"""
+        strings = [
+            {'size':1,'type':'str','address': i+12,'refs':[]}
+            for i in range( 10 )
+        ]
+        records = [
+            {'size': 10,'type':'moo','address':1,'refs':[s['address'] for s in strings]},
+            {'size': 1,'type':'dict','address':2,'refs':[1]},
+            {'size': 1,'type':'module','address':3,'refs':[2]},
+        ] + strings
+        index,shared = records_as_index( records )
+        meliaeloader.group_children( index, shared )
+        assert len(index) == 4, index # module, dict, moo, collection-of-strings
+        
+        new = index[-1]
+        assert len(new['refs']) == 0, new
+        assert new['type'] == '<many>', new
+        assert new['name'] == 'str', new
+    

@@ -14,6 +14,7 @@ Trees:
 """
 import logging, sys, weakref
 log = logging.getLogger( __name__ )
+from gettext import gettext as _
 try:
     from _meliaejson import loads as json_loads
 except ImportError, err:
@@ -102,6 +103,27 @@ def children_by_type( record, index, key='refs', stop_types=None ):
             }
         types[child['type']]['children'].append( child )
     return types.values()
+
+def children_types( record, index, key='refs', stop_types=None ):
+    """Produce dictionary mapping type-key to instances for all children"""
+    types = {}
+    for child in children( record, index, key, stop_types=stop_types ):
+        types.setdefault(child['type'],[]).append( child )
+    return types
+        
+
+#def remove_unreachable( modules, index, stop_types, already_seen=None, min_size=0 ):
+#    reachable = set()
+#    for module in modules:
+#        for record in recurse( 
+#            module, index, 
+#            stop_types=stop_types, 
+#            already_seen=already_seen, 
+#            type_group=True,
+#        ):
+#            reachable.add( record['address'] )
+#    for value in index.values():
+#        value['parents']
     
 
 def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, min_size=0 ):
@@ -176,6 +198,59 @@ def rewrite_references( sequence, old, new ):
             del sequence[i]
     return sequence
 
+def simple( child, shared, parent ):
+    """Return sub-set of children who are "simple" in the sense of group_children"""
+    return (
+        not child.get('refs',())
+        and (
+            not shared.get(child['address'])
+        or 
+            shared.get(child['address']) == [parent['address']]
+        )
+    )
+
+def group_children( index, shared, min_kids=10, stop_types=None, delete_children=True ):
+    """Collect like-type children into sub-groups of objects for objects with long children-lists
+    
+    Only group if:
+    
+        * there are more than X children of type Y
+        * children are "simple"
+            * individual children have no children themselves
+            * individual children have no other parents...
+    """
+    to_compress = []
+    
+    for to_simplify in list(iterindex( index )):
+        if not isinstance( to_simplify, dict ):
+            continue
+        for typ,kids in children_types( to_simplify, index, stop_types=stop_types ).items():
+            kids = [k for k in kids if k and simple(k,shared, to_simplify)]
+            if len(kids) >= min_kids:
+                # we can group and compress out...
+                to_compress.append( (to_simplify,typ,kids))
+    
+    for to_simplify,typ,kids in to_compress:
+        typ_address = new_address(index)
+        kid_addresses = [k['address'] for k in kids]
+        index[typ_address] = {
+            'address': typ_address,
+            'type': _('<many>'),
+            'name': typ,
+            'size': sum( [k.get('size',0) for k in kids], 0),
+        }
+        
+        shared[typ_address] = [to_simplify['address']]
+        to_simplify['refs'][:] = [typ_address]
+        
+        if delete_children:
+            for address in kid_addresses:
+                del index[address]
+                del shared[address]
+            index[typ_address]['refs'] = []
+        else:
+            index[typ_address]['refs'] = kid_addresses
+
 def simplify_core( index, shared ):
     """Eliminate "noise" records for core type (strs, ints, etc)"""
     compress_whole = set( ['int','long','str','unicode',] )
@@ -217,7 +292,6 @@ def simplify_index( index, shared ):
     
     module/type/class dictionaries
     """
-    #simplify_core( index, shared )
     
     # things which will have their dictionaries compressed out
     simplify_dicts = set( ['module','type','classobj'])
@@ -318,7 +392,12 @@ def load( filename, include_interpreter=False ):
         if struct['type'] == 'module':
             modules.add( struct['address'] )
     
+    stop_types = set([
+        'module',
+    ])
+    
     simplify_index( index,shared )
+    group_children( index, shared, min_kids=10, stop_types=stop_types )
     
     modules = []
     for v in iterindex( index ):
@@ -329,9 +408,7 @@ def load( filename, include_interpreter=False ):
     records = []
     for m in modules:
         recurse_module(
-            m, index, shared, stop_types=set([
-                'module',
-            ])
+            m, index, shared, stop_types=stop_types
         )
     modules.sort( key = lambda m: m.get('totsize',0))
     for module in modules:
