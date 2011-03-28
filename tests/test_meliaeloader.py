@@ -13,20 +13,6 @@ def records_as_index( records ):
     return index, shared
 
 class MeliaTests( unittest.TestCase ):
-    def test_reduce_core( self ):
-        """Do we share core-objects properly into parents"""
-        records = [
-            {'size': 10,'type':'str','address':1,'refs':[]},
-            {'size': 1,'type':'moo','address':2,'refs':[1]},
-            {'size': 1,'type':'moo','address':3,'refs':[1]},
-        ]
-        index,shared = records_as_index( records )
-        meliaeloader.simplify_core( index, shared )
-        assert index == {
-            2:{'size': 6,'type':'moo','address':2,'refs':[]},
-            3:{'size': 6,'type':'moo','address':3,'refs':[]},
-        }, index
-    
     def test_simplify_index( self ):
         """Do we remove __dict__ items properly?"""
         records = [
@@ -74,7 +60,7 @@ class MeliaTests( unittest.TestCase ):
         meliaeloader.recurse_module( 
             index[3], 
             index, 
-            shared, stop_types=set(['module']), 
+            shared,
         )
         assert index[3]['totsize'] == 22, index[3]['totsize']
     def test_recursive_shared( self ):
@@ -89,11 +75,17 @@ class MeliaTests( unittest.TestCase ):
         ]
         index,shared = records_as_index( records )
         meliaeloader.bind_parents( index, shared )
+        
+        loops = list( meliaeloader.find_loops( index[6], index ) )
+        assert len(loops) == 1, loops 
+        loop = loops[0]
+        assert set(loop) == set([1,4]), loop
+        
         for module in [3,6]:
             meliaeloader.recurse_module( 
                 index[module], 
                 index, 
-                shared, stop_types=set(['module']), 
+                shared,
             )
             assert index[module]['totsize'] == 12, index[module]['totsize']
         

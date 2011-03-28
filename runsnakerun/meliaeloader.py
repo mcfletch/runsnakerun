@@ -24,7 +24,9 @@ except ImportError, err:
         from simplejson import loads as json_loads
 import sys
 
-def recurse( record, index, stop_types=None,already_seen=None, type_group=False ):
+STOP_TYPES = set(['module'])
+
+def recurse( record, index, stop_types=STOP_TYPES,already_seen=None, type_group=False ):
     """Depth first traversal of a tree, all children are yielded before parent
     
     record -- dictionary record to be recursed upon 
@@ -36,8 +38,6 @@ def recurse( record, index, stop_types=None,already_seen=None, type_group=False 
     """
     if already_seen is None:
         already_seen = set()
-    if stop_types is None:
-        stop_types = set()
     if record['address'] not in already_seen:
         already_seen.add(record['address'])
         if 'refs' in record:
@@ -54,7 +54,23 @@ def recurse( record, index, stop_types=None,already_seen=None, type_group=False 
                         yield descendant
         yield record 
 
-def children( record, index, key='refs', stop_types=None ):
+def find_loops( record, index, stop_types = STOP_TYPES, open=None ):
+    """Find all loops within the index and replace with loop records"""
+    if open is None:
+        open = []
+    initial_open = len(open)
+    open.append( record['address'] )
+    for child in children( record, index, stop_types = stop_types ):
+        if child['address'] in open:
+            # loop has been found 
+            start = open.index( child['address'] )
+            yield open[start:]
+        else:
+            for loop in find_loops( child, index, stop_types=stop_types, open=open ):
+                yield loop 
+    del open[initial_open:]
+
+def children( record, index, key='refs', stop_types=STOP_TYPES ):
     """Retrieve children records for given record"""
     result = []
     for ref in record.get( key,[]):
@@ -70,7 +86,7 @@ def children( record, index, key='refs', stop_types=None ):
                 result.append(  record  )
     return result
 
-def children_types( record, index, key='refs', stop_types=None ):
+def children_types( record, index, key='refs', stop_types=STOP_TYPES ):
     """Produce dictionary mapping type-key to instances for all children"""
     types = {}
     for child in children( record, index, key, stop_types=stop_types ):
@@ -78,7 +94,7 @@ def children_types( record, index, key='refs', stop_types=None ):
     return types
         
 
-def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, min_size=0 ):
+def recurse_module( overall_record, index, shared, stop_types=STOP_TYPES, already_seen=None, min_size=0 ):
     """Creates a has-a recursive-cost hierarchy
     
     Mutates objects in-place to produce a hierarchy of memory usage based on 
@@ -161,7 +177,7 @@ def simple( child, shared, parent ):
         )
     )
 
-def group_children( index, shared, min_kids=10, stop_types=None, delete_children=True ):
+def group_children( index, shared, min_kids=10, stop_types=STOP_TYPES, delete_children=True ):
     """Collect like-type children into sub-groups of objects for objects with long children-lists
     
     Only group if:
@@ -251,7 +267,7 @@ def simplify_index( index, shared ):
     
     return index
 
-def find_reachable( modules, index, shared, stop_types=None ):
+def find_reachable( modules, index, shared, stop_types=STOP_TYPES ):
     """Find the set of all reachable objects from given root nodes (modules)"""
     reachable = set()
     for module in modules:
@@ -342,16 +358,12 @@ def load( filename, include_interpreter=False ):
         if struct['type'] == 'module':
             modules.add( struct['address'] )
     
-    stop_types = set([
-        'module',
-    ])
-    
     modules = [index[addr] for addr in modules]
     
     
     initial = index_size( index )
     
-    reachable = find_reachable( modules, index, shared, stop_types=stop_types )
+    reachable = find_reachable( modules, index, shared )
     deparent_unreachable( reachable, shared )
     
     new = index_size( index )
@@ -369,7 +381,7 @@ def load( filename, include_interpreter=False ):
     new = index_size( index )
     assert initial == new, (initial,new)
 
-    group_children( index, shared, min_kids=10, stop_types=stop_types )
+    group_children( index, shared, min_kids=10 )
 
     new = index_size( index )
     assert initial == new, (initial,new)
@@ -377,7 +389,7 @@ def load( filename, include_interpreter=False ):
     records = []
     for m in modules:
         recurse_module(
-            m, index, shared, stop_types=stop_types
+            m, index, shared
         )
         new = index_size( index )
         assert initial == new, (initial,new)
@@ -428,9 +440,7 @@ def find_roots( disconnected, index, shared ):
     log.warn( '%s objects with no parents at all' ,len(natural_roots))
     for natural_root in natural_roots:
         recurse_module(
-            natural_root, index, shared, stop_types=set([
-                'module',
-            ])
+            natural_root, index, shared
         )
         yield natural_root
     rest = [x for x in disconnected if x.get( 'totsize' ) is None]
