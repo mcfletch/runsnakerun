@@ -78,20 +78,6 @@ def children_types( record, index, key='refs', stop_types=None ):
     return types
         
 
-#def remove_unreachable( modules, index, stop_types, already_seen=None, min_size=0 ):
-#    reachable = set()
-#    for module in modules:
-#        for record in recurse( 
-#            module, index, 
-#            stop_types=stop_types, 
-#            already_seen=already_seen, 
-#            type_group=True,
-#        ):
-#            reachable.add( record['address'] )
-#    for value in index.values():
-#        value['parents']
-    
-
 def recurse_module( overall_record, index, shared, stop_types=None, already_seen=None, min_size=0 ):
     """Creates a has-a recursive-cost hierarchy
     
@@ -216,39 +202,6 @@ def group_children( index, shared, min_kids=10, stop_types=None, delete_children
             index[typ_address]['refs'] = []
         else:
             index[typ_address]['refs'] = kid_addresses
-
-def simplify_core( index, shared ):
-    """Eliminate "noise" records for core type (strs, ints, etc)"""
-    compress_whole = set( ['int','long','str','unicode',] )
-    to_delete = set()
-    # compress out objects which are to be entirely compressed
-    # things which will be eliminated add their uniqueness to their parents
-    for to_simplify in iterindex(index):
-        if not isinstance( to_simplify, dict ):
-            continue
-        if to_simplify['type'] in compress_whole:
-            # don't compress out these values if they hold references to something...
-            if not to_simplify['refs']:
-                # okay, so we are "just data", add our uniqueness to our parent...
-                parent_ids = shared.get( to_simplify['address'])
-                raw_parents = [index.get(x) for x in parent_ids]
-                parents = [x for x in raw_parents if x]
-                if parents and len(parents) == len(raw_parents):
-                    # all our parents are accounted for...
-                    cost = to_simplify['size']/float(len(parents))
-                    for parent in parents:
-                        parent['size'] = parent['size'] + cost 
-                    rewrite_refs( 
-                        parents, 
-                        to_simplify['address'], None, 
-                        index = index 
-                    )
-                    to_delete.add( to_simplify['address'] )
-    
-    for item in to_delete:
-        del index[item]
-        del shared[item]
-    
 
 def simplify_index( index, shared ):
     """Eliminate "noise" records from the index 
