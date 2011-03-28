@@ -88,30 +88,31 @@ def promote_loops( loops, index, shared ):
             addr for addr in sum([shared.get(addr,[]) for addr in loop],[])
             if addr not in loop 
         ]))
-        loop_addr = new_address( index )
-        shared[loop_addr] = external_parents
-        loop_record = index[loop_addr] = {
-            'address': loop_addr,
-            'refs': loop,
-            'parents': external_parents,
-            'type': _('<loop>'),
-            'size': 0,
-        }
-        for member in members:
-            # member's references must *not* point to loop...
-            member['refs'] = [
-                ref for ref in member['refs']
-                if ref not in loop 
-            ]
-            # member's parents are *just* the loop
-            member['parents'][:] = [loop_addr]
-        # each referent to loop holds a single reference to the loop rather than many to children
-        for parent in external_parents:
-            parent = index[parent]
+        if len(external_parents) > 1:
+            # we haven't already been looped...
+            loop_addr = new_address( index )
+            shared[loop_addr] = external_parents
+            loop_record = index[loop_addr] = {
+                'address': loop_addr,
+                'refs': loop,
+                'parents': external_parents,
+                'type': _('<loop>'),
+                'size': 0,
+            }
             for member in members:
-                rewrite_references( parent['refs'], member['address'], None )
-            parent['refs'].append( loop_addr )
-        
+                # member's references must *not* point to loop...
+                member['refs'] = [
+                    ref for ref in member['refs']
+                    if ref not in loop 
+                ]
+                # member's parents are *just* the loop
+                member['parents'][:] = [loop_addr]
+            # each referent to loop holds a single reference to the loop rather than many to children
+            for parent in external_parents:
+                parent = index[parent]
+                for member in members:
+                    rewrite_references( parent['refs'], member['address'], None )
+                parent['refs'].append( loop_addr )
 
 def children( record, index, key='refs', stop_types=STOP_TYPES ):
     """Retrieve children records for given record"""
