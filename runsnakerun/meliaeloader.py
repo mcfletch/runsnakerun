@@ -332,6 +332,24 @@ def simplify_index( index, shared ):
     
     return index
 
+def deparent_unreachable( modules, index, shared, stop_types=None ):
+    """Eliminate all parent-links to unreachable objects from reachable objects"""
+    reachable = set()
+    for module in modules:
+        for child in recurse( module, index, stop_types=stop_types):
+            reachable.add( child['address'] )
+    all = set( index.keys())
+    unreachable = all - reachable
+    for id,shares in shared.iteritems():
+        if id in reachable:
+            filtered = [
+                x 
+                for x in shares 
+                if x not in unreachable 
+            ]
+            if len(filtered) != len(shares):
+                print 'Removed %s unreachable parents:', len(shares) - len(filtered)
+                shares[:] = filtered
 
 
 class _syntheticaddress( object ):
@@ -396,14 +414,15 @@ def load( filename, include_interpreter=False ):
         'module',
     ])
     
-    simplify_index( index,shared )
-    group_children( index, shared, min_kids=10, stop_types=stop_types )
-    
     modules = []
     for v in iterindex( index ):
         v['parents'] = shared.get( v['address'], [] )
         if v['type'] == 'module':
             modules.append( v )
+    
+    deparent_unreachable( modules, index, shared, stop_types=stop_types )
+    simplify_index( index,shared )
+    group_children( index, shared, min_kids=10, stop_types=stop_types )
     
     records = []
     for m in modules:
