@@ -41,25 +41,12 @@ def recurse( record, index, stop_types=None,already_seen=None, type_group=False 
     if record['address'] not in already_seen:
         already_seen.add(record['address'])
         if 'refs' in record:
-            if type_group and False:
-                for typ in children_by_type( record, index, stop_types=stop_types ):
-                    if typ['name'] not in stop_types:
-                        for child in typ['children']:
-                            for descendant in recurse( 
-                                child, index, stop_types, 
-                                already_seen=already_seen, type_group=type_group,
-                            ):
-                                if descendant['type'] not in stop_types:
-                                    yield descendant
-                        if len(typ['children']) > 5:
-                            yield typ 
-            else:
-                for child in children( record, index, stop_types=stop_types ):
-                    for descendant in recurse( 
-                        child, index, stop_types, 
-                        already_seen=already_seen, type_group=type_group,
-                    ):
-                        yield descendant
+            for child in children( record, index, stop_types=stop_types ):
+                for descendant in recurse( 
+                    child, index, stop_types, 
+                    already_seen=already_seen, type_group=type_group,
+                ):
+                    yield descendant
         yield record 
 
 def children( record, index, key='refs', stop_types=None ):
@@ -77,32 +64,6 @@ def children( record, index, key='refs', stop_types=None ):
             if (not stop_types) or (record['type'] not in stop_types):
                 result.append(  record  )
     return result
-
-def children_by_type( record, index, key='refs', stop_types=None ):
-    """Get children grouped by type 
-    
-    returns (typ,[children]) for all children 
-    """
-    types = {}
-    for child in children( record, index, key, stop_types=stop_types ):
-        if child['type'] not in types:
-            typ = index.get( child['type'] )
-            if typ is None:
-                typ = {
-                    'address':new_address(index),
-                    'type': child['type'],
-                }
-            index[typ['address']] = types[child['type']] = typ = {
-                'address': typ['address'],
-                'type': 'type',
-                'name': child['type'],
-                'size': 0, # just a collection here...
-                'parents': [record['address']],
-                'children': [],
-                'refs': [],
-            }
-        types[child['type']]['children'].append( child )
-    return types.values()
 
 def children_types( record, index, key='refs', stop_types=None ):
     """Produce dictionary mapping type-key to instances for all children"""
@@ -332,25 +293,26 @@ def simplify_index( index, shared ):
     
     return index
 
-def deparent_unreachable( modules, index, shared, stop_types=None ):
-    """Eliminate all parent-links to unreachable objects from reachable objects"""
+def find_reachable( modules, index, shared, stop_types=None ):
+    """Find the set of all reachable objects from given root nodes (modules)"""
     reachable = set()
     for module in modules:
         for child in recurse( module, index, stop_types=stop_types):
             reachable.add( child['address'] )
-    all = set( index.keys())
-    unreachable = all - reachable
+    return reachable
+
+def deparent_unreachable( reachable, shared ):
+    """Eliminate all parent-links from unreachable objects from reachable objects
+    """
     for id,shares in shared.iteritems():
-        if id in reachable:
+        if id in reachable: # child is reachable
             filtered = [
                 x 
                 for x in shares 
-                if x not in unreachable 
+                if x in reachable # only those parents which are reachable
             ]
             if len(filtered) != len(shares):
-                print 'Removed %s unreachable parents:', len(shares) - len(filtered)
                 shares[:] = filtered
-
 
 class _syntheticaddress( object ):
     current = -1
@@ -420,7 +382,8 @@ def load( filename, include_interpreter=False ):
         if v['type'] == 'module':
             modules.append( v )
     
-    deparent_unreachable( modules, index, shared, stop_types=stop_types )
+    reachable = find_reachable( modules, index, shared, stop_types=stop_types )
+    deparent_unreachable( reachable, shared )
     simplify_index( index,shared )
     group_children( index, shared, min_kids=10, stop_types=stop_types )
     
@@ -432,7 +395,14 @@ def load( filename, include_interpreter=False ):
     modules.sort( key = lambda m: m.get('totsize',0))
     for module in modules:
         module['parents'].append( root_address )
-    
+
+    unreachable = sum([
+        v.get( 'size' )
+        for v in iterindex( index )
+        if (v['address'] > 0 and v['address'] not in reachable)
+    ], 0 )
+    print '%s bytes are unreachable from modules'%( unreachable )
+
     if include_interpreter:
         # Meliae produces quite a few of these un-referenced records, they aren't normally useful AFAICS
         # reachable from any module, but are present in the dump...
@@ -455,15 +425,6 @@ def load( filename, include_interpreter=False ):
 
     all_modules = sum([x.get('totsize',0) for x in modules],0)
     
-    diff = raw_total - all_modules
-    if diff:
-        log.error(
-            "Lost %s bytes in processing dump", diff 
-        )
-        raw_index = sum( [v.get('size') for v in iterindex( index )])
-        log.error(
-            "References missing (i.e. interpreter filter): %s", raw_total - raw_index 
-        )
 
     root['totsize'] = all_modules
     root['rsize'] = all_modules
