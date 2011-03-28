@@ -323,6 +323,12 @@ class _syntheticaddress( object ):
         return self.current 
 new_address = _syntheticaddress()
 
+def index_size( index ):
+    return sum([
+        v.get('size',0)
+        for v in iterindex( index )
+    ],0)
+
 def iterindex( index ):
     for (k,v) in index.iteritems():
         if (
@@ -382,26 +388,43 @@ def load( filename, include_interpreter=False ):
         if v['type'] == 'module':
             modules.append( v )
     
+    initial = index_size( index )
+    
     reachable = find_reachable( modules, index, shared, stop_types=stop_types )
     deparent_unreachable( reachable, shared )
-    simplify_index( index,shared )
-    group_children( index, shared, min_kids=10, stop_types=stop_types )
     
+    new = index_size( index )
+    assert initial == new, (initial,new)
+    
+    unreachable = sum([
+        v.get( 'size' )
+        for v in iterindex( index )
+        if v['address'] not in reachable
+    ], 0 )
+    print '%s bytes are unreachable from modules'%( unreachable )
+
+    simplify_index( index,shared )
+
+    new = index_size( index )
+    assert initial == new, (initial,new)
+
+    group_children( index, shared, min_kids=10, stop_types=stop_types )
+
+    new = index_size( index )
+    assert initial == new, (initial,new)
+
     records = []
     for m in modules:
         recurse_module(
             m, index, shared, stop_types=stop_types
         )
+        new = index_size( index )
+        assert initial == new, (initial,new)
+        
     modules.sort( key = lambda m: m.get('totsize',0))
     for module in modules:
         module['parents'].append( root_address )
 
-    unreachable = sum([
-        v.get( 'size' )
-        for v in iterindex( index )
-        if (v['address'] > 0 and v['address'] not in reachable)
-    ], 0 )
-    print '%s bytes are unreachable from modules'%( unreachable )
 
     if include_interpreter:
         # Meliae produces quite a few of these un-referenced records, they aren't normally useful AFAICS
@@ -425,6 +448,7 @@ def load( filename, include_interpreter=False ):
 
     all_modules = sum([x.get('totsize',0) for x in modules],0)
     
+    assert all_modules + unreachable == initial, (all_modules, unreachable, initial, unreachable+initial )
 
     root['totsize'] = all_modules
     root['rsize'] = all_modules
