@@ -43,15 +43,11 @@ def recurse( record, index, stop_types=STOP_TYPES,already_seen=None, type_group=
         if 'refs' in record:
             for child in children( record, index, stop_types=stop_types ):
                 if child['address'] not in already_seen:
-                    try:
-                        for descendant in recurse( 
-                            child, index, stop_types, 
-                            already_seen=already_seen, type_group=type_group,
-                        ):
-                            yield descendant
-                    except RuntimeError, err:
-                        import pdb
-                        pdb.set_trace()
+                    for descendant in recurse( 
+                        child, index, stop_types, 
+                        already_seen=already_seen, type_group=type_group,
+                    ):
+                        yield descendant
         yield record 
 
 def find_loops( record, index, stop_types = STOP_TYPES, open=None, seen = None ):
@@ -124,7 +120,8 @@ def children( record, index, key='refs', stop_types=STOP_TYPES ):
             else:
                 record = index[ref]
         except KeyError, err:
-            print 'no record for %s address'%(key,), ref 
+            #print 'No record for %s address %s in %s'%(key, ref, record['address'] )
+            pass # happens when an unreachable references a reachable that has been compressed out...
         else:
             if (not stop_types) or (record['type'] not in stop_types):
                 result.append(  record  )
@@ -265,8 +262,17 @@ def group_children( index, shared, min_kids=10, stop_types=STOP_TYPES, delete_ch
         else:
             index[typ_address]['refs'] = kid_addresses
 
-def simplify_index( index, shared ):
-    """Eliminate "noise" records from the index 
+# Types which *can* have their dictionaries compressed out
+SIMPLIFY_DICTS = set( ['module','type','classobj'])
+# Types which will *always* have their dictionaries compressed out,
+# even if there are multiple references to the dictionary, these values 
+# should *only* ever be part of STOP_TYPES, as their size contributions 
+# will be lost (STOP_TYPES make no contribution)
+ALWAYS_COMPRESS_DICTS = set( ['module'] )
+
+
+def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compress=ALWAYS_COMPRESS_DICTS ):
+    """Eliminate "noise" dictionary records from the index 
     
     index -- overall index of objects (including metadata such as type records)
     shared -- parent-count mapping for records in index
@@ -275,29 +281,26 @@ def simplify_index( index, shared ):
     """
     
     # things which will have their dictionaries compressed out
-    simplify_dicts = set( ['module','type','classobj'])
     
     to_delete = set()
     
     for to_simplify in iterindex(index):
-        if not isinstance( to_simplify, dict ):
-            continue
         if to_simplify['address'] in to_delete:
             continue 
-        to_simplify['parents'] = shared.get( to_simplify['address'], [] )
-        if to_simplify['type'] in simplify_dicts:
+        if to_simplify['type'] in simplify_dicts and not 'compressed' in to_simplify:
             refs = to_simplify['refs']
             for ref in refs:
                 child = index.get( ref )
                 if child is not None and child['type'] == 'dict':
                     child_referrers = shared.get(child['address'],[])
-                    if len(child_referrers) == 1:
+                    if len(child_referrers) == 1 or to_simplify['type'] in always_compress:
+                        to_simplify['compressed'] = True
                         to_simplify['refs'] = child['refs']
                         to_simplify['size'] += child['size']
-                        # we were the only thing referencing dict, so we don't need to 
-                        # rework it's parent references (we don't want to be our own parent)
+                        # rewrite anything that was pointing to child to point to us...
+                        rewrite_refs( child_referrers, child['address'],to_simplify['address'], index)
                         
-                        # TODO: now rewrite grandchildren to point to root obj instead of dict
+                        # now rewrite grandchildren to point to root obj instead of dict
                         for grandchild in child['refs']:
                             parent_set = shared.get( grandchild, ())
                             if parent_set:
@@ -418,7 +421,7 @@ def load( filename, include_interpreter=False ):
 #    ], 0 )
 #    print '%s bytes are unreachable from modules'%( unreachable )
 
-    simplify_index( index,shared )
+    simplify_dicts( index,shared )
 
     group_children( index, shared, min_kids=10 )
 
