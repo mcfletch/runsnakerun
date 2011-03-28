@@ -24,6 +24,10 @@ except ImportError, err:
         from simplejson import loads as json_loads
 import sys
 
+LOOP_TYPE = _('<loop>')
+MANY_TYPE = _('<many>')
+NON_MODULE_REFS = _('<non-module-references>')
+
 STOP_TYPES = set(['module'])
 
 def recurse( record, index, stop_types=STOP_TYPES,already_seen=None, type_group=False ):
@@ -57,7 +61,7 @@ def find_loops( record, index, stop_types = STOP_TYPES, open=None, seen = None )
     if seen is None:
         seen = set()
     for child in children( record, index, stop_types = stop_types ):
-        if child['type'] in stop_types or child['type'] == '<loop>':
+        if child['type'] in stop_types or child['type'] == LOOP_TYPE:
             continue
         if child['address'] in open:
             # loop has been found 
@@ -84,7 +88,12 @@ def promote_loops( loops, index, shared ):
             addr for addr in sum([shared.get(addr,[]) for addr in loop],[])
             if addr not in loop 
         ]))
-        if len(external_parents) > 1:
+        if external_parents:
+            if len(external_parents) == 1:
+                # potentially a loop that's been looped...
+                parent = index.get( external_parents[0] )
+                if parent['type'] == LOOP_TYPE:
+                    continue 
             # we haven't already been looped...
             loop_addr = new_address( index )
             shared[loop_addr] = external_parents
@@ -92,7 +101,7 @@ def promote_loops( loops, index, shared ):
                 'address': loop_addr,
                 'refs': loop,
                 'parents': external_parents,
-                'type': _('<loop>'),
+                'type': LOOP_TYPE,
                 'size': 0,
             }
             for member in members:
@@ -151,7 +160,7 @@ def recurse_module( overall_record, index, shared, stop_types=STOP_TYPES, alread
         if record.get('totsize') is not None:
             continue 
         rinfo = record 
-        rinfo['module'] = overall_record.get('name','<non-module-references>' )
+        rinfo['module'] = overall_record.get('name',NON_MODULE_REFS )
         if not record['refs']:
             rinfo['rsize'] = 0
             rinfo['children'] = []
@@ -248,7 +257,7 @@ def group_children( index, shared, min_kids=10, stop_types=STOP_TYPES, delete_ch
         kid_addresses = [k['address'] for k in kids]
         index[typ_address] = {
             'address': typ_address,
-            'type': _('<many>'),
+            'type': MANY_TYPE,
             'name': typ,
             'size': sum( [k.get('size',0) for k in kids], 0),
         }
@@ -302,11 +311,21 @@ def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compres
                 if child is not None and child['type'] == 'dict':
                     child_referrers = shared.get(child['address'],[])
                     if len(child_referrers) == 1 or to_simplify['type'] in always_compress:
+                        
                         to_simplify['compressed'] = True
                         to_simplify['refs'] = child['refs']
                         to_simplify['size'] += child['size']
-                        # rewrite anything that was pointing to child to point to us...
-                        rewrite_refs( child_referrers, child['address'],to_simplify['address'], index, single_ref=True)
+                        
+                        # rewrite anything *else* that was pointing to child to point to us...
+                        while to_simplify['address'] in child_referrers:
+                            child_referrers.remove( to_simplify['address'] )
+                        if child_referrers:
+                            rewrite_refs( 
+                                child_referrers, 
+                                child['address'],
+                                to_simplify['address'], 
+                                index, single_ref=True
+                            )
                         
                         # now rewrite grandchildren to point to root obj instead of dict
                         for grandchild in child['refs']:
