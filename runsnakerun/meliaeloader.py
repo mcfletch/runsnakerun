@@ -61,7 +61,7 @@ def find_loops( record, index, stop_types = STOP_TYPES, open=None, seen = None )
     if seen is None:
         seen = set()
     for child in children( record, index, stop_types = stop_types ):
-        if child['type'] in stop_types:
+        if child['type'] in stop_types or child['type'] == '<loop>':
             continue
         if child['address'] in open:
             # loop has been found 
