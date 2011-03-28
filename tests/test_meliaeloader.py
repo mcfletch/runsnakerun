@@ -48,7 +48,30 @@ class MeliaeTests( unittest.TestCase ):
         assert new['type'] == '<many>', new
         assert new['name'] == 'str', new
         assert len(new['parents']) == 1, new
-    
+
+    def test_group_module_children( self ):
+        """Do we group large numbers of children properly?"""
+        strings = [
+            {'size':1,'type':'str','address': i+12,'refs':[]}
+            for i in range( 10 )
+        ]
+        records = [
+            {'size': 1,'type':'dict','address':2,'refs':[s['address'] for s in strings]},
+            {'size': 1,'type':'module','address':3,'refs':[2]},
+        ] + strings
+        index,shared = records_as_index( records )
+        meliaeloader.bind_parents( index, shared )
+        meliaeloader.group_children( index, shared )
+        meliaeloader.simplify_dicts( index, shared )
+        assert len(index) == 2, index # module, collection-of-strings
+        
+        new = index[-1]
+        assert len(new['refs']) == 0, new
+        assert new['type'] == '<many>', new
+        assert new['name'] == 'str', new
+        assert len(new['parents']) == 1, new
+        assert new['parents'] == [3], new
+
     def test_recursive( self ):
         """Do we account for recursive structures properly?"""
         records = [

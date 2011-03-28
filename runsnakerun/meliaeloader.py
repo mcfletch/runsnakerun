@@ -310,7 +310,7 @@ def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compres
             for ref in refs:
                 child = index.get( ref )
                 if child is not None and child['type'] == 'dict':
-                    child_referrers = shared.get(child['address'],[])
+                    child_referrers = child['parents'][:]
                     if len(child_referrers) == 1 or to_simplify['type'] in always_compress:
                         
                         to_simplify['compressed'] = True
@@ -330,7 +330,8 @@ def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compres
                         
                         # now rewrite grandchildren to point to root obj instead of dict
                         for grandchild in child['refs']:
-                            parent_set = shared.get( grandchild, ())
+                            grandchild = index[grandchild]
+                            parent_set = grandchild['parents']
                             if parent_set:
                                 rewrite_references( 
                                     parent_set, 
@@ -394,6 +395,12 @@ def bind_parents( index, shared ):
     """Set parents on all items in index"""
     for v in iterindex( index ):
         v['parents'] = shared.get( v['address'], [] )
+
+
+def check_parents( index, reachable ):
+    for item in iterindex( index ):
+        if item['type'] == '<many>':
+            print 'parents', item['parents']
 
 def load( filename, include_interpreter=False ):
     index = {
@@ -494,6 +501,10 @@ def load( filename, include_interpreter=False ):
     root['rsize'] = all_modules
     root['size'] = 0
     root['children'] = modules
+
+    for item in iterindex( index ):
+        item['root'] = root_ref
+        item['index'] = index_ref
     
     return root, index
 

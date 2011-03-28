@@ -81,7 +81,8 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         """Retrieve/calculate the set of parents for the given node"""
         if 'index' in node:
             index = node['index']()
-            return list(meliaeloader.children( node, index, 'parents' ))
+            parents = list(meliaeloader.children( node, index, 'parents' ))
+            return parents 
         return []
 
     color_mapping = None
