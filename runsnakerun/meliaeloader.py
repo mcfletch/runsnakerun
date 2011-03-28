@@ -203,6 +203,8 @@ def rewrite_references( sequence, old, new, single_ref=False ):
                 sequence[i] = new 
                 if single_ref:
                     new = None
+        elif n == new and single_ref:
+            new = None
     if to_delete:
         to_delete.reverse()
         for i in to_delete:
@@ -256,8 +258,14 @@ def group_children( index, shared, min_kids=10, stop_types=STOP_TYPES, delete_ch
         
         if delete_children:
             for address in kid_addresses:
-                del index[address]
-                del shared[address]
+                try:
+                    del index[address]
+                except KeyError, err: 
+                    pass # already compressed out
+                try:
+                    del shared[address]
+                except KeyError, err:
+                    pass # already compressed out
             index[typ_address]['refs'] = []
         else:
             index[typ_address]['refs'] = kid_addresses
@@ -298,7 +306,7 @@ def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compres
                         to_simplify['refs'] = child['refs']
                         to_simplify['size'] += child['size']
                         # rewrite anything that was pointing to child to point to us...
-                        rewrite_refs( child_referrers, child['address'],to_simplify['address'], index)
+                        rewrite_refs( child_referrers, child['address'],to_simplify['address'], index, single_ref=True)
                         
                         # now rewrite grandchildren to point to root obj instead of dict
                         for grandchild in child['refs']:
@@ -308,6 +316,7 @@ def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compres
                                     parent_set, 
                                     child,
                                     to_simplify,
+                                    single_ref = True,
                                 )
                         to_delete.add( child['address'] )
     for item in to_delete:
