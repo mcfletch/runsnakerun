@@ -42,33 +42,76 @@ def recurse( record, index, stop_types=STOP_TYPES,already_seen=None, type_group=
         already_seen.add(record['address'])
         if 'refs' in record:
             for child in children( record, index, stop_types=stop_types ):
-                if child['address'] in already_seen:
-                    # break the loop, and charge parents full-rate
-                    child['parents'].remove( record['address'] )
-                    child.setdefault( 'recursive_parents',[]).append( record['address'] )
-                else:
-                    for descendant in recurse( 
-                        child, index, stop_types, 
-                        already_seen=already_seen, type_group=type_group,
-                    ):
-                        yield descendant
+                if child['address'] not in already_seen:
+                    try:
+                        for descendant in recurse( 
+                            child, index, stop_types, 
+                            already_seen=already_seen, type_group=type_group,
+                        ):
+                            yield descendant
+                    except RuntimeError, err:
+                        import pdb
+                        pdb.set_trace()
         yield record 
 
-def find_loops( record, index, stop_types = STOP_TYPES, open=None ):
+def find_loops( record, index, stop_types = STOP_TYPES, open=None, seen = None ):
     """Find all loops within the index and replace with loop records"""
     if open is None:
         open = []
-    initial_open = len(open)
-    open.append( record['address'] )
+    if seen is None:
+        seen = set()
     for child in children( record, index, stop_types = stop_types ):
+        if child['type'] in stop_types:
+            continue
         if child['address'] in open:
             # loop has been found 
             start = open.index( child['address'] )
-            yield open[start:]
+            new = frozenset( open[start:] )
+            if new not in seen:
+                seen.add(new)
+                yield new
+        elif child['address'] in seen:
+            continue 
         else:
-            for loop in find_loops( child, index, stop_types=stop_types, open=open ):
+            seen.add( child['address'])
+            open.append( child['address'] )
+            for loop in find_loops( child, index, stop_types=stop_types, open=open, seen=seen ):
                 yield loop 
-    del open[initial_open:]
+            open.pop( -1 )
+
+def promote_loops( loops, index, shared ):
+    """Turn loops into "objects" that can be processed normally"""
+    for loop in loops:
+        loop = list(loop)
+        members = [index[addr] for addr in loop]
+        external_parents = list(set([
+            addr for addr in sum([shared.get(addr,[]) for addr in loop],[])
+            if addr not in loop 
+        ]))
+        loop_addr = new_address( index )
+        shared[loop_addr] = external_parents
+        loop_record = index[loop_addr] = {
+            'address': loop_addr,
+            'refs': loop,
+            'parents': external_parents,
+            'type': _('<loop>'),
+            'size': 0,
+        }
+        for member in members:
+            # member's references must *not* point to loop...
+            member['refs'] = [
+                ref for ref in member['refs']
+                if ref not in loop 
+            ]
+            # member's parents are *just* the loop
+            member['parents'][:] = [loop_addr]
+        # each referent to loop holds a single reference to the loop rather than many to children
+        for parent in external_parents:
+            parent = index[parent]
+            for member in members:
+                rewrite_references( parent['refs'], member['address'], None )
+            parent['refs'].append( loop_addr )
+        
 
 def children( record, index, key='refs', stop_types=STOP_TYPES ):
     """Retrieve children records for given record"""
@@ -133,7 +176,7 @@ def as_id( x ):
     else:
         return x
 
-def rewrite_refs( targets, old,new, index, key='refs' ):
+def rewrite_refs( targets, old,new, index, key='refs', single_ref=False ):
     """Rewrite key in all targets (from index if necessary) to replace old with new"""
     for parent in targets:
         if not isinstance( parent, dict ):
@@ -141,9 +184,9 @@ def rewrite_refs( targets, old,new, index, key='refs' ):
                 parent = index[parent]
             except KeyError, err:
                 continue 
-        rewrite_references( parent[key], old, new )
+        rewrite_references( parent[key], old, new, single_ref=single_ref )
 
-def rewrite_references( sequence, old, new ):
+def rewrite_references( sequence, old, new, single_ref=False ):
     """Rewrite parents to point to new in old
     
     sequence -- sequence of id references 
@@ -160,6 +203,8 @@ def rewrite_references( sequence, old, new ):
                 to_delete.append( i )
             else:
                 sequence[i] = new 
+                if single_ref:
+                    new = None
     if to_delete:
         to_delete.reverse()
         for i in to_delete:
@@ -360,39 +405,29 @@ def load( filename, include_interpreter=False ):
     
     modules = [index[addr] for addr in modules]
     
-    
-    initial = index_size( index )
-    
     reachable = find_reachable( modules, index, shared )
     deparent_unreachable( reachable, shared )
     
-    new = index_size( index )
-    assert initial == new, (initial,new)
+    bind_parents( index, shared )
     
-    unreachable = sum([
-        v.get( 'size' )
-        for v in iterindex( index )
-        if v['address'] not in reachable
-    ], 0 )
-    print '%s bytes are unreachable from modules'%( unreachable )
+#    unreachable = sum([
+#        v.get( 'size' )
+#        for v in iterindex( index )
+#        if v['address'] not in reachable
+#    ], 0 )
+#    print '%s bytes are unreachable from modules'%( unreachable )
 
     simplify_index( index,shared )
 
-    new = index_size( index )
-    assert initial == new, (initial,new)
-
     group_children( index, shared, min_kids=10 )
-
-    new = index_size( index )
-    assert initial == new, (initial,new)
 
     records = []
     for m in modules:
+        loops = list( find_loops( m, index ) )
+        promote_loops( loops, index, shared )
         recurse_module(
             m, index, shared
         )
-        new = index_size( index )
-        assert initial == new, (initial,new)
         
     modules.sort( key = lambda m: m.get('totsize',0))
     for module in modules:
@@ -420,9 +455,7 @@ def load( filename, include_interpreter=False ):
             del index[k]
 
     all_modules = sum([x.get('totsize',0) for x in modules],0)
-    
-    assert all_modules + unreachable == initial, (all_modules, unreachable, initial, unreachable+initial )
-
+ 
     root['totsize'] = all_modules
     root['rsize'] = all_modules
     root['size'] = 0

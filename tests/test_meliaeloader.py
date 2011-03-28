@@ -57,20 +57,31 @@ class MeliaTests( unittest.TestCase ):
         ]
         index,shared = records_as_index( records )
         meliaeloader.bind_parents( index, shared )
+        loops = list( meliaeloader.find_loops( index[3], index ) )
+        meliaeloader.promote_loops( loops, index, shared )
+        
         meliaeloader.recurse_module( 
             index[3], 
             index, 
             shared,
         )
         assert index[3]['totsize'] == 22, index[3]['totsize']
+    
     def test_recursive_shared( self ):
-        """Do we account for recursive structures shared across modules properly?"""
+        """Do we account for recursive structures shared across modules properly?
+        
+        Loops should become a single "thing" which has references and parents, but 
+        also can be broken down to see what is in the loop...
+        
+        Loop totsize is the totsize of all components of the loop divided by the 
+        number of references to the loop which are *not* from the loop itself...
+        """
         records = [
             {'size': 10,'type':'moo','address':1,'refs':[4]},
             {'size': 10,'type':'moo','address':4,'refs':[1]},
             {'size': 1,'type':'dict','address':2,'refs':[1]},
             {'size': 1,'type':'module','address':3,'refs':[2]},
-            {'size': 1,'type':'dict','address':5,'refs':[4]},
+            {'size': 1,'type':'dict','address':5,'refs':[4,1]}, # should become a single ref to loop...
             {'size': 1,'type':'module','address':6,'refs':[5]},
         ]
         index,shared = records_as_index( records )
@@ -81,11 +92,18 @@ class MeliaTests( unittest.TestCase ):
         loop = loops[0]
         assert set(loop) == set([1,4]), loop
         
+        meliaeloader.promote_loops( loops, index, shared )
+        
+        assert index[5]['refs'] == [-1], index[5]
+        
         for module in [3,6]:
             meliaeloader.recurse_module( 
                 index[module], 
-                index, 
-                shared,
+                index=index, 
+                shared=shared,
             )
             assert index[module]['totsize'] == 12, index[module]['totsize']
-        
+
+        loop = [x for x in index.values() if x['type'] == '<loop>'][0]
+        assert set(loop['parents']) == set([5,2]), loop['parents']
+    
