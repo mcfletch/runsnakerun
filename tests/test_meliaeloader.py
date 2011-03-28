@@ -47,6 +47,7 @@ class MeliaeTests( unittest.TestCase ):
         assert len(new['refs']) == 0, new
         assert new['type'] == '<many>', new
         assert new['name'] == 'str', new
+        assert len(new['parents']) == 1, new
     
     def test_recursive( self ):
         """Do we account for recursive structures properly?"""

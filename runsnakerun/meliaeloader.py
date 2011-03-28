@@ -260,9 +260,10 @@ def group_children( index, shared, min_kids=10, stop_types=STOP_TYPES, delete_ch
             'type': MANY_TYPE,
             'name': typ,
             'size': sum( [k.get('size',0) for k in kids], 0),
+            'parents': [to_simplify['address']],
         }
         
-        shared[typ_address] = [to_simplify['address']]
+        shared[typ_address] = index[typ_address]['parents']
         to_simplify['refs'][:] = [typ_address]
         
         if delete_children:
@@ -337,6 +338,7 @@ def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compres
                                     to_simplify,
                                     single_ref = True,
                                 )
+                            assert parent_set
                         to_delete.add( child['address'] )
     for item in to_delete:
         del index[item]
