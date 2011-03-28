@@ -61,3 +61,39 @@ class MeliaTests( unittest.TestCase ):
         assert new['type'] == '<many>', new
         assert new['name'] == 'str', new
     
+    def test_recursive( self ):
+        """Do we account for recursive structures properly?"""
+        records = [
+            {'size': 10,'type':'moo','address':1,'refs':[4]},
+            {'size': 10,'type':'moo','address':4,'refs':[1]},
+            {'size': 1,'type':'dict','address':2,'refs':[1]},
+            {'size': 1,'type':'module','address':3,'refs':[2]},
+        ]
+        index,shared = records_as_index( records )
+        meliaeloader.bind_parents( index, shared )
+        meliaeloader.recurse_module( 
+            index[3], 
+            index, 
+            shared, stop_types=set(['module']), 
+        )
+        assert index[3]['totsize'] == 22, index[3]['totsize']
+    def test_recursive_shared( self ):
+        """Do we account for recursive structures shared across modules properly?"""
+        records = [
+            {'size': 10,'type':'moo','address':1,'refs':[4]},
+            {'size': 10,'type':'moo','address':4,'refs':[1]},
+            {'size': 1,'type':'dict','address':2,'refs':[1]},
+            {'size': 1,'type':'module','address':3,'refs':[2]},
+            {'size': 1,'type':'dict','address':5,'refs':[4]},
+            {'size': 1,'type':'module','address':6,'refs':[5]},
+        ]
+        index,shared = records_as_index( records )
+        meliaeloader.bind_parents( index, shared )
+        for module in [3,6]:
+            meliaeloader.recurse_module( 
+                index[module], 
+                index, 
+                shared, stop_types=set(['module']), 
+            )
+            assert index[module]['totsize'] == 12, index[module]['totsize']
+        

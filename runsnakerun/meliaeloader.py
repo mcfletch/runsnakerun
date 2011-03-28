@@ -42,11 +42,16 @@ def recurse( record, index, stop_types=None,already_seen=None, type_group=False 
         already_seen.add(record['address'])
         if 'refs' in record:
             for child in children( record, index, stop_types=stop_types ):
-                for descendant in recurse( 
-                    child, index, stop_types, 
-                    already_seen=already_seen, type_group=type_group,
-                ):
-                    yield descendant
+                if child['address'] in already_seen:
+                    # break the loop, and charge parents full-rate
+                    child['parents'].remove( record['address'] )
+                    child.setdefault( 'recursive_parents',[]).append( record['address'] )
+                else:
+                    for descendant in recurse( 
+                        child, index, stop_types, 
+                        already_seen=already_seen, type_group=type_group,
+                    ):
+                        yield descendant
         yield record 
 
 def children( record, index, key='refs', stop_types=None ):
@@ -336,6 +341,12 @@ def iterindex( index ):
             isinstance(k,(int,long))
         ):
             yield v
+
+def bind_parents( index, shared ):
+    """Set parents on all items in index"""
+    for v in iterindex( index ):
+        v['parents'] = shared.get( v['address'], [] )
+
 def load( filename, include_interpreter=False ):
     index = {
     } # address: structure
@@ -382,11 +393,8 @@ def load( filename, include_interpreter=False ):
         'module',
     ])
     
-    modules = []
-    for v in iterindex( index ):
-        v['parents'] = shared.get( v['address'], [] )
-        if v['type'] == 'module':
-            modules.append( v )
+    modules = [index[addr] for addr in modules]
+    
     
     initial = index_size( index )
     
