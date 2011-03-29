@@ -1,4 +1,4 @@
-import wx, sys, os, logging
+import wx, sys, os, logging, operator
 from gettext import gettext as _
 from squaremap import squaremap
 
@@ -27,22 +27,25 @@ class ColumnDefinition(object):
     def __init__(self, **named):
         for key, value in named.items():
             setattr(self, key, value)
-
-    def get(self, function):
-        """Get the value for this column from the function"""
         if self.getter:
-            value = self.getter( function )
+            self.get = self.getter 
         else:
-            value = getattr(function, self.attribute, None)
-        return value
+            attribute = self.attribute 
+            def getter( function ):
+                return getattr( function, attribute, None )
+            self.get = self.getter = getter
 
 class DictColumn( ColumnDefinition ):
-    def get( self, record ):
+    def __init__(self, **named):
+        for key, value in named.items():
+            setattr(self, key, value)
         if self.getter:
-            value = self.getter( record )
+            self.get = self.getter 
         else:
-            value = record.get(self.attribute, None)
-        return value
+            attribute = self.attribute 
+            def getter( function ):
+                return function.get( attribute, None )
+            self.get = self.getter = getter
 
 
 class DataView(wx.ListCtrl):
@@ -216,19 +219,10 @@ class DataView(wx.ListCtrl):
 
     def reorder(self):
         """Force a reorder of the displayed items"""
-        self.sorted.sort(self.compareFunction)
-
-    def compareFunction(self, first, second):
-        """Compare two functions according to our current sort order"""
-        for ascending, column in self.sortOrder:
-            aValue, bValue = column.get(first), column.get(second)
-            diff = cmp(aValue, bValue)
-            if diff:
-                if not ascending:
-                    return -diff
-                else:
-                    return diff
-        return 0
+        for ascending,column in self.sortOrder[::-1]:
+            # Python 2.2+ guarantees stable sort, so sort by each column in reverse 
+            # order will order by the assigned columns 
+            self.sorted.sort( key=column.get, reverse=(not ascending))
 
     def integrateRecords(self, functions):
         """Integrate records from the loader"""
