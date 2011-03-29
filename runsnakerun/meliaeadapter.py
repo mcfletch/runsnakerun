@@ -49,8 +49,12 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
     def value( self, node, parent=None ):
         """Return value used to compare size of this node"""
         # this is the *weighted* size/contribution of the node 
-        result = int(node.get('totsize',0)/float( len(node.get('parents',())) or 1))
-        return result 
+        try:
+            return node['contribution']
+        except KeyError, err:
+            contribution = int(node.get('totsize',0)/float( len(node.get('parents',())) or 1))
+            node['contribution'] = contribution
+            return contribution
     def label( self, node ):
         """Return textual description of this node"""
         result = []
