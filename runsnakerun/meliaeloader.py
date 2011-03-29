@@ -124,15 +124,12 @@ def children( record, index, key='refs', stop_types=STOP_TYPES ):
     result = []
     for ref in record.get( key,[]):
         try:
-            if isinstance( ref, dict ):
-                record = ref 
-            else:
-                record = index[ref]
+            record = index[ref]
         except KeyError, err:
             #print 'No record for %s address %s in %s'%(key, ref, record['address'] )
             pass # happens when an unreachable references a reachable that has been compressed out...
         else:
-            if (not stop_types) or (record['type'] not in stop_types):
+            if record['type'] not in stop_types:
                 result.append(  record  )
     return result
 
@@ -350,8 +347,9 @@ def simplify_dicts( index, shared, simplify_dicts=SIMPLIFY_DICTS, always_compres
 def find_reachable( modules, index, shared, stop_types=STOP_TYPES ):
     """Find the set of all reachable objects from given root nodes (modules)"""
     reachable = set()
+    already_seen = set()
     for module in modules:
-        for child in recurse( module, index, stop_types=stop_types):
+        for child in recurse( module, index, stop_types=stop_types, already_seen=already_seen):
             reachable.add( child['address'] )
     return reachable
 
