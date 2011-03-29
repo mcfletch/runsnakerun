@@ -4,6 +4,8 @@
 
 
 
+
+
   <link rel="icon" type="image/png" href="/maps/favicon.png">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python (c)Profile Viewer</title>
   
@@ -57,29 +59,53 @@ package/module/function hierarchic view via the menus. &nbsp;You can
 also toggle use of percentage displays there.</p>
 <h3>Meliae Memory Analysis</h3>
 <p><span class="technical"></span>Note: this feature is considered
-experimental, and has not yet proved itself to be particularly useful
-due to the size of the meliae logs and the presence of questionable
-data in them (e.g. objects unreferenced by any module will often make
-up 2MB or more of memory usage, often dwarfing the user-controllable
-memory usage).<br>
+experimental, the memory consumed loading even a tiny meliae dump is
+enormous, so real-world programs will make RunSnakeRun quite slow and
+require a very large amount of RAM (far more than the process being
+viewed).<br>
 <span class="technical"></span></p>
-<p><a href="https://launchpad.net/meliae">Meliae</a> will need to be installed (and compiled):</p>
+<p>To install<a href="https://launchpad.net/meliae"> Meliae</a>, you will need a working C extension compilation environment (Meliae uses a Cython extension):</p>
 <pre>easy_install meliae<br></pre>
 <p>Now instrument your application to be able to trigger a memory dump at the moment you would like to capture, like so:</p>
-<pre>from meliae import scanner<br>scanner.dump_all_objects( filename ) # you can pass a file-handle if you prefer<br></pre>
+<pre>from meliae import scanner<br>scanner.dump_all_objects( filename ) # you can pass a file-handle if you prefer<br></pre>
 <p>The memory dump will generally be quite large (e.g. 2MB to describe
 an application with 200KB of user-controllable memory usage (i.e. not
 the interpreter itself)) and for any real application will take an
-extremely long time to load.</p>
-<p style="text-align: center;"><img style="width: 973px; height: 821px;" alt="Screenshot of a meliae memory view" src="meliae-sample.png"><br>
+extremely long time to load (multiple minutes for 16MB dumps).</p>
+<br>
+<p style="text-align: center;"><img style="width: 1920px; height: 1159px;" alt="Screenshot of a meliae memory view" src="meliae-sample.png"></p>
+<p style="text-align: left;">The Meliae loader in RunSnakeRun performs the following simplifications:</p>
+<ul>
+  <li>only displays memory which is reachable from a module (there is
+normally &gt; 1MB of unreachable objects included in a meliae dump)<br>
+  </li>
+  <li>treats modules as memory-cost barriers, so referencing a module does not cost the referrer anything</li>
+  <li>treats all (reachable) references to an instance as sharing the cost of the instance equally</li>
+  <li>treats loops as being a separate object which holds all objects
+in the loop, breaking inter-loop references but retaining child
+references, all references to the loop members become references to the
+loop</li>
+  <li>eliminates dictionary objects from modules (always) and from
+types and classes when the dictionary is only referenced by the
+class/type, the cost of the dictionary is folded into the cost of the
+parent object (note: this means that function __globals__ references
+are "0-cost" and do not create loops)</li>
+  <li>compresses large numbers (&gt;=10 currently) of "simple" objects
+of the same type held by a single parent into a "&lt;many&gt;" object
+with the type as the name</li>
+</ul>
+<p>Even with those simplifications, however, the program is tracking
+most ints, strings, tuples, lists, etc. separately, which uses a large
+amount of RAM and slows down the GUI substantially.<br>
 </p>
+
 <h2><a name="code"></a>Code Access and Contributions</h2><p>RunSnakeRun
 is reasonably stable. &nbsp;I don't tend to do much work on it, as it
 tends to just work. &nbsp;My (personal) current wish list for the project follows:</p>
-<ul>
-  <li>Make meliae dumps useful</li>
-  <li>Speed up and reduce memory requirements for meliae loading<br>
+<ul><li>Speed up and reduce memory requirements for meliae loading</li>
+  <li>Clean up the meliae loader (was grown organically from a quick hack and doesn't particularly invite further hacking)<br>
   </li>
+
 </ul>
 <p>If you have an idea, feel free
 to check out the code and&nbsp;implement the new&nbsp;feature. &nbsp;I'm certainly willing
@@ -95,8 +121,11 @@ save that RunSnakeRun was intended to be Python specific and
 cross-platform</li><li><a href="http://pypi.python.org/pypi/profilehooks">profilehooks</a> -- specify which function to profile by using a decorator on a particular function</li></ul>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
-  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b1.tar.gz">2.0.1b1</a> -- Experimental support for meliae loads<br>
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b3.tar.gz">2.0.1b3</a> -- Performance and correctness fixes for meliae loads (still slow, but not as horribly slow)<br>
 </li>
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b1.tar.gz">2.0.1b1</a> -- Experimental support for meliae loads<br>
+  </li>
+
   <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.0b6.tar.gz">2.0.0b6</a> -- Fixes and enhancements by Marius Gedminas
 (percent-in-tooltips, code restructuring, home-button fix), display
 source-code for functions when selected, make SquareMap an explicit
