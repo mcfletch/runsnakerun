@@ -72,9 +72,9 @@ class DataView(wx.ListCtrl):
                              name)
         if columns is not None:
             self.columns = columns
-        
+
         if not sortOrder:
-            sortOrder = [(x.defaultOrder,x) for x in self.columns]
+            sortOrder = [(x.defaultOrder,x) for x in self.columns if x.sortDefault]
         self.sortOrder = sortOrder or []
         self.sorted = []
         self.CreateControls()
@@ -106,9 +106,10 @@ class DataView(wx.ListCtrl):
                 self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
             else:
                 self.SetColumnWidth(i, column.targetWidth)
-    def SetColumns( self, columns ):
+    def SetColumns( self, columns, sortOrder=None ):
         """Set columns to a set of values other than the originals and recreates column controls"""
         self.columns = columns 
+        self.sortOrder = [(x.defaultOrder,x) for x in self.columns if x.sortDefault]
         self.CreateColumns()
 
     def OnNodeActivated(self, event):
@@ -191,11 +192,12 @@ class DataView(wx.ListCtrl):
     def ReorderByColumn( self, column ):
         """Reorder the set of records by column"""
         # TODO: store current selection and re-select after sorting...
-        self.SetNewOrder( column )
-        self.reorder()
+        single_column = self.SetNewOrder( column )
+        self.reorder( single_column = True )
         self.Refresh()
 
     def SetNewOrder( self, column ):
+        """Set new sorting order based on column, return whether a simple single-column (True) or multiple (False)"""
         if column.sortOn:
             # multiple sorts for the click...
             columns = [self.columnByAttribute(attr) for attr in column.sortOn]
@@ -207,6 +209,7 @@ class DataView(wx.ListCtrl):
                 self.sortOrder = [
                     (c.defaultOrder, c) for c in columns
                 ] + [(a, b) for (a, b) in self.sortOrder if b not in columns]
+            return False
         else:
             if column is self.sortOrder[0][1]:
                 # reverse current major order
@@ -216,10 +219,15 @@ class DataView(wx.ListCtrl):
                     (a, b)
                     for (a, b) in self.sortOrder if b is not column
                 ]
+            return True
 
-    def reorder(self):
+    def reorder(self, single_column=False):
         """Force a reorder of the displayed items"""
-        for ascending,column in self.sortOrder[::-1]:
+        if single_column:
+            columns = self.sortOrder[:1]
+        else:
+            columns = self.sortOrder
+        for ascending,column in columns[::-1]:
             # Python 2.2+ guarantees stable sort, so sort by each column in reverse 
             # order will order by the assigned columns 
             self.sorted.sort( key=column.get, reverse=(not ascending))
