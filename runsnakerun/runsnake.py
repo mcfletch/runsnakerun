@@ -229,6 +229,8 @@ class MainFrame(wx.Frame):
             self.rightSplitter,
         )
 
+        self.CreateSourceWindow(self.tabs)
+        
         self.calleeListControl = listviews.DataView(
             self.tabs,
             columns = PROFILE_VIEW_COLUMNS,
@@ -257,7 +259,6 @@ class MainFrame(wx.Frame):
         self.tabs.AddPage(self.callerListControl, _('Callers'), False)
         self.tabs.AddPage(self.allCallerListControl, _('All Callers'), False)
         if editor:
-            self.CreateSourceWindow(self.tabs)
             self.tabs.AddPage(self.sourceCodeControl, _('Source Code'), False)
         self.rightSplitter.SetSashSize(10)
         self.Maximize(True)

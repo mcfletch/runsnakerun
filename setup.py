@@ -42,7 +42,7 @@ and package/module structures.""",
         author = "Mike C. Fletcher",
         author_email = "mcfletch@vrplumber.com",
         install_requires = [
-            'SquareMap',
+            'SquareMap >= 1.0.1b2',
         ],
         license = "BSD",
         package_dir = {
