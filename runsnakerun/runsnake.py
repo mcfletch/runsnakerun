@@ -13,6 +13,7 @@ from runsnakerun import listviews
 
 if sys.platform == 'win32':
     windows = True
+    editor = False
 else:
     windows = False
 
@@ -244,7 +245,6 @@ class MainFrame(wx.Frame):
             self.tabs,
             columns = PROFILE_VIEW_COLUMNS,
         )
-        self.CreateSourceWindow(self.tabs)
         self.ProfileListControls = [
             self.listControl,
             self.calleeListControl,
@@ -257,6 +257,7 @@ class MainFrame(wx.Frame):
         self.tabs.AddPage(self.callerListControl, _('Callers'), False)
         self.tabs.AddPage(self.allCallerListControl, _('All Callers'), False)
         if editor:
+            self.CreateSourceWindow(self.tabs)
             self.tabs.AddPage(self.sourceCodeControl, _('Source Code'), False)
         self.rightSplitter.SetSashSize(10)
         self.Maximize(True)
