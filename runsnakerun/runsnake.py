@@ -17,10 +17,6 @@ if sys.platform == 'win32':
 else:
     windows = False
 
-ICON_FILE = os.path.join( os.path.dirname( __file__ ), 'rsricon.png' )
-if not os.path.exists( ICON_FILE ):
-    ICON_FILE = None
-
 log = logging.getLogger(__name__)
 
 ID_OPEN = wx.NewId()
@@ -348,11 +344,11 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, ID_MORE_SQUARE, self.OnMoreSquareToggle)
 
     def LoadRSRIcon( self ):
-        if ICON_FILE:
-            icon = wx.Icon( ICON_FILE,wx.BITMAP_TYPE_PNG,32,32 )
-            return icon 
-        return None
-        
+        try:
+            from runsnakerun.resources import rsricon_png
+            return getIcon( rsricon_png.data )
+        except Exception, err:
+            return None
 
     def CreateSourceWindow(self, tabs):
         """Create our source-view window for tabs"""
@@ -692,6 +688,16 @@ class MeliaeViewApp(wx.App):
         else:
             log.warn( 'No memory file specified' )
         return True
+
+
+def getIcon( data ):
+    """Return the data from the resource as a wxIcon"""
+    import cStringIO
+    stream = cStringIO.StringIO(data)
+    image = wx.ImageFromStream(stream)
+    icon = wx.EmptyIcon()
+    icon.CopyFromBitmap(wx.BitmapFromImage(image))
+    return icon
 
 
 usage = """runsnake.py profilefile
