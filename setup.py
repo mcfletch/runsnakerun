@@ -64,6 +64,7 @@ and package/module structures.""",
         entry_points = {
             'gui_scripts': [
                 'runsnake=runsnakerun.runsnake:main',
+                'runsnakemem=runsnakerun.runsnake:meliaemain',
             ],
         },
         **extraArguments

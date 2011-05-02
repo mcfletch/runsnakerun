@@ -665,7 +665,6 @@ class MainFrame(wx.Frame):
 
 class RunSnakeRunApp(wx.App):
     """Basic application for holding the viewing Frame"""
-
     def OnInit(self):
         """Initialise the application"""
         wx.InitAllImageHandlers()
@@ -673,13 +672,25 @@ class RunSnakeRunApp(wx.App):
         frame.Show(True)
         self.SetTopWindow(frame)
         if sys.argv[1:]:
-            if sys.argv[1] == '-m':
+            if sys.argv[1] == '-m' or self.meliae_loading:
                 if sys.argv[2:]:
                     wx.CallAfter( frame.load_memory, sys.argv[2] )
                 else:
                     log.warn( 'No memory file specified' )
             else:
                 wx.CallAfter(frame.load, *sys.argv[1:])
+        return True
+class MeliaeViewApp(wx.App):
+    def OnInit(self):
+        """Initialise the application"""
+        wx.InitAllImageHandlers()
+        frame = MainFrame()
+        frame.Show(True)
+        self.SetTopWindow(frame)
+        if sys.argv[1:]:
+            wx.CallAfter( frame.load_memory, sys.argv[1] )
+        else:
+            log.warn( 'No memory file specified' )
         return True
 
 
@@ -693,6 +704,11 @@ def main():
     """Mainloop for the application"""
     app = RunSnakeRunApp(0)
     app.MainLoop()
+
+def meliaemain():
+    app = MeliaeViewApp(0)
+    app.MainLoop()
+    
 
 
 if __name__ == "__main__":

@@ -73,7 +73,9 @@ viewed).<br>
 an application with 200KB of user-controllable memory usage (i.e. not
 the interpreter itself)) and for any real application will take an
 extremely long time to load (multiple minutes for 16MB dumps).</p>
-<br>
+<pre>$ runsnakemem &lt;filename&gt;<br></pre>
+
+
 <p style="text-align: center;"><img style="width: 1920px; height: 1159px;" alt="Screenshot of a meliae memory view" src="meliae-sample.png"></p>
 <p style="text-align: left;">The Meliae loader in RunSnakeRun performs the following simplifications:</p>
 <ul>
@@ -111,7 +113,7 @@ tends to just work. &nbsp;My (personal) current wish list for the project follow
 <p>If you have an idea, feel free
 to check out the code and&nbsp;implement the new&nbsp;feature. &nbsp;I'm certainly willing
 to entertain new features or bug-fix requests as well. &nbsp;The code
-is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>cd squaremap<br>python setup.py develop<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li><li>rework squaremap to be more robust for large profiles</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>storage of preferences such as column widths</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
+is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>cd squaremap<br>python setup.py develop<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>storage of preferences such as column widths</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
 tool-set for profiling, you may want to have any or all of these other
 tools available for your profiling needs:</p><ul><li><a href="http://code.google.com/p/jrfonseca/wiki/Gprof2Dot">Gprof2Dot</a> -- Converts various Profile formats into dot-format graphs<br>
 </li>
@@ -122,7 +124,10 @@ save that RunSnakeRun was intended to be Python specific and
 cross-platform</li><li><a href="http://pypi.python.org/pypi/profilehooks">profilehooks</a> -- specify which function to profile by using a decorator on a particular function</li></ul>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
-  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b5.tar.gz">2.0.1b5</a> -- Fix regression for OS-X during work-around for Win32, add program icon<br>
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b5.tar.gz">2.0.1b5</a>
+-- Fix regression for OS-X during work-around for Win32, add program
+icon, provide a dedicated command alias for meliae loading (runsnakemem
+dump.memory)<br>
 </li>
   <li>2.0.1b4 -- Win32 source-code-control bug work-around (disables source-code view on Win32)<br>
   </li>
