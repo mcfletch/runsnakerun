@@ -17,6 +17,10 @@ if sys.platform == 'win32':
 else:
     windows = False
 
+ICON_FILE = os.path.join( os.path.dirname( __file__ ), 'rsricon.png' )
+if not os.path.exists( ICON_FILE ):
+    ICON_FILE = None
+
 log = logging.getLogger(__name__)
 
 ID_OPEN = wx.NewId()
@@ -202,6 +206,9 @@ class MainFrame(wx.Frame):
         self.adapter = pstatsadapter.PStatsAdapter()
         self.CreateControls()
         self.history = [] # set of (activated_node, selected_node) pairs...
+        icon = self.LoadRSRIcon()
+        if icon:
+            self.SetIcon( icon )
 
     def CreateControls(self):
         """Create our sub-controls"""
@@ -339,6 +346,13 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, ID_ROOT_VIEW, self.OnRootView)
         wx.EVT_MENU(self, ID_BACK_VIEW, self.OnBackView)
         wx.EVT_MENU(self, ID_MORE_SQUARE, self.OnMoreSquareToggle)
+
+    def LoadRSRIcon( self ):
+        if ICON_FILE:
+            icon = wx.Icon( ICON_FILE,wx.BITMAP_TYPE_PNG,32,32 )
+            return icon 
+        return None
+        
 
     def CreateSourceWindow(self, tabs):
         """Create our source-view window for tabs"""

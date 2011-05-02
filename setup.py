@@ -8,8 +8,10 @@ to install the package from the source archive.
 import os
 try:
     from setuptools import setup
+    setuptools = True
 except ImportError, err:
     from distutils.core import setup
+    setuptools = False
 
 version = [
     (line.split('=')[1]).strip().strip('"').strip("'")
@@ -32,6 +34,8 @@ Provides explorability and overall visualization of the call tree
 and package/module structures.""",
         'platforms': ['Any'],
     }
+    if setuptools:
+        extraArguments['install_package_data'] = True
     ### Now the actual set up call
     setup (
         name = "RunSnakeRun",

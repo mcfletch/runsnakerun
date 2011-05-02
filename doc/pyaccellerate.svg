@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32px"
+   height="32px"
+   id="svg2985"
+   version="1.1"
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="pyaccellerate.svg"
+   inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate-64.png"
+   inkscape:export-xdpi="180"
+   inkscape:export-ydpi="180">
+  <defs
+     id="defs2987" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="15.932259"
+     inkscape:cy="15.959399"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1141"
+     inkscape:window-x="-4"
+     inkscape:window-y="-1"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata2990">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <path
+       d="m 338.45281,193.29565 a 82.457451,118.56627 0 1 1 -164.9149,0 82.457451,118.56627 0 1 1 164.9149,0 z"
+       sodipodi:ry="118.56627"
+       sodipodi:rx="82.457451"
+       sodipodi:cy="193.29565"
+       sodipodi:cx="255.99536"
+       id="path1309"
+       style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2.29428958999999999;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:type="arc"
+       transform="matrix(0.03954739,0,0,0.04624387,-5.0834629,-2.0976714)"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       d="m 218.27658,211.08788 a 19.326572,50.021717 0 1 1 -38.65314,0 19.326572,50.021717 0 1 1 38.65314,0 z"
+       sodipodi:ry="50.021717"
+       sodipodi:rx="19.326572"
+       sodipodi:cy="211.08788"
+       sodipodi:cx="198.95001"
+       id="path6575"
+       style="fill:#000064;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.18499993999999997;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:type="arc"
+       transform="matrix(0.04143152,0,0,0.04866699,-5.4735065,-2.3748727)"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path1311"
+       style="fill:#498600;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.69999999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 7.1977428,15.884371 c -0.1888294,0.53982 -0.21644,0.315664 -0.5123889,0.949745 -0.7672282,1.643805 -0.3737168,3.278135 -0.3572642,4.563754 0.00677,0.533879 0.6971433,4.649353 2.5455066,6.819404 0.2858386,0.335586 3.2825397,3.019844 7.1452817,3.199873 4.208856,0.196159 7.33954,-3.694687 8.86428,-3.490074 1.782397,0.239188 1.318268,2.778779 3.151841,2.779429 2.456073,8.63e-4 3.443471,-1.925016 3.795166,-3.260861 -0.232554,0.121932 -0.87405,0.623118 -1.32187,1.074891 -1.206103,1.216755 -2.535997,0.219122 -2.806123,-0.361455 -0.456896,-0.982003 -1.56827,-5.330323 -3.533542,-5.005588 -2.21911,0.366681 -5.43491,3.192414 -7.785173,1.84973 C 11.462701,22.393369 16.165889,14.316222 16.256967,9.8314323 16.384922,3.5307316 11.489181,-1.1016106 5.5341656,1.3028841 l -2.717607,7.2209567 c -0.281642,0.2093527 -2.073274,-0.5179717 -2.67908602,1.5288682 -0.49442423,1.670499 0.86932632,4.046231 2.38054872,4.843234 1.3741263,0.724703 2.7411396,1.478632 4.788993,1.087265"
+       sodipodi:nodetypes="cscsssscssscsccssc"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       transform="matrix(0.04143152,0,0,0.04866699,-4.4791503,-2.2775388)"
+       sodipodi:type="arc"
+       style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2.18499993999999997;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="path1307"
+       sodipodi:cx="255.99536"
+       sodipodi:cy="193.29565"
+       sodipodi:rx="82.457451"
+       sodipodi:ry="118.56627"
+       d="m 338.45281,193.29565 a 82.457451,118.56627 0 1 1 -164.9149,0 82.457451,118.56627 0 1 1 164.9149,0 z"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none;stroke:#000000;stroke-width:0.398;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 7.1670392,15.889891 c 2.4652309,-0.471132 3.4395518,-3.052254 3.5821948,-4.196556 0.47832,0.319504 1.698096,0.709413 1.786321,-1.20651 0.05955,-1.293353 -1.327153,-2.0300838 -1.367921,-2.1258578"
+       id="path3945"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       transform="matrix(0.04143152,0,0,0.04866699,-4.4791503,-2.2775388)"
+       sodipodi:type="arc"
+       style="fill:#000064;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.18499993999999997;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="path5700"
+       sodipodi:cx="198.95001"
+       sodipodi:cy="211.08788"
+       sodipodi:rx="19.326572"
+       sodipodi:ry="50.021717"
+       d="m 218.27658,211.08788 a 19.326572,50.021717 0 1 1 -38.65314,0 19.326572,50.021717 0 1 1 38.65314,0 z"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#ff0051;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.09811472000000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 10.404996,13.03027 c -0.01156,0.171695 3.189028,1.247373 3.98035,0.325573 0.198117,-0.230783 1.511141,-1.24201 1.64023,-1.438014 0.226198,-0.343456 -0.2925,1.214796 -0.462119,1.54178 -0.128578,0.247865 -0.720537,0.699794 -0.841055,0.841359 0.246017,0.253008 0.56926,0.715384 0.731744,0.816228 0.194375,0.120638 -0.0998,0.361662 0.519737,1.004019 -0.244494,0.02946 -0.845251,-0.372078 -1.0654,-0.436728 -0.160348,-0.04709 -0.491618,-0.428218 -0.612606,-0.499276 -0.174903,-0.102721 -0.429937,-0.04359 -0.61204,-0.22131 -0.419469,-0.409382 -3.301421,-0.718229 -3.51435,-0.6611 -0.2120175,0.05687 -0.4170055,0.05329 -0.612322,0.110656 l 0.847831,-1.383185 z"
+       id="path8335"
+       sodipodi:nodetypes="cssscccsssscc"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#23d1be;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       d="m 16.369752,16.368912 c 0.861688,-0.22411 1.551079,-0.299716 2.191103,0.131377 0.29659,0.324235 0.514401,0.616369 0.823857,1.144901 0.37988,0.320722 0.502021,1.392934 0.214364,1.970014 -0.51658,0.76421 -1.362016,0.496507 -1.709742,-0.561655 -0.16876,-0.532156 -0.218516,-1.208135 -0.482238,-1.622877 -0.313257,-0.459532 -0.744852,-0.537861 -1.037364,-1.061775 z"
+       id="path9210"
+       sodipodi:nodetypes="ccccccc"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none;stroke:none;stroke-width:0.09811472000000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="M 28.945118,27.672407 C 28.488223,26.690403 27.376847,22.342084 25.411577,22.666819"
+       id="path10121"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#9cb700;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       d="m 7.5476805,16.001017 c -0.3486734,0.437407 -0.3797443,0.525627 -0.6756932,1.159708 -0.7672282,1.643805 -0.2804,3.021514 -0.2639474,4.307133 0.076758,0.673854 0.5804974,4.299415 2.4288607,6.469466 0.2858386,0.335586 3.2825394,2.949856 7.1452814,3.129885 l -0.01605,-0.02 C 11.951562,28.822213 10.484374,27.946118 9.0223521,24.778036 7.6094371,21.716366 7.9021503,18.911425 7.5476805,16.001017 z"
+       id="path11002"
+       sodipodi:nodetypes="cscsccsc"
+       inkscape:export-filename="/home/mcfletch/runsnake-dev/runsnakerun/doc/pyaccellerate.png"
+       inkscape:export-xdpi="3.3599999"
+       inkscape:export-ydpi="3.3599999" />
+  </g>
+</svg>
