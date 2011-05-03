@@ -668,7 +668,7 @@ class RunSnakeRunApp(wx.App):
         frame.Show(True)
         self.SetTopWindow(frame)
         if sys.argv[1:]:
-            if sys.argv[1] == '-m' or self.meliae_loading:
+            if sys.argv[1] == '-m':
                 if sys.argv[2:]:
                     wx.CallAfter( frame.load_memory, sys.argv[2] )
                 else:
