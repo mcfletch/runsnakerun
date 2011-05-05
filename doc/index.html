@@ -8,6 +8,7 @@
 
 
 
+
   <link rel="icon" type="image/png" href="/maps/favicon.png">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python (c)Profile Viewer</title>
   
@@ -25,8 +26,15 @@ using the same basic visualisations.<br>
 <h2>Features</h2><p>RunSnakeRun is a simple program, it doesn't provide
 all the bells-and-whistles of a program like KCacheGrind, it's intended
 to allow for profiling your Python programs, and just your Python
-programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable data-grid views for raw profile information</li><ul><li>identity: function name, file-name, directory name</li><li>time-spent: cummulative, cummulative-per, local and local-per time</li></ul><ul><li>overall data-grid view</li><li>(all) callers-of-this-function, (all) callees-of-this-function views</li></ul><li>squaremap view of call tree</li><ul><li>size proportional to amount of time spent by the given parent in the given function</li></ul><li>squaremap view of packages/modules/functions</li><ul><li>size proportional to time spent in each package/module/function</li></ul><li>basic navigation (home, back, up)</li></ul><p>If you are new to profiling you may wish to check out the author's <a href="http://us.pycon.org/2009/conference/schedule/event/15/">presentation at PyCon 2009</a> which tries to explain the use of profiling as a tool.</p>
-<p>For meliae memory-dump viewing, it provides:</p>
+programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable data-grid views for raw profile information</li><ul><li>identity: function name, file-name, directory name</li><li>time-spent: cummulative, cummulative-per, local and local-per time</li></ul><ul><li>overall data-grid view</li><li>(all) callers-of-this-function, (all) callees-of-this-function views</li></ul><li>squaremap view of call tree</li><ul><li>size proportional to amount of time spent by the given parent in the given function</li></ul><li>squaremap view of packages/modules/functions</li><ul><li>size proportional to time spent in each package/module/function</li></ul><li>basic navigation (home, back, up)</li></ul><p>If you are new to profiling you may wish to check out:</p>
+<ul>
+  <li>my (<a href="http://www.vrplumber.com">Mike Fletcher</a>'s) <a href="http://us.pycon.org/2009/conference/schedule/event/15/">presentation at PyCon 2009</a> which tries to explain the use of profiling as a tool for optimization in Python<br>
+  </li>
+  <li><a href="http://blip.tv/file/3988199">W. Matthew Wilson's presentation at PyOhio</a> on optimizing Python code<br>
+  </li>
+</ul>
+
+<p>For <a href="https://launchpad.net/meliae">Meliae</a> memory-dump viewing, it provides:</p>
 <ul>
   <li>sortable data-grid views</li>
   <li>squaremap of memory-usage</li>
@@ -35,16 +43,30 @@ programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable d
 </ul>
 <h2><a name="install"></a>Installation<br>
 </h2>
-<p>You will need to have all of wxPython, SquareMap and RunSnakeRun
+<p>You will need to have all of wxPython, <a href="http://pypi.python.org/pypi/SquareMap/">SquareMap</a> and <a href="http://pypi.python.org/pypi/RunSnakeRun">RunSnakeRun</a>
 installed to use RunSnakeRun. &nbsp;You may also need the
 "python-profile" package for your platform, which provides the pstats
-view.</p><p>You will likely want to use your platform wxPython package. &nbsp;If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p><pre>easy_install RunSnakeRun<br></pre><p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
-and Python installation. &nbsp;The setup will create a script named
-"runsnake" on Linux machines which launches the profile viewer.</p>
+view.</p><p>You will likely want to use your platform wxPython package. &nbsp;If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p><pre>easy_install RunSnakeRun<br></pre>
+<p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
+and Python 2.x installation. &nbsp;The setup will create a script named
+"runsnake" on Linux machines which launches the profile viewer</p>
+<p>Note:<br>
+<span class="technical">64-bit OS-X doesn't currently support wxPython
+2.x in 64-bit Python. You will need to make the code-loader prefer the
+32-bit version of Python to get the application to run. To do this,
+create an executable script in your personal bin directory (likely
+~/bin/runsnake) with the following.&nbsp; If you are an OS-X user and
+have a better solution to this problem, I would love to hear about it.</span><span class="technical"></span></p>
+<pre>#! /bin/sh<br>VERSIONER_PYTHON_PREFER_32_BIT=yes python /usr/local/bin/runsnake $*<br></pre>
+
 <h2><a name="usage"></a>Usage</h2>
 <h3>cProfile Viewing<br>
 </h3>
-<p>To use cProfile to capture your application's profile data:</p>
+<p>To use cProfile to capture your application's profile data, either using the command-line, like so:</p>
+<pre>$ python -m cProfile -o &lt;outputfilename&gt; &lt;script-name&gt; &lt;options&gt;<br></pre>
+<p>Or in code, like so:<br>
+</p>
+
 <pre>import cProfile<br>command = """reactor.run()"""<br>cProfile.runctx( command, globals(), locals(), filename="OpenGLContext.profile" )</pre><p>To view the results of your run:<br>
 </p>
 <pre>python runsnake.py OpenGLContext.profile<br></pre>
