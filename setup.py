@@ -5,7 +5,7 @@ Run:
     python setup.py install
 to install the package from the source archive.
 """
-import os
+import os,sys
 try:
     from setuptools import setup
     setuptools = True
@@ -37,6 +37,17 @@ and package/module structures.""",
     if setuptools:
         extraArguments['install_package_data'] = True
     ### Now the actual set up call
+    if sys.platform == 'darwin':
+        gui_commands = [
+            'runsnake=runsnakerun.runsnake:macshim',
+            'runsnake32=runsnakerun.runsnake:main',
+            'runsnakemem=runsnakerun.runsnake:meliaemain',
+        ]
+    else:
+        gui_commands = [
+            'runsnake=runsnakerun.runsnake:main',
+            'runsnakemem=runsnakerun.runsnake:meliaemain',
+        ]
     setup (
         name = "RunSnakeRun",
         version = version,
@@ -62,10 +73,7 @@ and package/module structures.""",
         },
         zip_safe=False,
         entry_points = {
-            'gui_scripts': [
-                'runsnake=runsnakerun.runsnake:main',
-                'runsnakemem=runsnakerun.runsnake:meliaemain',
-            ],
+            'gui_scripts': gui_commands,
         },
         **extraArguments
     )
