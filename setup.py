@@ -39,7 +39,7 @@ and package/module structures.""",
     ### Now the actual set up call
     if sys.platform == 'darwin':
         gui_commands = [
-            'runsnake=runsnakerun.runsnake:macshim',
+            'runsnake=runsnakerun.macshim:macshim',
             'runsnake32=runsnakerun.runsnake:main',
             'runsnakemem=runsnakerun.runsnake:meliaemain',
         ]
