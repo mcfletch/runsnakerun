@@ -9,6 +9,7 @@
 
 
 
+
   <link rel="icon" type="image/png" href="/maps/favicon.png">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python (c)Profile Viewer</title>
   
@@ -45,21 +46,24 @@ programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable d
 </h2>
 <p>You will need to have all of wxPython, <a href="http://pypi.python.org/pypi/SquareMap/">SquareMap</a> and <a href="http://pypi.python.org/pypi/RunSnakeRun">RunSnakeRun</a>
 installed to use RunSnakeRun. &nbsp;You may also need the
-"python-profile" package for your platform, which provides the pstats
-view.</p><p>You will likely want to use your platform wxPython package. &nbsp;If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p><pre>easy_install RunSnakeRun<br></pre>
-<p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>
-and Python 2.x installation. &nbsp;The setup will create a script named
-"runsnake" on Linux machines which launches the profile viewer</p>
-<p>Note:<br>
-<span class="technical">64-bit OS-X doesn't currently support wxPython
-2.x in 64-bit Python. You will need to make the code-loader prefer the
-32-bit version of Python to get the application to run. To do this,
-create an executable script in your personal bin directory (likely
-~/bin/runsnake) with the following.&nbsp; If you are an OS-X user and
-have a better solution to this problem, I would love to hear about it.</span><span class="technical"></span></p>
-<pre>#! /bin/sh<br>VERSIONER_PYTHON_PREFER_32_BIT=yes python /usr/local/bin/runsnake $*<br></pre>
+"python-profiler" package for your platform, which provides the pstats
+view.&nbsp; You will likely want to use your platform wxPython package (i.e. a pre-built binary). For Debian/Ubuntu distributions the prerequisite setup looks like this:
+</p>
+<pre>apt-get install python-profiler python-wxgtk2.8 python-setuptools</pre>
 
-<h2><a name="usage"></a>Usage</h2>
+<p>RunSnakeRun and SquareMap will install well in a VirtualEnv if you
+would like to keep them isolated (normally you do not want to use the <code>--no-site-packages</code> flag if you are doing this).&nbsp; If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p>
+<pre>easy_install SquareMap RunSnakeRun<br></pre>
+<p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>and
+Python 2.x installation. &nbsp;The setup will create a script named
+"runsnake" on Linux machines which launches the profile viewer.&nbsp;
+On OS-X machines a wrapper script runsnake is created that runs the
+runsnake32 executable with a flag to tell Python to use the 32-bit
+implementation (for wxPython compatibility).&nbsp; On Win32 machines, a
+Scripts\runsnake.exe executable is created.&nbsp; If you have added
+your scripts directory to the PATH then this will be available from the
+command-line.<br>
+</p><h2><a name="usage"></a>Usage</h2>
 <h3>cProfile Viewing<br>
 </h3>
 <p>To use cProfile to capture your application's profile data, either using the command-line, like so:</p>
