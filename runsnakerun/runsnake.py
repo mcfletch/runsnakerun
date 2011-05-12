@@ -13,7 +13,6 @@ from runsnakerun import listviews
 
 if sys.platform == 'win32':
     windows = True
-    #editor = False
 else:
     windows = False
 
