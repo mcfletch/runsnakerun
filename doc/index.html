@@ -10,6 +10,7 @@
 
 
 
+
   <link rel="icon" type="image/png" href="/maps/favicon.png">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>RunSnakeRun Python (c)Profile Viewer</title>
   
@@ -27,15 +28,7 @@ using the same basic visualisations.<br>
 <h2>Features</h2><p>RunSnakeRun is a simple program, it doesn't provide
 all the bells-and-whistles of a program like KCacheGrind, it's intended
 to allow for profiling your Python programs, and just your Python
-programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable data-grid views for raw profile information</li><ul><li>identity: function name, file-name, directory name</li><li>time-spent: cummulative, cummulative-per, local and local-per time</li></ul><ul><li>overall data-grid view</li><li>(all) callers-of-this-function, (all) callees-of-this-function views</li></ul><li>squaremap view of call tree</li><ul><li>size proportional to amount of time spent by the given parent in the given function</li></ul><li>squaremap view of packages/modules/functions</li><ul><li>size proportional to time spent in each package/module/function</li></ul><li>basic navigation (home, back, up)</li></ul><p>If you are new to profiling you may wish to check out:</p>
-<ul>
-  <li>my (<a href="http://www.vrplumber.com">Mike Fletcher</a>'s) <a href="http://us.pycon.org/2009/conference/schedule/event/15/">presentation at PyCon 2009</a> which tries to explain the use of profiling as a tool for optimization in Python<br>
-  </li>
-  <li><a href="http://blip.tv/file/3988199">W. Matthew Wilson's presentation at PyOhio</a> on optimizing Python code<br>
-  </li>
-</ul>
-
-<p>For <a href="https://launchpad.net/meliae">Meliae</a> memory-dump viewing, it provides:</p>
+programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable data-grid views for raw profile information</li><ul><li>identity: function name, file-name, directory name</li><li>time-spent: cummulative, cummulative-per, local and local-per time</li></ul><ul><li>overall data-grid view</li><li>(all) callers-of-this-function, (all) callees-of-this-function views</li></ul><li>squaremap view of call tree</li><ul><li>size proportional to amount of time spent by the given parent in the given function</li></ul><li>squaremap view of packages/modules/functions</li><ul><li>size proportional to time spent in each package/module/function</li></ul><li>basic navigation (home, back, up)</li></ul><p>For <a href="https://launchpad.net/meliae">Meliae</a> memory-dump viewing, it provides:</p>
 <ul>
   <li>sortable data-grid views</li>
   <li>squaremap of memory-usage</li>
@@ -47,15 +40,21 @@ programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable d
 <p>You will need to have all of wxPython, <a href="http://pypi.python.org/pypi/SquareMap/">SquareMap</a> and <a href="http://pypi.python.org/pypi/RunSnakeRun">RunSnakeRun</a>
 installed to use RunSnakeRun. &nbsp;You may also need the
 "python-profiler" package for your platform, which provides the pstats
-view.&nbsp; You will likely want to use your platform wxPython package (i.e. a pre-built binary). For Debian/Ubuntu distributions the prerequisite setup looks like this:
+view.&nbsp; You will likely want to use your platform wxPython package
+(i.e. a pre-built binary). For Debian/Ubuntu distributions the
+prerequisite setup looks like this:
 </p>
 <pre>apt-get install python-profiler python-wxgtk2.8 python-setuptools</pre>
 
 <p>RunSnakeRun and SquareMap will install well in a VirtualEnv if you
-would like to keep them isolated (normally you do not want to use the <code>--no-site-packages</code> flag if you are doing this).&nbsp; If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p>
+would like to keep them isolated (normally you do not want to use the <code>--no-site-packages</code> flag if you are doing this).&nbsp; I recommend this approach rather than using easy_install directly on your Linux/OS-X host.<br>
+</p>
+<pre>virtualenv runsnake<br>source runsnake/bin/activate<br></pre>
+<p>If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p>
+
 <pre>easy_install SquareMap RunSnakeRun<br></pre>
-<p>You will require a modern <a href="http://www.wxpython.org/">wxPython</a>and
-Python 2.x installation. &nbsp;The setup will create a script named
+<p>You will require a modern <a href="http://www.wxpython.org/">wxPython (e.g. 2.8)</a> and
+Python 2.x (e.g. 2.5 through 2.7) installation. &nbsp;The setup will create a script named
 "runsnake" on Linux machines which launches the profile viewer.&nbsp;
 On OS-X machines a wrapper script runsnake is created that runs the
 runsnake32 executable with a flag to tell Python to use the 32-bit
@@ -64,6 +63,16 @@ Scripts\runsnake.exe executable is created.&nbsp; If you have added
 your scripts directory to the PATH then this will be available from the
 command-line.<br>
 </p><h2><a name="usage"></a>Usage</h2>
+<p>If you are new to profiling you may wish to check out:</p>
+
+<ul>
+<li>my (<a href="http://www.vrplumber.com/">Mike Fletcher</a>'s) <a href="http://us.pycon.org/2009/conference/schedule/event/15/">presentation at PyCon 2009</a> which tries to explain the use of profiling as a tool for optimization in Python<br>
+  </li><li><a href="http://blip.tv/file/3988199">W. Matthew Wilson's presentation at PyOhio</a> on optimizing Python code<br>
+  </li>
+</ul>
+
+
+
 <h3>cProfile Viewing<br>
 </h3>
 <p>To use cProfile to capture your application's profile data, either using the command-line, like so:</p>
@@ -140,7 +149,8 @@ tends to just work. &nbsp;My (personal) current wish list for the project follow
 <p>If you have an idea, feel free
 to check out the code and&nbsp;implement the new&nbsp;feature. &nbsp;I'm certainly willing
 to entertain new features or bug-fix requests as well. &nbsp;The code
-is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>cd squaremap<br>python setup.py develop<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>storage of preferences such as column widths</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
+is available in bzr here:</p><pre>bzr branch lp:~mcfletch/squaremap/trunk squaremap<br>cd squaremap<br>python setup.py develop<br>bzr branch lp:~mcfletch/runsnakerun/trunk runsnakerun<br>cd runsnakerun<br>python setup.py develop<br></pre><p>You can <a href="mailto:mcfletch@vrplumber.com">contact me directly</a> if you'd like to contribute. &nbsp;Or you can just set up a bzr branch on LaunchPad and request a merge.</p><h2><a name="roadmap"></a>Roadmap/Wish-list</h2><p>This is just a listing of things that either I or others have requested as features:</p><ul><li>provide comparison views and "progress" views that compare across multiple profiles</li><li>(re)support&nbsp;Hotshot profile dumps (removed because Hotshot itself was deprecated)</li><li>support&nbsp;Robert Kern's line_profiler module (line and import timings)</li><li>support&nbsp;IronPython profiles (with cleanup on load to remove "noise" functions)</li><li>with a line-profiling module, allow per-line profile views</li><li>support&nbsp;(C)&nbsp;calltree/cachegrind files (as used by kcachegrind)</li><li>clean up the UI code (very hacky)</li><li>configuration/storage of preferences such as column widths, rounded corners, padding, etc.<br>
+</li><li>utility functions for capturing data</li></ul><h2><a name="othertools"></a>Other Tools</h2><p>RunSnakeRun is by no means a comprehensive
 tool-set for profiling, you may want to have any or all of these other
 tools available for your profiling needs:</p><ul><li><a href="http://code.google.com/p/jrfonseca/wiki/Gprof2Dot">Gprof2Dot</a> -- Converts various Profile formats into dot-format graphs<br>
 </li>
@@ -151,8 +161,11 @@ save that RunSnakeRun was intended to be Python specific and
 cross-platform</li><li><a href="http://pypi.python.org/pypi/profilehooks">profilehooks</a> -- specify which function to profile by using a decorator on a particular function</li></ul>
 <h2><a name="download"></a>Releases/Downloads</h2>
 <ul>
-  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b6.tar.gz">2.0.1b6</a> -- Fixes regression from introducing runsnakemem command<br>
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1.tar.gz">2.0.1</a> -- Fix for OS-X loading (32-bit mode forced)<br>
 </li>
+  <li><a href="http://pypi.python.org/packages/source/R/RunSnakeRun/RunSnakeRun-2.0.1b6.tar.gz">2.0.1b6</a> -- Fixes regression from introducing runsnakemem command<br>
+  </li>
+
   <li>2.0.1b5
 -- Fix regression for OS-X during work-around for Win32, add program
 icon, provide a dedicated command alias for meliae loading (runsnakemem
