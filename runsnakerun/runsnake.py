@@ -195,18 +195,19 @@ class MainFrame(wx.Frame):
         size=wx.DefaultSize,
         style=wx.DEFAULT_FRAME_STYLE|wx.CLIP_CHILDREN,
         name= _("RunSnakeRun"),
+        config_parser=None,
     ):
         """Initialise the Frame"""
         wx.Frame.__init__(self, parent, id, title, pos, size, style, name)
         # TODO: toolbar for back, up, root, directory-view, percentage view
         self.adapter = pstatsadapter.PStatsAdapter()
-        self.CreateControls()
+        self.CreateControls(config_parser)
         self.history = [] # set of (activated_node, selected_node) pairs...
         icon = self.LoadRSRIcon()
         if icon:
             self.SetIcon( icon )
 
-    def CreateControls(self):
+    def CreateControls(self, config_parser):
         """Create our sub-controls"""
         self.CreateMenuBar()
         self.SetupToolBar()
@@ -264,9 +265,9 @@ class MainFrame(wx.Frame):
         if editor:
             self.tabs.AddPage(self.sourceCodeControl, _('Source Code'), False)
         self.rightSplitter.SetSashSize(10)
-        #self.Maximize(True)
         # calculate size as proportional value for initial display...
-        width, height = wx.GetDisplaySize()
+        self.LoadState( config_parser )
+        width, height = self.GetSizeTuple()
         rightsplit = 2 * (height // 3)
         leftsplit = width // 3
         self.rightSplitter.SplitHorizontally(self.squareMap, self.tabs,
@@ -684,19 +685,18 @@ class MainFrame(wx.Frame):
             )
         ):
             self.Maximize(True)
-        else:
-            try:
-                width,height,x,y = [
-                    config_parser.getint( 'window',key )
-                    for key in ['width','height','x','y']
-                ]
-                self.SetPosition( (x,y))
-                self.SetSize( (width,height))
-            except Exception, err:
-                # this is just convenience, if it breaks in *any* way, ignore it...
-                log.error(
-                    "Unable to load window preferences, ignoring: %s", traceback.format_exc()
-                )
+        try:
+            width,height,x,y = [
+                config_parser.getint( 'window',key )
+                for key in ['width','height','x','y']
+            ]
+            self.SetPosition( (x,y))
+            self.SetSize( (width,height))
+        except Exception, err:
+            # this is just convenience, if it breaks in *any* way, ignore it...
+            log.error(
+                "Unable to load window preferences, ignoring: %s", traceback.format_exc()
+            )
         self.config = config_parser
         wx.EVT_CLOSE( self, self.OnCloseWindow )
     def OnCloseWindow( self, event=None ):
@@ -715,9 +715,7 @@ class RunSnakeRunApp(wx.App):
     def OnInit(self):
         """Initialise the application"""
         wx.InitAllImageHandlers()
-        frame = MainFrame()
-        self.config = load_config()
-        frame.LoadState( self.config )
+        frame = MainFrame( config_parser = load_config())
         frame.Show(True)
         self.SetTopWindow(frame)
         if sys.argv[1:]:
@@ -734,8 +732,7 @@ class MeliaeViewApp(wx.App):
     def OnInit(self):
         """Initialise the application"""
         wx.InitAllImageHandlers()
-        frame = MainFrame()
-        frame.LoadState( load_config() )
+        frame = MainFrame( config_parser = load_config())
         frame.Show(True)
         self.SetTopWindow(frame)
         if sys.argv[1:]:
