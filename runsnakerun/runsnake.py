@@ -1,6 +1,7 @@
-#! /usr/bin/env python
+    #! /usr/bin/env python
 """The main script for the RunSnakeRun profile viewer"""
 import wx, sys, os, logging, traceback
+import ConfigParser
 try:
     from wx.py import editor, editwindow
 except ImportError, err:
@@ -692,6 +693,9 @@ class MainFrame(wx.Frame):
             ]
             self.SetPosition( (x,y))
             self.SetSize( (width,height))
+        except ConfigParser.NoSectionError, err:
+            # the file isn't written yet, so don't even warn...
+            pass
         except Exception, err:
             # this is just convenience, if it breaks in *any* way, ignore it...
             log.error(
@@ -762,7 +766,6 @@ def config_file():
     return os.path.join( directory, 'runsnake.conf' )
     
 def load_config( ):
-    import ConfigParser
     config = ConfigParser.SafeConfigParser()
     filename = config_file()
     if os.path.exists( filename ):
