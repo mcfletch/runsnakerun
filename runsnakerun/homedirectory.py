@@ -42,13 +42,10 @@ def appdatadirectory(  ):
 
     This is the location where application-specific
     files should be stored.  On *nix systems, this will
-    be the HOME directory.  On Win32 systems, it will be
+    be the ${HOME}/.config directory.  On Win32 systems, it will be
     the "Application Data" directory.  Note that for
     Win32 systems it is normal to create a sub-directory
     for storing data in the Application Data directory.
-
-    XXX should os.environ['home'] override Win32 queries or
-        vice-versa?
     """
     if shell:
         # on Win32 and have Win32all extensions, best-case
@@ -59,14 +56,14 @@ def appdatadirectory(  ):
         return _winreg_getShellFolder( 'AppData' )
     # okay, what if for some reason _winreg is missing? would we want to allow ctypes?
     ## default case, look for name in environ...
-    for name in ['appdata', 'home']:
+    for name in ['APPDATA', 'HOME']:
         if name in os.environ:
             return os.path.join( os.environ[name], '.config' )
     # well, someone's being naughty, see if we can get ~ to expand to a directory...
     possible = os.path.abspath(os.path.expanduser( '~/.config' ))
     if os.path.exists( possible ):
         return possible
-    raise OSError( """Unable to determine user's application-data directory""" )
+    raise OSError( """Unable to determine user's application-data directory, no ${HOME} or ${APPDATA} in environment""" )
 
 if __name__ == "__main__":
     print 'AppData', appdatadirectory()
