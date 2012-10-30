@@ -68,7 +68,7 @@ PROFILE_VIEW_COLUMNS = [
     ),
     listviews.ColumnDefinition(
         name = _('Cum'),
-        attribute = 'cummulative',
+        attribute = 'cumulative',
         format = '%0.5f',
         percentPossible = True,
         targetWidth = 50,
@@ -77,7 +77,7 @@ PROFILE_VIEW_COLUMNS = [
     ),
     listviews.ColumnDefinition(
         name = _('/Call'),
-        attribute = 'cummulativePer',
+        attribute = 'cumulativePer',
         format = '%0.5f',
         defaultOrder = False,
         targetWidth = 50,
@@ -314,7 +314,7 @@ class MainFrame(wx.Frame):
         )
         self.upViewItem = menu.Append(
             ID_UP_VIEW, _('&Up'),
-            _('Go "up" to the parent of this node with the largest cummulative total')
+            _('Go "up" to the parent of this node with the largest cumulative total')
         )
         self.moreSquareViewItem = menu.AppendCheckItem(
             ID_MORE_SQUARE, _('&Hierarchic Squares'),
@@ -469,7 +469,7 @@ class MainFrame(wx.Frame):
         self.percentageView = percentageView
         self.percentageMenuItem.Check(self.percentageView)
         self.percentageViewTool.SetValue(self.percentageView)
-        total = self.loader.tree.cummulative
+        total = self.loader.tree.cumulative
         for control in self.ProfileListControls:
             control.SetPercentage(self.percentageView, total)
         self.adapter.SetPercentage(self.percentageView, total)
@@ -659,7 +659,7 @@ class MainFrame(wx.Frame):
                 adapter = pstatsadapter.PStatsAdapter()
                 tree = self.loader.tree
                 rows = self.loader.rows
-            adapter.SetPercentage(self.percentageView, self.loader.tree.cummulative)
+            adapter.SetPercentage(self.percentageView, self.loader.tree.cumulative)
         return adapter, tree, rows
     
     def SaveState( self, config_parser ):

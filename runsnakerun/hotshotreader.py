@@ -23,22 +23,22 @@ class FunctionRecord( object ):
         self.file = file # note, this is a circular reference!
         self.key = (fileno,lineno)
         self.name = name 
-        # accumArray being (local, cummulative) time elapsed
+        # accumArray being (local, cumulative) time elapsed
         self.accumArray = numpy.zeros( (2,), 'd' )
         # callArray being (direct, recursive) call counts
         self.callArray = numpy.zeros( (2,), 'l' )
         # children arcs are functions which were called by this function 
         # should have the total they took for each of them...
         self.childrenArcs = {
-            # (functionrecord,functionrecord): cummulativeTime,
+            # (functionrecord,functionrecord): cumulativeTime,
         }
     def get_local( self ):
         return self.accumArray[0]
     def get_localPer( self ):
         return self.accumArray[0]/(self.callArray[0] or 1)
-    def get_cummulative( self ):
+    def get_cumulative( self ):
         return self.accumArray[1]
-    def get_cummulativePer( self ):
+    def get_cumulativePer( self ):
         return self.accumArray[1]/(self.callArray[0] or 1)
     def get_calls( self ):
         return self.callArray[0]
@@ -49,9 +49,9 @@ class FunctionRecord( object ):
     def get_filename( self ):
         return os.path.basename( self.file.filename )
     local = property( get_local, None, None, """Local elapsed time""" )
-    cummulative = property( get_cummulative, None, None, """Cummulative elapsed time""" )
+    cumulative = property( get_cumulative, None, None, """cumulative elapsed time""" )
     localPer = property( get_localPer, None, None, """Local elapsed time per call (average)""" )
-    cummulativePer = property( get_cummulativePer, None, None, """Cummulative elapsed time per call (average)""" )
+    cumulativePer = property( get_cumulativePer, None, None, """cumulative elapsed time per call (average)""" )
     calls = property( get_calls, None, None, """Total number of calls to the function""" )
     recursive = property( get_recursive, None, None, """Calls to the function where the function is already on the call stack""" )
     directory = property( get_directory, None, None, """Directory in which our file is stored""" )
@@ -127,7 +127,7 @@ def loadHotshot( filename, yieldCount=10000 ):
             # current does so
             localDeltas[depth] += tdelta
             if what == whatExit:
-                # add time spent in this frame to cummulative for all open frames
+                # add time spent in this frame to cumulative for all open frames
                 localDelta = localDeltas[depth]*secondsFraction
                 # XXX should avoid this list-copy somehow...
                 lastParent = None
@@ -135,7 +135,7 @@ def loadHotshot( filename, yieldCount=10000 ):
                     if frame is not None:
                         frame[1] += localDelta
                 try:
-                    # add time spent in this instance of this frame to local cummulative for this frame
+                    # add time spent in this instance of this frame to local cumulative for this frame
                     depth -= 1
                     if frames[depth] is not None:
                         frames[depth][0] += localDelta
@@ -205,11 +205,11 @@ class StackInfo( object ):
     def __init__( self, stack, local ):
         self.stack = stack 
         self.local = local 
-        self.cummulative = local
+        self.cumulative = local
         self.children = []
     def addChild( self, child ):
         self.children.append( child )
-        self.cummulative += child.cummulative 
+        self.cumulative += child.cumulative 
     def __repr__( self ):
         return 'StackInfo( %s, %s, children=%s )'%( self.stack, self.local, self.children )
 def asTree( heatmap ):
@@ -253,7 +253,7 @@ if __name__ == "__main__":
 #    for (fileno,lineno),value in functionValues:
 #        key = (fileno,lineno)
 #        print files.get(fileno).filename, lineno,
-#        print value.calls, value.recursive, value.local, value.cummulative
+#        print value.calls, value.recursive, value.local, value.cumulative
 #    print 'read %i records in %s seconds'%( i, completion-startTime )
 
     t1 = time.time()

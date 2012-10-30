@@ -10,8 +10,8 @@ class PStatsAdapter(squaremap.DefaultAdapter):
 
     def value(self, node, parent=None):
         if isinstance(parent, pstatsloader.PStatGroup):
-            if parent.cummulative:
-                return node.cummulative / parent.cummulative
+            if parent.cumulative:
+                return node.cumulative / parent.cumulative
             else:
                 return 0
         return parent.child_cumulative_time(node)
@@ -20,14 +20,14 @@ class PStatsAdapter(squaremap.DefaultAdapter):
         if isinstance(node, pstatsloader.PStatGroup):
             return '%s / %s' % (node.filename, node.directory)
         if self.percentageView and self.total:
-            time = '%0.2f%%' % round(node.cummulative * 100.0 / self.total, 2)
+            time = '%0.2f%%' % round(node.cumulative * 100.0 / self.total, 2)
         else:
-            time = '%0.3fs' % round(node.cummulative, 3)
+            time = '%0.3fs' % round(node.cumulative, 3)
         return '%s@%s:%s [%s]' % (node.name, node.filename, node.lineno, time)
 
     def empty(self, node):
-        if node.cummulative:
-            return node.local / float(node.cummulative)
+        if node.cumulative:
+            return node.local / float(node.cumulative)
         return 0.0
 
     def parents(self, node):

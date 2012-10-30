@@ -34,10 +34,10 @@ class PStatsLoader( object ):
 
         TODO: still need more robustness here, particularly in the case of
         threaded programs.  Should be tracing back each row to root, breaking
-        cycles by sorting on cummulative time, and then collecting the traced
+        cycles by sorting on cumulative time, and then collecting the traced
         roots (or, if they are all on the same root, use that).
         """
-        maxes = sorted( rows.values(), key = lambda x: x.cummulative )
+        maxes = sorted( rows.values(), key = lambda x: x.cumulative )
         if not maxes:
             raise RuntimeError( """Null results!""" )
         root = maxes[-1]
@@ -136,7 +136,7 @@ class PStatRow( BaseStat ):
             raise ValueError( 'Null stats row' )
         (
             self.calls, self.recursive, self.local, self.localPer,
-            self.cummulative, self.cummulativePer, self.directory,
+            self.cumulative, self.cumulativePer, self.directory,
             self.filename, self.name, self.lineno
         ) = (
             nc,
@@ -164,7 +164,7 @@ class PStatRow( BaseStat ):
                 self.parents.append( parent )
                 parent.children.append( self )
     def child_cumulative_time( self, child ):
-        total = self.cummulative
+        total = self.cumulative
         if total:
             try:
                 (cc,nc,tt,ct) = child.callers[ self.key ]
@@ -177,7 +177,7 @@ class PStatRow( BaseStat ):
 
 class PStatGroup( BaseStat ):
     """A node/record that holds a group of children but isn't a raw-record based group"""
-    # if LOCAL_ONLY then only take the raw-record's local values, not cummulative values
+    # if LOCAL_ONLY then only take the raw-record's local values, not cumulative values
     LOCAL_ONLY = False
     def __init__( self, directory='', filename='', name='', children=None, local_children=None, tree=TREE_CALLS ):
         self.directory = directory
@@ -207,8 +207,8 @@ class PStatGroup( BaseStat ):
     def filter_children( self ):
         """Filter our children into regular and local children sets (if appropriate)"""
     def calculate_totals( self, children, local_children=None ):
-        """Calculate our cummulative totals from children and/or local children"""
-        for field,local_field in (('recursive','calls'),('cummulative','local')):
+        """Calculate our cumulative totals from children and/or local children"""
+        for field,local_field in (('recursive','calls'),('cumulative','local')):
             values = []
             for child in children:
                 if isinstance( child, PStatGroup ) or not self.LOCAL_ONLY:
@@ -218,7 +218,7 @@ class PStatGroup( BaseStat ):
             value = sum( values )
             setattr( self, field, value )
         if self.recursive:
-            self.cummulativePer = self.cummulative/float(self.recursive)
+            self.cumulativePer = self.cumulative/float(self.recursive)
         else:
             self.recursive = 0
         if local_children:
