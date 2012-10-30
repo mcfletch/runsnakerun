@@ -12,6 +12,7 @@ from squaremap import squaremap
 from runsnakerun import pstatsloader,pstatsadapter, meliaeloader, meliaeadapter
 from runsnakerun import listviews
 from runsnakerun import homedirectory
+from runsnakerun import coldshotadapter
 
 if sys.platform == 'win32':
     windows = True
@@ -179,6 +180,7 @@ class MainFrame(wx.Frame):
     loader = None
     percentageView = False
     directoryView = False
+    coldshotView = False
     memoryView = False
     historyIndex = -1
     activated_node = None
@@ -618,7 +620,9 @@ class MainFrame(wx.Frame):
             self.restoringHistory = False
 
     def load(self, *filenames):
-        """Load our hotshot dataset (iteratively)"""
+        """Load our dataset (iteratively)"""
+        if len(filenames) == 1 and os.path.basename( filenames[0] ) == 'index.coldshot':
+            return self.load_coldshot( filenames[0] )
         try:
             self.SetModel(pstatsloader.PStatsLoader(*filenames))
             self.SetTitle(_("Run Snake Run: %(filenames)s")
@@ -635,6 +639,12 @@ class MainFrame(wx.Frame):
         for view in self.ProfileListControls:
             view.SetColumns( MEMORY_VIEW_COLUMNS )
         self.SetModel( meliaeloader.load( filename ) )
+    def load_coldshot(self, filename ):
+        from coldshot import loader
+        self.coldshotView = True
+        self.loader = loader.Loader( os.path.dirname( filename ) )
+        self.loader.load()
+        self.SetModel( self.loader )
 
     def SetModel(self, loader):
         """Set our overall model (a loader object) and populate sub-controls"""
@@ -650,6 +660,11 @@ class MainFrame(wx.Frame):
         if self.memoryView:
             adapter = meliaeadapter.MeliaeAdapter()
             tree,rows = self.loader 
+        elif self.coldshotView:
+            adapter = coldshotadapter.ColdshotAdapter()
+            tree = self.loader.root 
+            rows = self.loader.functions
+            adapter.SetPercentage(self.percentageView, tree.cumulative)
         else:
             if self.directoryView:
                 adapter = pstatsadapter.DirectoryViewAdapter()
