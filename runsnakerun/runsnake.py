@@ -1,10 +1,12 @@
     #! /usr/bin/env python
 """The main script for the RunSnakeRun profile viewer"""
 import wx, sys, os, logging, traceback
+log = logging.getLogger( __name__ )
 import ConfigParser
 try:
     from wx.py import editor, editwindow
 except ImportError, err:
+    log.info( 'No editor available: %s', err )
     editor = None
 from gettext import gettext as _
 import pstats
@@ -540,6 +542,8 @@ class MainFrame(wx.Frame):
 
     def SourceShowFile(self, node):
         """Show the given file in the source-code view (attempt it anyway)"""
+#        import pdb
+#        pdb.set_trace()
         filename = self.adapter.filename( node )
         if filename and self.sourceFileShown != filename:
             try:
@@ -621,8 +625,11 @@ class MainFrame(wx.Frame):
 
     def load(self, *filenames):
         """Load our dataset (iteratively)"""
-        if len(filenames) == 1 and os.path.basename( filenames[0] ) == 'index.coldshot':
-            return self.load_coldshot( filenames[0] )
+        if len(filenames) == 1:
+            if os.path.basename( filenames[0] ) == 'index.coldshot':
+                return self.load_coldshot( os.path.dirname( filenames[0]) )
+            elif os.path.isdir( filenames[0] ):
+                return self.load_coldshot( filenames[0] )
         try:
             self.SetModel(pstatsloader.PStatsLoader(*filenames))
             self.SetTitle(_("Run Snake Run: %(filenames)s")
@@ -639,10 +646,10 @@ class MainFrame(wx.Frame):
         for view in self.ProfileListControls:
             view.SetColumns( MEMORY_VIEW_COLUMNS )
         self.SetModel( meliaeloader.load( filename ) )
-    def load_coldshot(self, filename ):
+    def load_coldshot(self, dirname ):
         from coldshot import loader
         self.coldshotView = True
-        self.loader = loader.Loader( os.path.dirname( filename ) )
+        self.loader = loader.Loader( dirname )
         self.loader.load()
         self.SetModel( self.loader )
 

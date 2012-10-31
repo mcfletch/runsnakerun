@@ -10,6 +10,9 @@ class ColdshotAdapter(squaremap.DefaultAdapter):
 
     def value(self, node, parent=None):
         return parent.child_cumulative_time(node)
+    
+    def filename( self, node ):
+        return node.path
 
     def label(self, node):
         if self.percentageView and self.total:
@@ -46,7 +49,3 @@ class ColdshotAdapter(squaremap.DefaultAdapter):
         """Set whether to display percentage values (and total for doing so)"""
         self.percentageView = percent
         self.total = total
-
-    def filename( self, node ):
-        """Extension to squaremap api to provide "what file is this" information"""
-        return node.file.filename
