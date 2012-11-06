@@ -327,12 +327,12 @@ class MainFrame(wx.Frame):
 
         # This stuff isn't really all that useful for profiling,
         # it's more about how to generate graphics to describe profiling...
-#        self.deeperViewItem = menu.Append(
-#            ID_DEEPER_VIEW, _('&Deeper'), _('View deeper squaremap views')
-#        )
-#        self.shallowerViewItem = menu.Append(
-#            ID_SHALLOWER_VIEW, _('&Shallower'), _('View shallower squaremap views')
-#        )
+        self.deeperViewItem = menu.Append(
+            ID_DEEPER_VIEW, _('&Deeper'), _('View deeper squaremap views')
+        )
+        self.shallowerViewItem = menu.Append(
+            ID_SHALLOWER_VIEW, _('&Shallower'), _('View shallower squaremap views')
+        )
 #        wx.ToolTip.Enable(True)
         menubar.Append(menu, _('&View'))
         self.SetMenuBar(menubar)
@@ -437,17 +437,17 @@ class MainFrame(wx.Frame):
 
     def OnShallowerView(self, event):
         if not self.squareMap.max_depth:
-            new_depth = self.squareMap.max_depth_seen or 0 - 5
+            new_depth = self.squareMap.max_depth_seen or 0 - 1
         else:
-            new_depth = self.squareMap.max_depth - 5
+            new_depth = self.squareMap.max_depth - 1
         self.squareMap.max_depth = max((1, new_depth))
         self.squareMap.Refresh()
 
     def OnDeeperView(self, event):
         if not self.squareMap.max_depth:
-            new_depth = 5
+            new_depth = 1
         else:
-            new_depth = self.squareMap.max_depth + 5
+            new_depth = self.squareMap.max_depth + 1
         self.squareMap.max_depth = max((self.squareMap.max_depth_seen or 0,
                                         new_depth))
         self.squareMap.Refresh()
@@ -491,6 +491,8 @@ class MainFrame(wx.Frame):
                         for mod in parents:
                             if mod['type'] == 'module' and mod['name'] == module:
                                 selected_parent = mod 
+            elif self.coldshotView:
+                parents = self.adapter.parents( node )
             else:
                 if self.directoryView:
                     tree = pstatsloader.TREE_FILES
@@ -542,8 +544,6 @@ class MainFrame(wx.Frame):
 
     def SourceShowFile(self, node):
         """Show the given file in the source-code view (attempt it anyway)"""
-#        import pdb
-#        pdb.set_trace()
         filename = self.adapter.filename( node )
         if filename and self.sourceFileShown != filename:
             try:
@@ -668,9 +668,14 @@ class MainFrame(wx.Frame):
             adapter = meliaeadapter.MeliaeAdapter()
             tree,rows = self.loader 
         elif self.coldshotView:
-            adapter = coldshotadapter.ColdshotAdapter()
-            tree = self.loader.root 
-            rows = self.loader.functions
+            if self.directoryView:
+                adapter = coldshotadapter.ModuleAdapter()
+                rows = self.loader.info.location_rows()
+                tree = self.loader.info.get_root( 'modules' )
+            else:
+                adapter = coldshotadapter.ColdshotAdapter()
+                rows = self.loader.info.function_rows()
+                tree = self.loader.info.get_root( 'calls' )
             adapter.SetPercentage(self.percentageView, tree.cumulative)
         else:
             if self.directoryView:
