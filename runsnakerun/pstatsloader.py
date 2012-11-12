@@ -1,7 +1,6 @@
 """Module to load cProfile/profile records as a tree of records"""
 import pstats, os, logging
 log = logging.getLogger(__name__)
-#log.setLevel( logging.DEBUG )
 from gettext import gettext as _
 
 TREE_CALLS, TREE_FILES = range( 2 )
@@ -15,6 +14,33 @@ class PStatsLoader( object ):
         self.tree = self.load( self.stats.stats )
         self.location_rows = {}
         self.location_tree = l = self.load_location( )
+        self.roots = {}
+    
+    ROOTS = ['functions','location']
+
+    def get_root( self, key ):
+        """Retrieve a given declared root by root-type-key"""
+        if key not in self.roots:
+            function = getattr( self, 'load_%s'%(key,) )()
+            self.roots[key] = function
+        return self.roots[key]
+    def get_rows( self, key ):
+        """Get the set of rows for the type-key"""
+        if key not in self.roots:
+            self.get_root( key )
+        if key == 'location':
+            return self.location_rows 
+        else:
+            return self.rows
+    def get_adapter( self, key ):
+        from runsnakerun import pstatsadapter
+        if key == 'functions':
+            return pstatsadapter.PStatsAdapter()
+        elif key == 'location':
+            return pstatsadapter.DirectoryViewAdapter()
+        else:
+            raise KeyError( """Unknown root type %s"""%( key, ))
+    
     def load( self, stats ):
         """Build a squaremap-compatible model from a pstats class"""
         rows = self.rows
@@ -26,7 +52,12 @@ class PStatsLoader( object ):
         for row in rows.itervalues():
             row.weave( rows )
         return self.find_root( rows )
-
+    
+    
+    def load_functions( self ):
+        """Load function records from the pstats file"""
+        return self.load()
+    
     def find_root( self, rows ):
         """Attempt to find/create a reasonable root node from list/set of rows
 
@@ -56,8 +87,14 @@ class PStatsLoader( object ):
             )
             root.finalize()
             self.rows[ root.key ] = root
+        self.roots['functions'] = root
         return root
     def load_location( self ):
+        """Load the location root record (loading regular records if necessary)"""
+        if not self.rows:
+            self.load()
+        return self._load_location()
+    def _load_location( self ):
         """Build a squaremap-compatible model for location-based hierarchy"""
         directories = {}
         files = {}

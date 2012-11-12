@@ -43,6 +43,8 @@ def mb( value ):
 
 class MeliaeAdapter( squaremap.DefaultAdapter ):
     """Default adapter class for adapting node-trees to SquareMap API"""
+    def SetPercentage( self, *args ):
+        """Ignore percentage requests for now"""
     def children( self, node ):
         """Retrieve the set of nodes which are children of this node"""
         return node.get('children',[])
@@ -88,6 +90,20 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
             parents = list(meliaeloader.children( node, index, 'parents' ))
             return parents 
         return []
+    def best_parent( self, node, tree_type=None ):
+        """Choose the best parent for a given node"""
+        parents = self.parents(node)
+        selected_parent = None
+        if node['type'] == 'type':
+            module = ".".join( node['name'].split( '.' )[:-1] )
+            if module:
+                for mod in parents:
+                    if mod['type'] == 'module' and mod['name'] == module:
+                        selected_parent = mod 
+        if parents and selected_parent is None:
+            parents.sort( key = lambda x: self.value(node, x) )
+            return parents[-1]
+        return selected_parent
 
     color_mapping = None
     def background_color(self, node, depth):

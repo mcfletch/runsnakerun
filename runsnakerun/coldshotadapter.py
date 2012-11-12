@@ -2,7 +2,7 @@
 import wx, sys, os, logging
 log = logging.getLogger( __name__ )
 from squaremap import squaremap
-from coldshot import stack
+from coldshot import stack,loader
 
 class BaseColdshotAdapter( squaremap.DefaultAdapter):
     """Base class for the various adapters"""
@@ -77,3 +77,36 @@ class ModuleAdapter( ColdshotAdapter ):
         else:
             return getattr( node, 'parents', [] )
         
+class Loader( loader.Loader ):
+    """Coldshot loader subclass with knowledge of squaremap adapters"""
+    def functions_rows( self ):
+        """Get cProfile-like function metadata rows
+        
+        returns an ID: function mapping
+        """
+        return self.info.functions
+    def location_rows( self ):
+        """Get our location records (finalized)
+        
+        returns an module-name: Grouping mapping
+        """
+        self.info.finalize_modules()
+        return self.info.modules
+    
+    ROOTS = ['functions','location' ]# ,'thread','calls']
+    
+    def get_root( self, key ):
+        """Retrieve the given root by type-key"""
+        return self.info.roots[key]
+    def get_rows( self, key ):
+        """Get the set of rows for the type-key"""
+        return getattr( self, '%s_rows'%(key,) )( )
+    def get_adapter( self, key ):
+        """Get an adapter for our given key"""
+        if key == 'functions':
+            return ColdshotAdapter()
+        elif key == 'location':
+            return ModuleAdapter()
+        else:
+            raise KeyError( """Unknown root type %s"""%( key, ))
+    

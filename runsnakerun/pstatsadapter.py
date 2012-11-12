@@ -7,6 +7,8 @@ class PStatsAdapter(squaremap.DefaultAdapter):
 
     percentageView = False
     total = 0
+    
+    TREE = pstatsloader.TREE_CALLS
 
     def value(self, node, parent=None):
         if isinstance(parent, pstatsloader.PStatGroup):
@@ -31,7 +33,12 @@ class PStatsAdapter(squaremap.DefaultAdapter):
         return 0.0
 
     def parents(self, node):
-        return getattr(node, 'parents', [])
+        """Determine all parents of node in our tree"""
+        return [
+            parent for parent in
+            getattr( node, 'parents', [] )
+            if getattr(parent, 'tree', self.TREE) == self.TREE
+        ]
 
     color_mapping = None
 
@@ -66,7 +73,7 @@ class PStatsAdapter(squaremap.DefaultAdapter):
 
 class DirectoryViewAdapter(PStatsAdapter):
     """Provides a directory-view-only adapter for PStats objects"""
-
+    TREE = pstatsloader.TREE_FILES
     def children(self, node):
         if isinstance(node, pstatsloader.PStatGroup):
             return node.children

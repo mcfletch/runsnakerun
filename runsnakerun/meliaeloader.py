@@ -538,6 +538,28 @@ class Ref(object):
     def __call__( self ):
         return self.target
 
+class Loader( object ):
+    """A data-set loader for pulling root and rows from a meliae dump"""
+    def __init__( self, filename, include_interpreter=False ):
+        self.filename = filename 
+        self.include_interpreter = include_interpreter
+        self.roots = {}
+    ROOTS = ['memory']
+    
+    def get_root( self, key ):
+        """Retrieve the given root by type-key"""
+        if root not in self.roots:
+            root,self.rows = self.load( self.filename, include_interpreter = self.include_interpreter )
+            self.roots[key] = root
+        return self.roots[key]
+    def get_rows( self, key ):
+        """Get the set of rows for the type-key"""
+        if key not in self.roots:
+            self.get_root( key )
+        return self.rows
+    def get_adapter( self, key ):
+        from runsnakerun import meliaeadapter
+        meliaeadapter.MeliaeAdapter()
 
 if __name__ == "__main__":
     import logging

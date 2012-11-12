@@ -14,7 +14,6 @@ from squaremap import squaremap
 from runsnakerun import pstatsloader,pstatsadapter, meliaeloader, meliaeadapter
 from runsnakerun import listviews
 from runsnakerun import homedirectory
-from runsnakerun import coldshotadapter
 
 if sys.platform == 'win32':
     windows = True
@@ -181,9 +180,9 @@ class MainFrame(wx.Frame):
     """The root frame for the display of a single data-set"""
     loader = None
     percentageView = False
-    directoryView = False
-    coldshotView = False
-    memoryView = False
+    
+    treeType = 'functions'
+    
     historyIndex = -1
     activated_node = None
     selected_node = None
@@ -452,6 +451,10 @@ class MainFrame(wx.Frame):
                                         new_depth))
         self.squareMap.Refresh()
 
+#    def SetTreeType( self, event ):
+#        """Get the button, get its associated tree type constant"""
+#        self.
+
     def OnPackageView(self, event):
         self.SetPackageView(not self.directoryView)
 
@@ -481,32 +484,17 @@ class MainFrame(wx.Frame):
     def OnUpView(self, event):
         """Request to move up the hierarchy to highest-weight parent"""
         node = self.activated_node
+        parents = []
+        selected_parent = None
+        
         if node:
-            selected_parent = None
-            if self.memoryView:
-                parents = self.adapter.parents(node)
-                if node['type'] == 'type':
-                    module = ".".join( node['name'].split( '.' )[:-1] )
-                    if module:
-                        for mod in parents:
-                            if mod['type'] == 'module' and mod['name'] == module:
-                                selected_parent = mod 
-            elif self.coldshotView:
-                parents = self.adapter.parents( node )
+            if hasattr( self.adapter, 'best_parent' ):
+                selected_parent = self.adapter.best_parent( node )
             else:
-                if self.directoryView:
-                    tree = pstatsloader.TREE_FILES
-                else:
-                    tree = pstatsloader.TREE_CALLS
-                parents = [
-                    parent for parent in
-                    self.adapter.parents(node)
-                    if getattr(parent, 'tree', pstatsloader.TREE_CALLS) == tree
-                ]
+                parents = self.adapter.parents( node )
             if parents:
                 if not selected_parent:
-                    parents.sort(lambda a, b: cmp(self.adapter.value(node, a),
-                                                  self.adapter.value(node, b)))
+                    parents.sort(key = lambda a: self.adapter.value(node, a))
                     selected_parent = parents[-1]
                 class event:
                     node = selected_parent
@@ -631,7 +619,9 @@ class MainFrame(wx.Frame):
             elif os.path.isdir( filenames[0] ):
                 return self.load_coldshot( filenames[0] )
         try:
-            self.SetModel(pstatsloader.PStatsLoader(*filenames))
+            self.loader = pstatsloader.PStatsLoader(*filenames)
+            self.SetModel( self.loader )
+            self.viewType = self.loader.ROOTS[0]
             self.SetTitle(_("Run Snake Run: %(filenames)s")
                           % {'filenames': ', '.join(filenames)[:120]})
         except (IOError, OSError, ValueError,MemoryError), err:
@@ -642,15 +632,17 @@ class MainFrame(wx.Frame):
                 err=err
             ))
     def load_memory(self, filename ):
-        self.memoryView = True
+        self.viewType = 'memory'
         for view in self.ProfileListControls:
             view.SetColumns( MEMORY_VIEW_COLUMNS )
-        self.SetModel( meliaeloader.load( filename ) )
+        self.loader = meliaeloader.Loader( filename )
+        self.viewType = self.loader.ROOTS[0]
+        self.SetModel( loader )
     def load_coldshot(self, dirname ):
-        from coldshot import loader
-        self.coldshotView = True
-        self.loader = loader.Loader( dirname )
+        from runsnakerun import coldshotadapter
+        self.loader = coldshotadapter.Loader( dirname )
         self.loader.load()
+        self.viewType = self.loader.ROOTS[0]
         self.SetModel( self.loader )
 
     def SetModel(self, loader):
@@ -664,29 +656,12 @@ class MainFrame(wx.Frame):
 
     def RootNode(self):
         """Return our current root node and appropriate adapter for it"""
-        if self.memoryView:
-            adapter = meliaeadapter.MeliaeAdapter()
-            tree,rows = self.loader 
-        elif self.coldshotView:
-            if self.directoryView:
-                adapter = coldshotadapter.ModuleAdapter()
-                rows = self.loader.info.location_rows()
-                tree = self.loader.info.get_root( 'modules' )
-            else:
-                adapter = coldshotadapter.ColdshotAdapter()
-                rows = self.loader.info.function_rows()
-                tree = self.loader.info.get_root( 'calls' )
-            adapter.SetPercentage(self.percentageView, tree.cumulative)
-        else:
-            if self.directoryView:
-                adapter = pstatsadapter.DirectoryViewAdapter()
-                tree = self.loader.location_tree
-                rows = self.loader.location_rows
-            else:
-                adapter = pstatsadapter.PStatsAdapter()
-                tree = self.loader.tree
-                rows = self.loader.rows
-            adapter.SetPercentage(self.percentageView, self.loader.tree.cumulative)
+        tree = self.loader.get_root( self.treeType )
+        adapter = self.loader.get_adapter( self.treeType )
+        rows = self.loader.get_rows( self.treeType )
+        
+        adapter.SetPercentage(self.percentageView, tree.cumulative)
+        
         return adapter, tree, rows
     
     def SaveState( self, config_parser ):
