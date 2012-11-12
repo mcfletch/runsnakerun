@@ -122,9 +122,10 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
 
 class TestApp(wx.App):
     """Basic application for holding the viewing Frame"""
+    handler = wx.PNGHandler()
     def OnInit(self):
         """Initialise the application"""
-        wx.InitAllImageHandlers()
+        wx.Image.AddHandler(self.handler)
         self.frame = frame = wx.Frame( None,
         )
         frame.CreateStatusBar()

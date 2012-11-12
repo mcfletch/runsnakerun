@@ -743,9 +743,10 @@ class MainFrame(wx.Frame):
 
 class RunSnakeRunApp(wx.App):
     """Basic application for holding the viewing Frame"""
+    handler = wx.PNGHandler()
     def OnInit(self):
         """Initialise the application"""
-        wx.InitAllImageHandlers()
+        wx.Image.AddHandler(self.handler)
         frame = MainFrame( config_parser = load_config())
         frame.Show(True)
         self.SetTopWindow(frame)
@@ -760,9 +761,10 @@ class RunSnakeRunApp(wx.App):
         return True
     
 class MeliaeViewApp(wx.App):
+    handler = wx.PNGHandler()
     def OnInit(self):
         """Initialise the application"""
-        wx.InitAllImageHandlers()
+        wx.Image.AddHandler(self.handler)
         frame = MainFrame( config_parser = load_config())
         frame.Show(True)
         self.SetTopWindow(frame)
