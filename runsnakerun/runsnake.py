@@ -25,7 +25,11 @@ log = logging.getLogger(__name__)
 ID_OPEN = wx.NewId()
 ID_OPEN_MEMORY = wx.NewId()
 ID_EXIT = wx.NewId()
-ID_PACKAGE_VIEW = wx.NewId()
+
+ID_TREE_TYPE = wx.NewId()
+
+#ID_PACKAGE_VIEW = wx.NewId()
+
 ID_PERCENTAGE_VIEW = wx.NewId()
 ID_ROOT_VIEW = wx.NewId()
 ID_BACK_VIEW = wx.NewId()
@@ -186,6 +190,9 @@ class MainFrame(wx.Frame):
     historyIndex = -1
     activated_node = None
     selected_node = None
+
+    viewTypeTool = None
+
     TBFLAGS = (
         wx.TB_HORIZONTAL
         #| wx.NO_BORDER
@@ -300,10 +307,10 @@ class MainFrame(wx.Frame):
         menu.Append(ID_EXIT, _('&Close'), _('Close this RunSnakeRun window'))
         menubar.Append(menu, _('&File'))
         menu = wx.Menu()
-        self.packageMenuItem = menu.AppendCheckItem(
-            ID_PACKAGE_VIEW, _('&File View'),
-            _('View time spent by package/module')
-        )
+#        self.packageMenuItem = menu.AppendCheckItem(
+#            ID_PACKAGE_VIEW, _('&File View'),
+#            _('View time spent by package/module')
+#        )
         self.percentageMenuItem = menu.AppendCheckItem(
             ID_PERCENTAGE_VIEW, _('&Percentage View'),
             _('View time spent as percent of overall time')
@@ -339,7 +346,8 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, ID_EXIT, lambda evt: self.Close(True))
         wx.EVT_MENU(self, ID_OPEN, self.OnOpenFile)
         wx.EVT_MENU(self, ID_OPEN_MEMORY, self.OnOpenMemory)
-        wx.EVT_MENU(self, ID_PACKAGE_VIEW, self.OnPackageView)
+        
+        #wx.EVT_MENU(self, ID_PACKAGE_VIEW, self.OnPackageView)
         wx.EVT_MENU(self, ID_PERCENTAGE_VIEW, self.OnPercentageView)
         wx.EVT_MENU(self, ID_UP_VIEW, self.OnUpView)
         wx.EVT_MENU(self, ID_DEEPER_VIEW, self.OnDeeperView)
@@ -401,12 +409,15 @@ class MainFrame(wx.Frame):
         wx.EVT_CHECKBOX(self.percentageViewTool,
                         self.percentageViewTool.GetId(), self.OnPercentageView)
 
-        self.packageViewTool = wx.CheckBox(tb, -1, _("File View    "))
-        self.packageViewTool.SetToolTip(wx.ToolTip(
-            _("Switch between call-hierarchy and package/module/function hierarchy")))
-        tb.AddControl(self.packageViewTool)
-        wx.EVT_CHECKBOX(self.packageViewTool, self.packageViewTool.GetId(),
-                        self.OnPackageView)
+#        self.packageViewTool = wx.CheckBox(tb, -1, _("File View    "))
+#        self.packageViewTool.SetToolTip(wx.ToolTip(
+#            _("Switch between call-hierarchy and package/module/function hierarchy")))
+#        tb.AddControl(self.packageViewTool)
+#        wx.EVT_CHECKBOX(self.packageViewTool, self.packageViewTool.GetId(),
+#                        self.OnPackageView)
+        if self.loader is not None:
+            self.viewTypeTool= wx.Choice( tb, -1, choices= self.loader.ROOTS )
+            tb.AddControl( self.viewTypeTool )
         tb.Realize()
 
     def OnOpenFile(self, event):
