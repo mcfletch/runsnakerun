@@ -6,7 +6,7 @@ from gettext import gettext as _
 TREE_CALLS, TREE_FILES = range( 2 )
 
 class PStatsLoader( object ):
-    """Load profiler statistic from """
+    """Load profiler statistics from PStats (cProfile) files"""
     def __init__( self, *filenames ):
         self.filename = filenames
         self.rows = {}

@@ -346,7 +346,6 @@ class MainFrame(wx.Frame):
         wx.EVT_MENU(self, ID_OPEN, self.OnOpenFile)
         wx.EVT_MENU(self, ID_OPEN_MEMORY, self.OnOpenMemory)
         
-        #wx.EVT_MENU(self, ID_PACKAGE_VIEW, self.OnPackageView)
         wx.EVT_MENU(self, ID_PERCENTAGE_VIEW, self.OnPercentageView)
         wx.EVT_MENU(self, ID_UP_VIEW, self.OnUpView)
         wx.EVT_MENU(self, ID_DEEPER_VIEW, self.OnDeeperView)
@@ -408,13 +407,9 @@ class MainFrame(wx.Frame):
         wx.EVT_CHECKBOX(self.percentageViewTool,
                         self.percentageViewTool.GetId(), self.OnPercentageView)
 
-#        self.packageViewTool = wx.CheckBox(tb, -1, _("File View    "))
-#        self.packageViewTool.SetToolTip(wx.ToolTip(
-#            _("Switch between call-hierarchy and package/module/function hierarchy")))
-#        tb.AddControl(self.packageViewTool)
-#        wx.EVT_CHECKBOX(self.packageViewTool, self.packageViewTool.GetId(),
-#                        self.OnPackageView)
         self.viewTypeTool= wx.Choice( tb, -1, choices= getattr(self.loader,'ROOTS',[]) )
+        self.viewTypeTool.SetToolTip(wx.ToolTip(
+            _("Switch between different hierarchic views of the data")))
         wx.EVT_CHOICE( self.viewTypeTool, self.viewTypeTool.GetId(), self.OnViewTypeTool )
         tb.AddControl( self.viewTypeTool )
         tb.Realize()
@@ -473,10 +468,6 @@ class MainFrame(wx.Frame):
         self.squareMap.max_depth = max((self.squareMap.max_depth_seen or 0,
                                         new_depth))
         self.squareMap.Refresh()
-
-#    def SetTreeType( self, event ):
-#        """Get the button, get its associated tree type constant"""
-#        self.
 
     def OnPackageView(self, event):
         self.SetPackageView(not self.directoryView)
