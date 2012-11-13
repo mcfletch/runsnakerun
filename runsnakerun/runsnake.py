@@ -518,7 +518,7 @@ class MainFrame(wx.Frame):
         self.percentageView = percentageView
         self.percentageMenuItem.Check(self.percentageView)
         self.percentageViewTool.SetValue(self.percentageView)
-        total = self.adapter.get_root( self.viewType ).cumulative
+        total = self.adapter.value( self.loader.get_root( self.viewType ) )
         for control in self.ProfileListControls:
             control.SetPercentage(self.percentageView, total)
         self.adapter.SetPercentage(self.percentageView, total)
@@ -682,7 +682,7 @@ class MainFrame(wx.Frame):
         self.loader = meliaeloader.Loader( filename )
         self.ConfigureViewTypeChoices()
         self.viewType = self.loader.ROOTS[0]
-        self.SetModel( loader )
+        self.SetModel( self.loader )
     def load_coldshot(self, dirname ):
         from runsnakerun import coldshotadapter
         self.loader = coldshotadapter.Loader( dirname )
@@ -706,7 +706,7 @@ class MainFrame(wx.Frame):
         adapter = self.loader.get_adapter( self.viewType )
         rows = self.loader.get_rows( self.viewType )
         
-        adapter.SetPercentage(self.percentageView, tree.cumulative)
+        adapter.SetPercentage(self.percentageView, adapter.value( tree ))
         
         return adapter, tree, rows
     

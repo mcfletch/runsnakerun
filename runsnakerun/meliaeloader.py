@@ -548,8 +548,8 @@ class Loader( object ):
     
     def get_root( self, key ):
         """Retrieve the given root by type-key"""
-        if root not in self.roots:
-            root,self.rows = self.load( self.filename, include_interpreter = self.include_interpreter )
+        if key not in self.roots:
+            root,self.rows = load( self.filename, include_interpreter = self.include_interpreter )
             self.roots[key] = root
         return self.roots[key]
     def get_rows( self, key ):
@@ -559,7 +559,7 @@ class Loader( object ):
         return self.rows
     def get_adapter( self, key ):
         from runsnakerun import meliaeadapter
-        meliaeadapter.MeliaeAdapter()
+        return meliaeadapter.MeliaeAdapter()
 
 if __name__ == "__main__":
     import logging
