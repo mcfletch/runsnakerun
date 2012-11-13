@@ -37,13 +37,19 @@ class BaseColdshotAdapter( squaremap.DefaultAdapter):
             time = '%0.2f%%' % round(node.cumulative * 100.0 / self.total, 2)
         else:
             time = '%0.3fs' % round(node.cumulative, 3)
-        return '%s@%s:%s [%s]' % (node.name, node.filename, node.line, time)
+        if hasattr( node, 'line' ):
+            return '%s@%s:%s [%s]' % (node.name, node.filename, node.line, time)
+        else:
+            return '%s [%s]'%( node.name, time )
 
 class ColdshotAdapter(BaseColdshotAdapter):
     """Adapts a coldshot.loader.Loader into a Squaremap-compatible structure"""
 
     def value(self, node, parent=None):
-        return parent.child_cumulative_time(node)
+        if parent:
+            return parent.child_cumulative_time(node)
+        else:
+            return node.cumulative
     
     def empty(self, node):
         """Calculate percentage of "empty" time"""
@@ -57,6 +63,35 @@ class ColdshotAdapter(BaseColdshotAdapter):
 #    def empty(self, node):
 #        """Calculate percentage of "empty" time"""
 #        return node.empty
+
+class FunctionLineWrapper( object ):
+    def __init__( self, function_info, line_info ):
+        self.function_info = function_info
+        self.line_info = line_info
+    @property 
+    def children( self ):
+        return []
+    @property 
+    def parents( self ):
+        return [ self.function_info ]
+    @property 
+    def cumulative( self ):
+        return self.line_info.time * self.function_info.loader.timer_unit
+    @property 
+    def empty( self ):
+        return 0.0
+    @property 
+    def local( self ):
+        return self.line_info.time * self.function_info.loader.timer_unit
+    @property 
+    def key( self ):
+        return self.function_info.key 
+    @property 
+    def name( self ):
+        return '%s:%s'%( self.line_info.line, self.function_info.filename,  )
+    @property 
+    def calls( self ):
+        return self.line_info.calls
 
 class ModuleAdapter( ColdshotAdapter ):
     """Currently doesn't do anything different"""
@@ -74,8 +109,22 @@ class ModuleAdapter( ColdshotAdapter ):
             if parent:
                 return [parent]
             return []
+        elif isinstance( node, stack.FunctionLineInfo ):
+            return [node.function]
         else:
             return getattr( node, 'parents', [] )
+    def children( self, node ):
+        if isinstance( node, stack.FunctionInfo ):
+            return [
+                FunctionLineWrapper( node, line )
+                for lineno,line in sorted( node.line_map.items())
+            ]
+        return ColdshotAdapter.children( self, node )
+    def label(self, node):
+        if isinstance( node, FunctionLineWrapper ):
+            return node.name 
+        return ColdshotAdapter.label( self, node )
+    
         
 class Loader( loader.Loader ):
     """Coldshot loader subclass with knowledge of squaremap adapters"""
@@ -92,7 +141,7 @@ class Loader( loader.Loader ):
         """
         self.info.finalize_modules()
         return self.info.modules
-    
+        
     ROOTS = ['functions','location' ]# ,'thread','calls']
     
     def get_root( self, key ):
