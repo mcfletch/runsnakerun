@@ -340,6 +340,10 @@ class MainFrame(wx.Frame):
         )
 #        wx.ToolTip.Enable(True)
         menubar.Append(menu, _('&View'))
+        
+        self.viewTypeMenu =wx.Menu( )
+        menubar.Append(self.viewTypeMenu, _('View &Type'))
+        
         self.SetMenuBar(menubar)
 
         wx.EVT_MENU(self, ID_EXIT, lambda evt: self.Close(True))
@@ -426,6 +430,30 @@ class MainFrame(wx.Frame):
         self.viewTypeTool.SetItems( getattr( self.loader, 'ROOTS', [] ))
         if self.loader and self.viewType in self.loader.ROOTS:
             self.viewTypeTool.SetSelection( self.loader.ROOTS.index( self.viewType ))
+            
+        # configure the menu with the available choices...
+        def chooser( typ ):
+            def Callback( event ):
+                if typ != self.viewType:
+                    self.viewType = typ 
+                    self.OnRootView( event )
+            return Callback
+        # Clear all previous items
+        for item in self.viewTypeMenu.GetMenuItems():
+            self.viewTypeMenu.DeleteItem( item )
+        if self.loader and self.loader.ROOTS:
+            for root in self.loader.ROOTS:
+                item = wx.MenuItem( 
+                    self.viewTypeMenu, -1, root.title(), 
+                    _("View hierarchy by %(name)s")%{
+                        'name': root.title(),
+                    },
+                    kind=wx.ITEM_RADIO,
+                )
+                item.SetCheckable( True )
+                self.viewTypeMenu.AppendItem( item )
+                item.Check( root == self.viewType )
+                wx.EVT_MENU( self, item.GetId(), chooser( root ))
 
     def OnOpenFile(self, event):
         """Request to open a new profile file"""
