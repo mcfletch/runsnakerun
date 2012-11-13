@@ -185,12 +185,11 @@ class MainFrame(wx.Frame):
     loader = None
     percentageView = False
     
-    treeType = 'functions'
-    
     historyIndex = -1
     activated_node = None
     selected_node = None
 
+    viewType = 'functions'
     viewTypeTool = None
 
     TBFLAGS = (
@@ -415,10 +414,23 @@ class MainFrame(wx.Frame):
 #        tb.AddControl(self.packageViewTool)
 #        wx.EVT_CHECKBOX(self.packageViewTool, self.packageViewTool.GetId(),
 #                        self.OnPackageView)
-        if self.loader is not None:
-            self.viewTypeTool= wx.Choice( tb, -1, choices= self.loader.ROOTS )
-            tb.AddControl( self.viewTypeTool )
+        self.viewTypeTool= wx.Choice( tb, -1, choices= getattr(self.loader,'ROOTS',[]) )
+        wx.EVT_CHOICE( self.viewTypeTool, self.viewTypeTool.GetId(), self.OnViewTypeTool )
+        tb.AddControl( self.viewTypeTool )
         tb.Realize()
+    
+    def OnViewTypeTool( self, event ):
+        """When the user changes the selection, make that our selection"""
+        new = self.viewTypeTool.GetStringSelection()
+        if new != self.viewType:
+            self.viewType = new
+            self.OnRootView( event )
+    
+    def ConfigureViewTypeChoices( self, event=None ):
+        """Configure the set of View types in the toolbar (and menus)"""
+        self.viewTypeTool.SetItems( getattr( self.loader, 'ROOTS', [] ))
+        if self.loader and self.viewType in self.loader.ROOTS:
+            self.viewTypeTool.SetSelection( self.loader.ROOTS.index( self.viewType ))
 
     def OnOpenFile(self, event):
         """Request to open a new profile file"""
@@ -487,7 +499,7 @@ class MainFrame(wx.Frame):
         self.percentageView = percentageView
         self.percentageMenuItem.Check(self.percentageView)
         self.percentageViewTool.SetValue(self.percentageView)
-        total = self.loader.tree.cumulative
+        total = self.adapter.get_root( self.viewType ).cumulative
         for control in self.ProfileListControls:
             control.SetPercentage(self.percentageView, total)
         self.adapter.SetPercentage(self.percentageView, total)
@@ -529,6 +541,7 @@ class MainFrame(wx.Frame):
         self.adapter, tree, rows = self.RootNode()
         self.squareMap.SetModel(tree, self.adapter)
         self.RecordHistory()
+        self.ConfigureViewTypeChoices()
 
     def OnNodeActivated(self, event):
         """Double-click or enter on a node in some control..."""
@@ -631,6 +644,7 @@ class MainFrame(wx.Frame):
                 return self.load_coldshot( filenames[0] )
         try:
             self.loader = pstatsloader.PStatsLoader(*filenames)
+            self.ConfigureViewTypeChoices()
             self.SetModel( self.loader )
             self.viewType = self.loader.ROOTS[0]
             self.SetTitle(_("Run Snake Run: %(filenames)s")
@@ -647,12 +661,14 @@ class MainFrame(wx.Frame):
         for view in self.ProfileListControls:
             view.SetColumns( MEMORY_VIEW_COLUMNS )
         self.loader = meliaeloader.Loader( filename )
+        self.ConfigureViewTypeChoices()
         self.viewType = self.loader.ROOTS[0]
         self.SetModel( loader )
     def load_coldshot(self, dirname ):
         from runsnakerun import coldshotadapter
         self.loader = coldshotadapter.Loader( dirname )
         self.loader.load()
+        self.ConfigureViewTypeChoices()
         self.viewType = self.loader.ROOTS[0]
         self.SetModel( self.loader )
 
@@ -667,9 +683,9 @@ class MainFrame(wx.Frame):
 
     def RootNode(self):
         """Return our current root node and appropriate adapter for it"""
-        tree = self.loader.get_root( self.treeType )
-        adapter = self.loader.get_adapter( self.treeType )
-        rows = self.loader.get_rows( self.treeType )
+        tree = self.loader.get_root( self.viewType )
+        adapter = self.loader.get_adapter( self.viewType )
+        rows = self.loader.get_rows( self.viewType )
         
         adapter.SetPercentage(self.percentageView, tree.cumulative)
         
