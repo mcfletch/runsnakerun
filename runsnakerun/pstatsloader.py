@@ -10,11 +10,11 @@ class PStatsLoader( object ):
     def __init__( self, *filenames ):
         self.filename = filenames
         self.rows = {}
+        self.roots = {}
+        self.location_rows = {}
         self.stats = pstats.Stats( *filenames )
         self.tree = self.load( self.stats.stats )
-        self.location_rows = {}
         self.location_tree = l = self.load_location( )
-        self.roots = {}
     
     ROOTS = ['functions','location']
 
