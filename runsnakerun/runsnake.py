@@ -19,6 +19,10 @@ if sys.platform == 'win32':
     windows = True
 else:
     windows = False
+if sys.platform == 'darwin':
+    osx = True 
+else:
+    osx = False
 
 log = logging.getLogger(__name__)
 
@@ -385,7 +389,8 @@ class MainFrame(wx.Frame):
                                             tsize)
         tb.AddLabelTool(ID_OPEN, "Open", open_bmp, shortHelp="Open",
                         longHelp="Open a (c)Profile trace file")
-        tb.AddSeparator()
+        if not osx:
+            tb.AddSeparator()
 #        self.Bind(wx.EVT_TOOL, self.OnOpenFile, id=ID_OPEN)
         self.rootViewTool = tb.AddLabelTool(
             ID_ROOT_VIEW, _("Root View"),
@@ -402,7 +407,8 @@ class MainFrame(wx.Frame):
             wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, tsize),
             shortHelp=_("Go one level up the call tree (highest-percentage parent)")
         )
-        tb.AddSeparator()
+        if not osx:
+            tb.AddSeparator()
         # TODO: figure out why the control is sizing the label incorrectly on Linux
         self.percentageViewTool = wx.CheckBox(tb, -1, _("Percent    "))
         self.percentageViewTool.SetToolTip(wx.ToolTip(
