@@ -1,5 +1,6 @@
-    #! /usr/bin/env python
+#!/usr/bin/env python
 """The main script for the RunSnakeRun profile viewer"""
+
 import wx, sys, os, logging, traceback
 log = logging.getLogger( __name__ )
 import ConfigParser
@@ -724,7 +725,18 @@ class MainFrame(wx.Frame):
         config_parser.set( 'window', 'height', str(size[1]) )
         config_parser.set( 'window', 'x', str(position[0]) )
         config_parser.set( 'window', 'y', str(position[1]) )
+
+        if not config_parser.has_section('listControl'):
+            config_parser.add_section('listControl')
+            for i, dfn in enumerate(PROFILE_VIEW_COLUMNS):
+                col = self.listControl.GetColumn(i)
+                col_cfg = ' '.join(map(str,
+                                       [col.GetWidth(),
+                                        col.GetShown()]))
+
         return config_parser
+
+
     def LoadState( self, config_parser ):
         """Set our window state from the given config_parser instance"""
         if (
@@ -749,8 +761,40 @@ class MainFrame(wx.Frame):
             log.error(
                 "Unable to load window preferences, ignoring: %s", traceback.format_exc()
             )
+
+        try:
+            font_size = config_parser.getint('window', 'font_size')
+        except Exception:
+            pass # use the default, by default
+        else:
+            font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+            font.SetPointSize(font_size)
+            for ctrl in self.ProfileListControls:
+                ctrl.SetFont(font)
+
+        # XXX: modify the column set
+        if config_parser.has_section('listControl'):
+            for i, dfn in enumerate(PROFILE_VIEW_COLUMNS):
+                if config_parser.has_option('listControl', dfn.attribute):
+                    col_cfg = config_parser.get('listControl', dfn.attribute)
+                    w, shown = col_cfg.split(' ')
+                    w = int(w)
+                    if shown.lower() in ('t', 'true', 'y', 'yes', '1'):
+                        shown = True
+                    elif shown.lower() in ('f', 'false', 'n', 'no', '0'):
+                        shown = False
+                    else:
+                        shown = True
+                        log.error(
+                            "Could not understand the 'shown' field for "
+                            "listControl.%s: %r" % (dfn.attribute, shown))
+                    self.listControl.SetColumnWidth(i, w)
+                    self.listControl.SetColumnShown(i, shown)
+
         self.config = config_parser
         wx.EVT_CLOSE( self, self.OnCloseWindow )
+
+
     def OnCloseWindow( self, event=None ):
         try:
             self.SaveState( self.config )
@@ -761,6 +805,7 @@ class MainFrame(wx.Frame):
         except Exception, err:
             log.error( "Unable to write window preferences, ignoring: %s", traceback.format_exc())
         self.Destroy()
+
 
 class RunSnakeRunApp(wx.App):
     """Basic application for holding the viewing Frame"""

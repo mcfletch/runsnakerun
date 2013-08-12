@@ -16,7 +16,10 @@ class PStatsAdapter(squaremap.DefaultAdapter):
                 return node.cumulative / parent.cumulative
             else:
                 return 0
-        return parent.child_cumulative_time(node)
+        if parent is None:
+            return 0
+        else:
+            return parent.child_cumulative_time(node)
 
     def label(self, node):
         if isinstance(node, pstatsloader.PStatGroup):

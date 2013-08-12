@@ -24,6 +24,7 @@ class PStatsLoader( object ):
             function = getattr( self, 'load_%s'%(key,) )()
             self.roots[key] = function
         return self.roots[key]
+
     def get_rows( self, key ):
         """Get the set of rows for the type-key"""
         if key not in self.roots:
@@ -32,6 +33,7 @@ class PStatsLoader( object ):
             return self.location_rows 
         else:
             return self.rows
+
     def get_adapter( self, key ):
         from runsnakerun import pstatsadapter
         if key == 'functions':
@@ -89,11 +91,13 @@ class PStatsLoader( object ):
             self.rows[ root.key ] = root
         self.roots['functions'] = root
         return root
+
     def load_location( self ):
         """Load the location root record (loading regular records if necessary)"""
         if not self.rows:
             self.load()
         return self._load_location()
+
     def _load_location( self ):
         """Build a squaremap-compatible model for location-based hierarchy"""
         directories = {}
@@ -163,6 +167,8 @@ class PStatRow( BaseStat ):
         self.children = []
         self.parents = []
         file,line,func = self.key = key
+        if 'cPickle.load' in func:
+            print key, raw
         try:
             dirname,basename = os.path.dirname(file),os.path.basename(file)
         except ValueError, err:
@@ -188,8 +194,10 @@ class PStatRow( BaseStat ):
             line,
         )
         self.callers = callers
+
     def __repr__( self ):
         return 'PStatRow( %r,%r,%r,%r, %s )'%(self.directory, self.filename, self.lineno, self.name, len(self.children))
+
     def add_child( self, child ):
         self.children.append( child )
 
@@ -200,6 +208,7 @@ class PStatRow( BaseStat ):
             if parent:
                 self.parents.append( parent )
                 parent.children.append( self )
+
     def child_cumulative_time( self, child ):
         total = self.cumulative
         if total:

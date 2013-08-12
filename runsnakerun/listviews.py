@@ -1,6 +1,7 @@
 import wx, sys, os, logging, operator
 from gettext import gettext as _
 from squaremap import squaremap
+from wx.lib.agw.ultimatelistctrl import UltimateListCtrl,ULC_REPORT,ULC_VIRTUAL,ULC_VRULES,ULC_SINGLE_SEL
 
 if sys.platform == 'win32':
     windows = True
@@ -48,7 +49,7 @@ class DictColumn( ColumnDefinition ):
             self.get = self.getter = getter
 
 
-class DataView(wx.ListCtrl):
+class DataView(UltimateListCtrl):
     """A sortable profile list control"""
 
     indicated = -1
@@ -62,14 +63,17 @@ class DataView(wx.ListCtrl):
         self, parent,
         id=-1,
         pos=wx.DefaultPosition, size=wx.DefaultSize,
-        style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_VRULES|wx.LC_SINGLE_SEL,
+        style=wx.LC_VIRTUAL,
+        agwStyle=ULC_REPORT|ULC_VIRTUAL|ULC_VRULES|ULC_SINGLE_SEL,
         validator=wx.DefaultValidator,
         columns=None,
         sortOrder=None,
         name=_("ProfileView"),
     ):
-        wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator,
-                             name)
+        UltimateListCtrl.__init__(self, parent, id, pos, size,
+                                  style=style, agwStyle=agwStyle,
+                                  validator=validator, name=name)
+
         if columns is not None:
             self.columns = columns
 
@@ -189,6 +193,7 @@ class DataView(wx.ListCtrl):
         """Given a request to reorder, tell us to reorder"""
         column = self.columns[event.GetColumn()]
         return self.ReorderByColumn( column )
+
     def ReorderByColumn( self, column ):
         """Reorder the set of records by column"""
         # TODO: store current selection and re-select after sorting...
@@ -276,3 +281,29 @@ class DataView(wx.ListCtrl):
                 if isinstance(value,(unicode,str)):
                     return value
                 return unicode(value)
+
+    # http://namespace-diff-tool.googlecode.com/svn/trunk/extern/ultimatelistctrl.py
+
+    def OnGetItemToolTip(self, item, col):
+        return self.OnGetItemText(item, col) # XXX: do something nicer
+
+    def OnGetItemTextColour(self, item, col):
+        c = self.GetColumn(col)
+        if c.GetWidth() < 16:
+            # gray out really narrow columns for now.  This way "0"
+            # width columns that actually show several pixels don't
+            # create so much confusion.
+            return wx.Colour(192, 192, 192)
+        else:
+            return None
+
+    def OnGetItemColumnImage(self, item, column=0):
+        return []
+
+    def OnGetItemAttr(self, item):
+        return None
+
+    def OnGetItemColumnCheck(self, item, column=0):
+        return False
+
+
