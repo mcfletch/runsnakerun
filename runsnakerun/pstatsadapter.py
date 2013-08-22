@@ -17,7 +17,7 @@ class PStatsAdapter(squaremap.DefaultAdapter):
             else:
                 return 0
         elif parent is None:
-            return 0
+            return node.cumulative
         return parent.child_cumulative_time(node)
 
     def label(self, node):
