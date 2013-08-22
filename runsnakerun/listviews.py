@@ -1,6 +1,7 @@
-import wx, sys, os, logging, operator
+import wx, sys, os, logging, operator, traceback
 from gettext import gettext as _
 from squaremap import squaremap
+from wx.lib.agw.ultimatelistctrl import UltimateListCtrl,ULC_REPORT,ULC_VIRTUAL,ULC_VRULES,ULC_SINGLE_SEL
 
 if sys.platform == 'win32':
     windows = True
@@ -70,6 +71,7 @@ class DataView(wx.ListCtrl):
     ):
         wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator,
                              name)
+
         if columns is not None:
             self.columns = columns
 
@@ -189,6 +191,7 @@ class DataView(wx.ListCtrl):
         """Given a request to reorder, tell us to reorder"""
         column = self.columns[event.GetColumn()]
         return self.ReorderByColumn( column )
+
     def ReorderByColumn( self, column ):
         """Reorder the set of records by column"""
         # TODO: store current selection and re-select after sorting...
@@ -276,3 +279,26 @@ class DataView(wx.ListCtrl):
                 if isinstance(value,(unicode,str)):
                     return value
                 return unicode(value)
+
+    def OnGetItemToolTip(self, item, col):
+        return self.OnGetItemText(item, col) # XXX: do something nicer
+
+    def SaveState( self, config_parser ):
+        section = 'listctrl-%s'%(self.GetName())
+        if not config_parser.has_section(section):
+            config_parser.add_section(section)
+        for i, dfn in enumerate(self.columns):
+            col = self.GetColumn(i)
+            config_parser.set( section, '%s_width'%dfn.attribute, str(col.GetWidth()) )
+    def LoadState( self, config_parser ):
+        section = 'listctrl-%s'%(self.GetName())
+        if config_parser.has_section(section):
+            for i, dfn in enumerate(self.columns):
+                width = '%s_width'%dfn.attribute
+                if config_parser.has_option(section, width):
+                    try:
+                        value = int(config_parser.get(section, width))
+                    except ValueError:
+                        log.warn( "Unable to restore %s %s", section, width )
+                    else:
+                        self.SetColumnWidth(i,value)

@@ -1,5 +1,6 @@
-    #! /usr/bin/env python
+#!/usr/bin/env python
 """The main script for the RunSnakeRun profile viewer"""
+
 import wx, sys, os, logging, traceback
 log = logging.getLogger( __name__ )
 import ConfigParser
@@ -235,6 +236,7 @@ class MainFrame(wx.Frame):
         self.listControl = listviews.DataView(
             self.leftSplitter,
             columns = PROFILE_VIEW_COLUMNS,
+            name='mainlist',
         )
         self.squareMap = squaremap.SquareMap(
             self.rightSplitter,
@@ -252,18 +254,22 @@ class MainFrame(wx.Frame):
         self.calleeListControl = listviews.DataView(
             self.tabs,
             columns = PROFILE_VIEW_COLUMNS,
+            name='callee',
         )
         self.allCalleeListControl = listviews.DataView(
             self.tabs,
             columns = PROFILE_VIEW_COLUMNS,
+            name='allcallee',
         )
         self.allCallerListControl = listviews.DataView(
             self.tabs,
             columns = PROFILE_VIEW_COLUMNS,
+            name='allcaller',
         )
         self.callerListControl = listviews.DataView(
             self.tabs,
             columns = PROFILE_VIEW_COLUMNS,
+            name='caller',
         )
         self.ProfileListControls = [
             self.listControl,
@@ -730,7 +736,13 @@ class MainFrame(wx.Frame):
         config_parser.set( 'window', 'height', str(size[1]) )
         config_parser.set( 'window', 'x', str(position[0]) )
         config_parser.set( 'window', 'y', str(position[1]) )
+        
+        for control in self.ProfileListControls:
+            control.SaveState( config_parser )
+
         return config_parser
+
+
     def LoadState( self, config_parser ):
         """Set our window state from the given config_parser instance"""
         if (
@@ -755,8 +767,24 @@ class MainFrame(wx.Frame):
             log.error(
                 "Unable to load window preferences, ignoring: %s", traceback.format_exc()
             )
+
+        try:
+            font_size = config_parser.getint('window', 'font_size')
+        except Exception:
+            pass # use the default, by default
+        else:
+            font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+            font.SetPointSize(font_size)
+            for ctrl in self.ProfileListControls:
+                ctrl.SetFont(font)
+        
+        for control in self.ProfileListControls:
+            control.LoadState( config_parser )
+        
         self.config = config_parser
         wx.EVT_CLOSE( self, self.OnCloseWindow )
+
+
     def OnCloseWindow( self, event=None ):
         try:
             self.SaveState( self.config )
