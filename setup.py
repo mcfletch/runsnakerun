@@ -57,7 +57,7 @@ and package/module structures.""",
         author = "Mike C. Fletcher",
         author_email = "mcfletch@vrplumber.com",
         install_requires = [
-            'SquareMap >= 1.0.1b3',
+            'SquareMap >= 1.0.3',
         ],
         license = "BSD",
         package_dir = {
