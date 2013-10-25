@@ -745,6 +745,8 @@ class MainFrame(wx.Frame):
 
     def LoadState( self, config_parser ):
         """Set our window state from the given config_parser instance"""
+        if not config_parser:
+            return
         if (
             not config_parser.has_section( 'window' ) or (
                 config_parser.has_option( 'window','maximized' ) and 
