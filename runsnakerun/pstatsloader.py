@@ -14,7 +14,12 @@ except NameError:
 TREE_CALLS, TREE_FILES = list(range( 2))
 
 def load_pstats(filenames):
-    """Given list of filenames, load pstats, potentially using a different python version"""
+    """Given list of filenames, load pstats, potentially using a different python version
+    
+    Internally will create a python2 subprocess to convert python2
+    pstats dumps for loading in python3, that will create a cPickle/pickle
+    dump and load it locally.
+    """
     # first up, happy path...
     filenames = [filenames] if isinstance(filenames, (bytes,unicode)) else filenames
     try:

@@ -162,7 +162,7 @@ class TestApp(wx.App):
         return meliaeloader.load( path )[0] # tree-only
     def OnSquareSelected( self, event ):
         text = self.sq.adapter.label( event.node )
-        self.frame.SetToolTipString( text )
+        self.frame.SetToolTip( text )
 
 usage = 'meliaeloader.py somefile'
 

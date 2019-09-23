@@ -622,7 +622,7 @@ class MainFrame(wx.Frame):
         self.SetStatusText(self.adapter.label(event.node))
         self.listControl.SetIndicated(event.node)
         text = self.squareMap.adapter.label(event.node)
-        self.squareMap.SetToolTipString(text)
+        self.squareMap.SetToolTip(text)
         self.SetStatusText(text)
 
     def OnSquareHighlightedList(self, event):
