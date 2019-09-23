@@ -6,8 +6,42 @@ import six
 from six.moves import range
 log = logging.getLogger(__name__)
 from gettext import gettext as _
+try:
+    unicode 
+except NameError:
+    unicode = str
 
 TREE_CALLS, TREE_FILES = list(range( 2))
+
+def load_pstats(filenames):
+    """Given list of filenames, load pstats, potentially using a different python version"""
+    # first up, happy path...
+    filenames = [filenames] if isinstance(filenames, (bytes,unicode)) else filenames
+    try:
+        log.debug("Using native loading for %s", filenames)
+        stats = pstats.Stats(*filenames)
+        return stats.stats
+    except ValueError as err:
+        import subprocess
+        try:
+            import cPickle as pickle 
+        except ImportError:
+            import pickle
+        log.info("Failure loading %s with native, trying python2", filenames)
+        converter = '''import pstats, cPickle; print(cPickle.dumps(pstats.Stats(*%r).stats))'''%(
+            filenames,
+        )
+        try:
+            content = pickle.loads(subprocess.check_output([
+                'python2','-c',converter,
+            ]))
+        except subprocess.CalledProcessError as err:
+            raise RuntimeError(
+                'Unable to load %r as a pstats dump'%(filenames,)
+            )
+        else:
+            return content
+
 
 class PStatsLoader( object ):
     """Load profiler statistics from PStats (cProfile) files"""
@@ -16,8 +50,7 @@ class PStatsLoader( object ):
         self.rows = {}
         self.roots = {}
         self.location_rows = {}
-        self.stats = pstats.Stats( *filenames )
-        self.tree = self.load( self.stats.stats )
+        self.tree = self.load( load_pstats(self.filename) )
         self.location_tree = l = self.load_location( )
     
     ROOTS = ['functions','location']
