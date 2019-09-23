@@ -6,7 +6,9 @@ json + C speedups.  This is *not* however, a full json decoder, it is
 *just* a parser for the flat records meliae produces (i.e. no recursive 
 structures, no floats, just ints, strings and lists-of-ints)
 """
+from __future__ import absolute_import
 import re, unittest, json
+from six import unichr
 
 whitespace = r'[ \t]'
 

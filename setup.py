@@ -6,36 +6,15 @@ Run:
 to install the package from the source archive.
 """
 import os,sys
-try:
-    from setuptools import setup
-    setuptools = True
-except ImportError, err:
-    from distutils.core import setup
-    setuptools = False
+from setuptools import setup
 
 version = [
     (line.split('=')[1]).strip().strip('"').strip("'")
-    for line in open(os.path.join('runsnakerun', '__init__.py'))
+    for line in open(os.path.join(os.path.dirname(__file__),'runsnakerun', '__init__.py'))
     if line.startswith( '__version__' )
 ][0]
 
 if __name__ == "__main__":
-    extraArguments = {
-        'classifiers': [
-            """License :: OSI Approved :: BSD License""",
-            """Programming Language :: Python""",
-            """Topic :: Software Development :: Libraries :: Python Modules""",
-            """Intended Audience :: Developers""",
-        ],
-        'keywords': 'profile,gui,wxPython,squaremap',
-        'long_description' : """GUI Viewer for Python profiling runs
-
-Provides explorability and overall visualization of the call tree
-and package/module structures.""",
-        'platforms': ['Any'],
-    }
-    if setuptools:
-        extraArguments['install_package_data'] = True
     ### Now the actual set up call
     if sys.platform == 'darwin':
         gui_commands = [
@@ -51,13 +30,15 @@ and package/module structures.""",
     setup (
         name = "RunSnakeRun",
         version = version,
-        url = "http://www.vrplumber.com/programming/runsnakerun/",
-        download_url = "http://www.vrplumber.com/programming/runsnakerun/",
+        url = "https://github.com/mcfletch/runsnakerun",
+        download_url = "https://pypi.org/project/RunSnakeRun/",
         description = "GUI Viewer for Python profiling runs",
         author = "Mike C. Fletcher",
         author_email = "mcfletch@vrplumber.com",
         install_requires = [
+            'pathlib2', # dependency for wxPython
             'SquareMap >= 1.0.3',
+            'wxPython',
         ],
         license = "BSD",
         package_dir = {
@@ -75,6 +56,18 @@ and package/module structures.""",
         entry_points = {
             'gui_scripts': gui_commands,
         },
-        **extraArguments
+        install_package_data = True,
+        classifiers= [
+            """License :: OSI Approved :: BSD License""",
+            """Programming Language :: Python""",
+            """Topic :: Software Development :: Libraries :: Python Modules""",
+            """Intended Audience :: Developers""",
+        ],
+        keywords= 'profile,gui,wxPython,squaremap',
+        long_description= """GUI Viewer for Python profiling runs
+
+Provides explorability and overall visualization of the call tree
+and package/module structures.""",
+        platforms= ['Any'],
     )
 

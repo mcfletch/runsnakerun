@@ -21,8 +21,11 @@ Planned:
             
 
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import wx, sys, os, logging, imp
 import wx.lib.newevent
+import six
 log = logging.getLogger( __name__ )
 import sys
 from squaremap import squaremap
@@ -53,7 +56,7 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         # this is the *weighted* size/contribution of the node 
         try:
             return node['contribution']
-        except KeyError, err:
+        except KeyError as err:
             contribution = int(node.get('totsize',0)/float( len(node.get('parents',())) or 1))
             node['contribution'] = contribution
             return contribution
@@ -65,7 +68,7 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         if node.get('name' ):
             result.append( node['name'] )
         elif node.get('value') is not None:
-            result.append( unicode(node['value'])[:32])
+            result.append( six.text_type(node['value'])[:32])
         if 'module' in node and not node['module'] in result:
             result.append( ' in %s'%( node['module'] ))
         if node.get( 'size' ):
@@ -126,7 +129,7 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         if 'module' in node and not 'filename' in node:
             try:
                 fp, pathname, description = imp.find_module(node['module'])
-            except (ImportError), err:
+            except (ImportError) as err:
                 node['filename'] = None
             else:
                 if fp:
@@ -166,7 +169,7 @@ usage = 'meliaeloader.py somefile'
 def main():
     """Mainloop for the application"""
     if not sys.argv[1:]:
-        print usage
+        print(usage)
     else:
         app = TestApp(0)
         app.MainLoop()

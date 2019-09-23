@@ -1,4 +1,5 @@
 """Adapter for RunSnakeRun to load coldshot profiles"""
+from __future__ import absolute_import
 import wx, sys, os, logging
 log = logging.getLogger( __name__ )
 from squaremap import squaremap
