@@ -9,6 +9,10 @@ structures, no floats, just ints, strings and lists-of-ints)
 from __future__ import absolute_import
 import re, unittest, json
 from six import unichr
+try:
+    unicode 
+except NameError:
+    unicode = str
 
 whitespace = r'[ \t]'
 
@@ -25,7 +29,7 @@ attr = r"""%(whitespace)s*%(key)s%(whitespace)s*:%(whitespace)s*(%(intlist)s|%(s
 escape = re.compile( escape, re.U )
 simple_escape = re.compile( r'\\([^uU])', re.U )
 
-assert escape.match( "\u0000" )
+assert escape.match( u"\\u0000" )
 attr = re.compile( attr )
 string = re.compile( string )
 integer = re.compile( integer )
@@ -61,7 +65,9 @@ def loads( source ):
         elif match.group( 'string' ) is not None:
             def deescape( match ):
                 return unichr( int( match.group(0)[2:], 16 ))
-            value = match.group('string').decode( 'utf-8' )
+            value = match.group('string')
+            if isinstance(value,bytes):
+                value = value.decode( 'utf-8' )
             value = escape.sub( 
                 deescape,
                 value,
