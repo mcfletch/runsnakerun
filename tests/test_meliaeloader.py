@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import unittest
 from runsnakerun import meliaeloader
+from six.moves import range
 
 def records_as_index( records ):
     index = dict([

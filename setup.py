@@ -37,6 +37,7 @@ if __name__ == "__main__":
         author_email = "mcfletch@vrplumber.com",
         install_requires = [
             'pathlib2', # dependency for wxPython
+            'six',
             'SquareMap >= 1.0.3',
             'wxPython',
         ],

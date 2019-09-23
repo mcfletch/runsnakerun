@@ -93,10 +93,10 @@ class DataView(wx.ListCtrl):
 
     def CreateControls(self):
         """Create our sub-controls"""
-        wx.EVT_LIST_COL_CLICK(self, self.GetId(), self.OnReorder)
-        wx.EVT_LIST_ITEM_SELECTED(self, self.GetId(), self.OnNodeSelected)
-        wx.EVT_MOTION(self, self.OnMouseMove)
-        wx.EVT_LIST_ITEM_ACTIVATED(self, self.GetId(), self.OnNodeActivated)
+        self.Bind(wx.EVT_LIST_COL_CLICK, self.OnReorder, id= self.GetId())
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED,self.OnNodeSelected, id= self.GetId(), )
+        self.Bind(wx.EVT_MOTION,self.OnMouseMove)
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED,self.OnNodeActivated, id= self.GetId(), )
         self.CreateColumns()
     def CreateColumns( self ):
         """Create/recreate our column definitions from current self.columns"""

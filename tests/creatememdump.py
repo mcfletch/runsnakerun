@@ -1,5 +1,8 @@
 #! /usr/bin/env python
-import sys,httplib
+from __future__ import absolute_import
+from __future__ import print_function
+import sys,six.moves.http_client
+from six.moves import range
 
 class Test( object ):
     def __init__( self, size=1024 ):
@@ -24,7 +27,7 @@ def main():
     fh = open( filename, 'wb' )
     scanner.dump_all_objects( fh )
     fh.close()
-    print 'saved memory dump to: %r'%( filename, )
+    print('saved memory dump to: %r'%( filename, ))
 
 if __name__ == "__main__":
     main()

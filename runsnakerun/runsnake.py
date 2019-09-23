@@ -249,6 +249,7 @@ class MainFrame(wx.Frame):
         )
         self.tabs = wx.Notebook(
             self.rightSplitter,
+            size=(300,50),
         )
 
         self.CreateSourceWindow(self.tabs)
@@ -289,23 +290,32 @@ class MainFrame(wx.Frame):
         self.rightSplitter.SetSashSize(10)
         # calculate size as proportional value for initial display...
         self.LoadState( config_parser )
-        width, height = self.GetSizeTuple()
+        width, height = self.GetSize()
         rightsplit = 2 * (height // 3)
         leftsplit = width // 3
         self.rightSplitter.SplitHorizontally(self.squareMap, self.tabs,
                                              rightsplit)
         self.leftSplitter.SplitVertically(self.listControl, self.rightSplitter,
                                           leftsplit)
-        squaremap.EVT_SQUARE_HIGHLIGHTED(self.squareMap,
-                                         self.OnSquareHighlightedMap)
-        squaremap.EVT_SQUARE_SELECTED(self.listControl,
-                                      self.OnSquareSelectedList)
-        squaremap.EVT_SQUARE_SELECTED(self.squareMap, self.OnSquareSelectedMap)
-        squaremap.EVT_SQUARE_ACTIVATED(self.squareMap, self.OnNodeActivated)
+        self.squareMap.Bind(
+            squaremap.EVT_SQUARE_HIGHLIGHTED,
+            self.OnSquareHighlightedMap
+        )
+        self.squareMap.Bind(
+            squaremap.EVT_SQUARE_SELECTED,
+            self.OnSquareSelectedList
+        )
+        self.squareMap.Bind(
+            squaremap.EVT_SQUARE_SELECTED, 
+            self.OnSquareSelectedMap,
+        )
+        self.squareMap.Bind(
+            squaremap.EVT_SQUARE_ACTIVATED, 
+            self.OnNodeActivated
+        )
         for control in self.ProfileListControls:
-            squaremap.EVT_SQUARE_ACTIVATED(control, self.OnNodeActivated)
-            squaremap.EVT_SQUARE_HIGHLIGHTED(control,
-                                             self.OnSquareHighlightedList)
+            control.Bind(squaremap.EVT_SQUARE_ACTIVATED, self.OnNodeActivated)
+            control.Bind(squaremap.EVT_SQUARE_HIGHLIGHTED,self.OnSquareHighlightedList)
         self.moreSquareViewItem.Check(self.squareMap.square_style)
         
     def CreateMenuBar(self):
@@ -358,17 +368,17 @@ class MainFrame(wx.Frame):
         
         self.SetMenuBar(menubar)
 
-        wx.EVT_MENU(self, ID_EXIT, lambda evt: self.Close(True))
-        wx.EVT_MENU(self, ID_OPEN, self.OnOpenFile)
-        wx.EVT_MENU(self, ID_OPEN_MEMORY, self.OnOpenMemory)
+        self.Bind(wx.EVT_MENU, lambda evt: self.Close(True), id=ID_EXIT)
+        self.Bind(wx.EVT_MENU, self.OnOpenFile, id=ID_OPEN)
+        self.Bind(wx.EVT_MENU, self.OnOpenMemory, id=ID_OPEN_MEMORY)
         
-        wx.EVT_MENU(self, ID_PERCENTAGE_VIEW, self.OnPercentageView)
-        wx.EVT_MENU(self, ID_UP_VIEW, self.OnUpView)
-        wx.EVT_MENU(self, ID_DEEPER_VIEW, self.OnDeeperView)
-        wx.EVT_MENU(self, ID_SHALLOWER_VIEW, self.OnShallowerView)
-        wx.EVT_MENU(self, ID_ROOT_VIEW, self.OnRootView)
-        wx.EVT_MENU(self, ID_BACK_VIEW, self.OnBackView)
-        wx.EVT_MENU(self, ID_MORE_SQUARE, self.OnMoreSquareToggle)
+        self.Bind(wx.EVT_MENU,self.OnPercentageView,id=ID_PERCENTAGE_VIEW)
+        self.Bind(wx.EVT_MENU,self.OnUpView,id=ID_UP_VIEW, )
+        self.Bind(wx.EVT_MENU,self.OnDeeperView, id=ID_DEEPER_VIEW, )
+        self.Bind(wx.EVT_MENU,self.OnShallowerView, id=ID_SHALLOWER_VIEW, )
+        self.Bind(wx.EVT_MENU,self.OnRootView, id=ID_ROOT_VIEW, )
+        self.Bind(wx.EVT_MENU,self.OnBackView, id=ID_BACK_VIEW, )
+        self.Bind(wx.EVT_MENU,self.OnMoreSquareToggle, id=ID_MORE_SQUARE, )
 
     def LoadRSRIcon( self ):
         try:
@@ -395,25 +405,29 @@ class MainFrame(wx.Frame):
         tb.ToolBitmapSize = tsize
         open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR,
                                             tsize)
-        tb.AddLabelTool(ID_OPEN, "Open", open_bmp, shortHelp="Open",
-                        longHelp="Open a (c)Profile trace file")
+        tb.AddTool(ID_OPEN, _("Open"), open_bmp, open_bmp, shortHelp="Open",
+                        longHelp="Open a (c)Profile trace file",kind=wx.ITEM_NORMAL)
         if not osx:
             tb.AddSeparator()
 #        self.Bind(wx.EVT_TOOL, self.OnOpenFile, id=ID_OPEN)
-        self.rootViewTool = tb.AddLabelTool(
+        root_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_HOME, wx.ART_TOOLBAR, tsize)
+        self.rootViewTool = tb.AddTool(
             ID_ROOT_VIEW, _("Root View"),
-            wx.ArtProvider.GetBitmap(wx.ART_GO_HOME, wx.ART_TOOLBAR, tsize),
-            shortHelp=_("Display the root of the current view tree (home view)")
+            root_bmp,
+            shortHelp=_("Display the root of the current view tree (home view)"),
+            kind=wx.ITEM_NORMAL,
         )
-        self.rootViewTool = tb.AddLabelTool(
+        self.rootViewTool = tb.AddTool(
             ID_BACK_VIEW, _("Back"),
             wx.ArtProvider.GetBitmap(wx.ART_GO_BACK, wx.ART_TOOLBAR, tsize),
-            shortHelp=_("Back to the previously activated node in the call tree")
+            shortHelp=_("Back to the previously activated node in the call tree"),
+            kind=wx.ITEM_NORMAL,
         )
-        self.upViewTool = tb.AddLabelTool(
+        self.upViewTool = tb.AddTool(
             ID_UP_VIEW, _("Up"),
             wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, tsize),
-            shortHelp=_("Go one level up the call tree (highest-percentage parent)")
+            shortHelp=_("Go one level up the call tree (highest-percentage parent)"),
+            kind=wx.ITEM_NORMAL,
         )
         if not osx:
             tb.AddSeparator()
@@ -422,13 +436,16 @@ class MainFrame(wx.Frame):
         self.percentageViewTool.SetToolTip(wx.ToolTip(
             _("Toggle display of percentages in list views")))
         tb.AddControl(self.percentageViewTool)
-        wx.EVT_CHECKBOX(self.percentageViewTool,
-                        self.percentageViewTool.GetId(), self.OnPercentageView)
+        self.percentageViewTool.Bind(
+            wx.EVT_CHECKBOX,
+            self.OnPercentageView,
+            id=self.percentageViewTool.GetId()
+        )
 
         self.viewTypeTool= wx.Choice( tb, -1, choices= getattr(self.loader,'ROOTS',[]) )
         self.viewTypeTool.SetToolTip(wx.ToolTip(
             _("Switch between different hierarchic views of the data")))
-        wx.EVT_CHOICE( self.viewTypeTool, self.viewTypeTool.GetId(), self.OnViewTypeTool )
+        self.viewTypeTool.Bind(wx.EVT_CHOICE, self.OnViewTypeTool, id =self.viewTypeTool.GetId() )
         tb.AddControl( self.viewTypeTool )
         tb.Realize()
     
@@ -454,7 +471,7 @@ class MainFrame(wx.Frame):
             return Callback
         # Clear all previous items
         for item in self.viewTypeMenu.GetMenuItems():
-            self.viewTypeMenu.DeleteItem( item )
+            self.viewTypeMenu.Delete( item )
         if self.loader and self.loader.ROOTS:
             for root in self.loader.ROOTS:
                 item = wx.MenuItem( 
@@ -464,14 +481,13 @@ class MainFrame(wx.Frame):
                     },
                     kind=wx.ITEM_RADIO,
                 )
-                item.SetCheckable( True )
-                self.viewTypeMenu.AppendItem( item )
+                self.viewTypeMenu.Append( item )
                 item.Check( root == self.viewType )
-                wx.EVT_MENU( self, item.GetId(), chooser( root ))
+                self.Bind(wx.EVT_MENU, chooser( root ), id = item.GetId() )
 
     def OnOpenFile(self, event):
         """Request to open a new profile file"""
-        dialog = wx.FileDialog(self, style=wx.OPEN|wx.FD_MULTIPLE)
+        dialog = wx.FileDialog(self, style=wx.FD_OPEN|wx.FD_MULTIPLE)
         if dialog.ShowModal() == wx.ID_OK:
             paths = dialog.GetPaths()
             if self.loader:
@@ -483,7 +499,7 @@ class MainFrame(wx.Frame):
                 self.load(*paths)
     def OnOpenMemory(self, event):
         """Request to open a new profile file"""
-        dialog = wx.FileDialog(self, style=wx.OPEN)
+        dialog = wx.FileDialog(self, style=wx.FD_OPEN)
         if dialog.ShowModal() == wx.ID_OK:
             path = dialog.GetPath()
             if self.loader:
@@ -683,6 +699,9 @@ class MainFrame(wx.Frame):
             self.SetTitle(_("Run Snake Run: %(filenames)s")
                           % {'filenames': ', '.join(filenames)[:120]})
         except (IOError, OSError, ValueError,MemoryError) as err:
+            log.exception(
+                'Failure loading: %s', filenames
+            )
             self.SetStatusText(
                 _('Failure during load of %(filenames)s: %(err)s'
             ) % dict(
@@ -777,7 +796,7 @@ class MainFrame(wx.Frame):
         except Exception:
             pass # use the default, by default
         else:
-            font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
             font.SetPointSize(font_size)
             for ctrl in self.ProfileListControls:
                 ctrl.SetFont(font)
@@ -786,7 +805,7 @@ class MainFrame(wx.Frame):
             control.LoadState( config_parser )
         
         self.config = config_parser
-        wx.EVT_CLOSE( self, self.OnCloseWindow )
+        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow )
 
 
     def OnCloseWindow( self, event=None ):
