@@ -27,41 +27,42 @@ programs. &nbsp;What it does provide, for profile viewing:</p><ul><li>sortable d
 </ul>
 <h2><a name="install"></a>Installation<br>
 </h2>
-<p>You will need to have all of wxPython, <a href="http://pypi.python.org/pypi/SquareMap/">SquareMap</a> and <a href="http://pypi.python.org/pypi/RunSnakeRun">RunSnakeRun</a>
-installed to use RunSnakeRun. &nbsp;You may also need the
+<p>You will need to have all of wxPython, 
+  <a href="http://pypi.python.org/pypi/SquareMap/">SquareMap</a> 
+  and <a href="http://pypi.python.org/pypi/RunSnakeRun">RunSnakeRun</a>
+installed to use RunSnakeRun. You may also need the
 "python-profiler" package for your platform, which provides the pstats
-view.&nbsp; You will likely want to use your platform wxPython package
+view. You will likely want to use your platform wxPython package
 (i.e. a pre-built binary). For Debian/Ubuntu distributions the
 prerequisite setup looks like this:
 </p>
 <pre>apt-get install python-profiler python-wxgtk2.8 python-setuptools</pre>
-
 <p>RunSnakeRun and SquareMap will install well in a VirtualEnv if you
-would like to keep them isolated (normally you do not want to use the <code>--no-site-packages</code> flag if you are doing this).&nbsp; I recommend this approach rather than using easy_install directly on your Linux/OS-X host.<br>
-</p>
-<pre>virtualenv runsnake<br>source runsnake/bin/activate<br></pre>
-<p>If you already have Python setuptools installed (a.k.a. <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>), you should be able to install the Python packages with:</p>
-
-<pre>easy_install SquareMap RunSnakeRun<br></pre>
-<p>You will require a modern <a href="http://www.wxpython.org/">wxPython (e.g. 2.8)</a> and
-Python 2.x (e.g. 2.5 through 2.7) installation. &nbsp;The setup will create a script named
-"runsnake" on Linux machines which launches the profile viewer.&nbsp;
+would like to keep them isolated (normally you do not want to use the 
+<code>--no-site-packages</code> flag if you are doing this).
+I recommend this approach rather than using pip as root on your 
+Linux/OS-X host.</p>
+<pre>virtualenv runsnake
+source runsnake/bin/activate
+</pre>
+<p>If you already have pip installed you should be able to install the Python packages with:</p>
+<pre>pip install RunSnakeRun</pre>
+<p>You will require a modern <a href="http://www.wxpython.org/">wxPython (2.8+ including Pheonix)</a> and
+Python 2.7 or 3.6+  installation. Setup will create a script named
+"runsnake" on Linux machines which launches the profile viewer.
 On OS-X machines a wrapper script runsnake is created that runs the
 runsnake32 executable with a flag to tell Python to use the 32-bit
-implementation (for wxPython compatibility).&nbsp; On Win32 machines, a
-Scripts\runsnake.exe executable is created.&nbsp; If you have added
+implementation (for wxPython compatibility). On Win32 machines, a
+Scripts\runsnake.exe executable is created. If you have added
 your scripts directory to the PATH then this will be available from the
-command-line.<br>
-</p><h2><a name="usage"></a>Usage</h2>
+command-line.</p>
+
+<h2><a name="usage"></a>Usage</h2>
 <p>If you are new to profiling you may wish to check out:</p>
-
 <ul>
-<li>my (<a href="http://www.vrplumber.com/">Mike Fletcher</a>'s) <a href="http://blip.tv/pycon-us-videos-2009-2010-2011/introduction-to-python-profiling-1966784">presentation at PyCon 2009</a> which tries to explain the use of profiling as a tool for optimization in Python<br>
-  </li><li><a href="http://blip.tv/file/3988199">W. Matthew Wilson's presentation at PyOhio</a> on optimizing Python code<br>
-  </li>
+<li>my (<a href="http://www.vrplumber.com/">Mike Fletcher</a>'s) <a href="https://youtu.be/SUf-ALvk3cU">presentation at PyCon.ca</a> which tries to explain the use of profiling as a tool for optimization in Python</li>
+<li><a href="http://blip.tv/file/3988199">W. Matthew Wilson's presentation at PyOhio</a> on optimizing Python code</li>
 </ul>
-
-
 
 <h3>cProfile Viewing<br>
 </h3>
