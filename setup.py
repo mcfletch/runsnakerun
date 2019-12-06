@@ -38,7 +38,7 @@ if __name__ == "__main__":
         install_requires = [
             'pathlib2', # dependency for wxPython
             'six',
-            'SquareMap >= 1.0.3',
+            'SquareMap >= 1.0.5',# to work with python 3.x and Pheonix
             'wxPython',
         ],
         license = "BSD",
@@ -60,7 +60,8 @@ if __name__ == "__main__":
         install_package_data = True,
         classifiers= [
             """License :: OSI Approved :: BSD License""",
-            """Programming Language :: Python""",
+            """Programming Language :: Python :: 2""",
+            """Programming Language :: Python :: 3""",
             """Topic :: Software Development :: Libraries :: Python Modules""",
             """Intended Audience :: Developers""",
         ],
