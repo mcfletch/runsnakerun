@@ -751,8 +751,8 @@ class MainFrame(wx.Frame):
             config_parser.set( 'window', 'maximized', str(True))
         else:
             config_parser.set( 'window', 'maximized', str(False))
-        size = self.GetSizeTuple()
-        position = self.GetPositionTuple()
+        size = self.GetSize()
+        position = self.GetPosition()
         config_parser.set( 'window', 'width', str(size[0]) )
         config_parser.set( 'window', 'height', str(size[1]) )
         config_parser.set( 'window', 'x', str(position[0]) )
