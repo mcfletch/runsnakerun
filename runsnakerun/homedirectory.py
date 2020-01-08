@@ -12,6 +12,10 @@ except ImportError:
     winreg = None
 import os, sys
 
+if sys.platform == 'darwin':
+    RELATIVE_CONFIG = 'Library/Preferences'
+else:
+    RELATIVE_CONFIG = '.config'
 
 ## The registry keys where the SHGetFolderPath values appear to be stored
 r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
@@ -46,7 +50,8 @@ def appdatadirectory():
 
     This is the location where application-specific
     files should be stored.  On *nix systems, this will
-    be the ${HOME}/.config directory.  On Win32 systems, it will be
+    be the ${HOME}/{RELATIVE_CONFIG} directory.  
+    On Win32 systems, it will be
     the "Application Data" directory.  Note that for
     Win32 systems it is normal to create a sub-directory
     for storing data in the Application Data directory.
@@ -62,9 +67,9 @@ def appdatadirectory():
     ## default case, look for name in environ...
     for name in ['APPDATA', 'HOME']:
         if name in os.environ:
-            return os.path.join(os.environ[name], '.config')
+            return os.path.join(os.environ[name], RELATIVE_CONFIG)
     # well, someone's being naughty, see if we can get ~ to expand to a directory...
-    possible = os.path.abspath(os.path.expanduser('~/.config'))
+    possible = os.path.abspath(os.path.expanduser('~/%s'%(RELATIVE_CONFIG,)))
     if os.path.exists(possible):
         return possible
     raise OSError(
