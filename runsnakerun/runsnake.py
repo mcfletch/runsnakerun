@@ -696,7 +696,15 @@ class MainFrame(wx.Frame):
             elif os.path.isdir(filenames[0]):
                 return self.load_coldshot(filenames[0])
         try:
-            self.loader = pstatsloader.PStatsLoader(*filenames)
+            pstats, speedscopes = [], []
+            for filename in filenames:
+                if self.is_speedscope(filename):
+                    speedscopes.append(filename)
+                else:
+                    pstats.append(filename)
+            if speedscopes:
+                return self.load_speedscope(speedscopes[0])
+            self.loader = pstatsloader.PStatsLoader(*pstats)
             self.ConfigureViewTypeChoices()
             self.SetModel(self.loader)
             self.viewType = self.loader.ROOTS[0]
@@ -727,6 +735,26 @@ class MainFrame(wx.Frame):
         self.loader.load()
         self.ConfigureViewTypeChoices()
         self.viewType = self.loader.ROOTS[0]
+        self.SetModel(self.loader)
+
+    def is_speedscope(self, filename):
+        try:
+            with open(filename, "rb") as fh:
+                header = fh.read(1)
+                if header and header == b"{":
+                    return True
+        except Exception:
+            return False
+
+    def load_speedscope(self, filename):
+        """Load a speedscope (py-spy) file from disk"""
+        from runsnakerun import speedscopeloader, speedscopeadapter
+
+        self.loader = speedscopeadapter.SpeedScopeLoader(filename=filename)
+        # self.loader = speedscopeloader.SpeedScopeFile(filename=filename)
+        self.ConfigureViewTypeChoices()
+        self.viewType = self.loader.ROOTS[0]
+        # import ipdb;ipdb.set_trace()
         self.SetModel(self.loader)
 
     def SetModel(self, loader):
