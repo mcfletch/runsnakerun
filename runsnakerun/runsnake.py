@@ -11,7 +11,7 @@ import six.moves.configparser
 try:
     from wx.py import editor, editwindow
 except ImportError as err:
-    log.info('No editor available: %s', err)
+    log.info("No editor available: %s", err)
     editor = None
 from gettext import gettext as _
 import pstats
@@ -20,11 +20,11 @@ from runsnakerun import pstatsloader, pstatsadapter, meliaeloader, meliaeadapter
 from runsnakerun import listviews
 from runsnakerun import homedirectory
 
-if sys.platform == 'win32':
+if sys.platform == "win32":
     windows = True
 else:
     windows = False
-if sys.platform == 'darwin':
+if sys.platform == "darwin":
     osx = True
 else:
     osx = False
@@ -49,63 +49,63 @@ ID_MORE_SQUARE = wx.NewId()
 
 PROFILE_VIEW_COLUMNS = [
     listviews.ColumnDefinition(
-        name=_('Name'), attribute='name', defaultOrder=True, targetWidth=50,
+        name=_("Name"), attribute="name", defaultOrder=True, targetWidth=50,
     ),
     listviews.ColumnDefinition(
-        name=_('Calls'), attribute='calls', defaultOrder=False, targetWidth=50,
+        name=_("Calls"), attribute="calls", defaultOrder=False, targetWidth=50,
     ),
     listviews.ColumnDefinition(
-        name=_('RCalls'), attribute='recursive', defaultOrder=False, targetWidth=40,
+        name=_("RCalls"), attribute="recursive", defaultOrder=False, targetWidth=40,
     ),
     listviews.ColumnDefinition(
-        name=_('Local'),
-        attribute='local',
-        format='%0.5f',
+        name=_("Local"),
+        attribute="local",
+        format="%0.5f",
         defaultOrder=False,
         percentPossible=True,
         targetWidth=50,
     ),
     listviews.ColumnDefinition(
-        name=_('/Call'),
-        attribute='localPer',
+        name=_("/Call"),
+        attribute="localPer",
         defaultOrder=False,
-        format='%0.5f',
+        format="%0.5f",
         targetWidth=50,
     ),
     listviews.ColumnDefinition(
-        name=_('Cum'),
-        attribute='cumulative',
-        format='%0.5f',
+        name=_("Cum"),
+        attribute="cumulative",
+        format="%0.5f",
         percentPossible=True,
         targetWidth=50,
         defaultOrder=False,
         sortDefault=True,
     ),
     listviews.ColumnDefinition(
-        name=_('/Call'),
-        attribute='cumulativePer',
-        format='%0.5f',
+        name=_("/Call"),
+        attribute="cumulativePer",
+        format="%0.5f",
         defaultOrder=False,
         targetWidth=50,
     ),
     listviews.ColumnDefinition(
-        name=_('File'),
-        attribute='filename',
-        sortOn=('filename', 'lineno', 'directory',),
+        name=_("File"),
+        attribute="filename",
+        sortOn=("filename", "lineno", "directory",),
         defaultOrder=True,
         targetWidth=70,
     ),
     listviews.ColumnDefinition(
-        name=_('Line'),
-        attribute='lineno',
-        sortOn=('filename', 'lineno', 'directory'),
+        name=_("Line"),
+        attribute="lineno",
+        sortOn=("filename", "lineno", "directory"),
         defaultOrder=True,
         targetWidth=30,
     ),
     listviews.ColumnDefinition(
-        name=_('Directory'),
-        attribute='directory',
-        sortOn=('directory', 'filename', 'lineno'),
+        name=_("Directory"),
+        attribute="directory",
+        sortOn=("directory", "filename", "lineno"),
         defaultOrder=True,
         targetWidth=90,
     ),
@@ -115,66 +115,66 @@ MAX_NAME_LEN = 64
 
 
 def mem_name(x):
-    if x.get('name'):
-        return x['name']
-    value = x.get('value')
+    if x.get("name"):
+        return x["name"]
+    value = x.get("value")
     if value:
         if isinstance(value, (str, six.text_type)) and len(value) > MAX_NAME_LEN:
-            return value[: MAX_NAME_LEN - 3] + '...'
+            return value[: MAX_NAME_LEN - 3] + "..."
         else:
             return value
-    return ''
+    return ""
 
 
 MEMORY_VIEW_COLUMNS = [
     listviews.DictColumn(
-        name=_('Type'), attribute='type', targetWidth=20, defaultOrder=True,
+        name=_("Type"), attribute="type", targetWidth=20, defaultOrder=True,
     ),
     listviews.DictColumn(
-        name=_('Name'),
-        attribute='name',
+        name=_("Name"),
+        attribute="name",
         targetWidth=20,
         getter=mem_name,
         defaultOrder=True,
     ),
     listviews.DictColumn(
-        name=_('Cum'),
-        attribute='totsize',
+        name=_("Cum"),
+        attribute="totsize",
         targetWidth=5,
         defaultOrder=False,
-        format='%0.1f',
+        format="%0.1f",
         percentPossible=True,
         sortDefault=True,
     ),
     listviews.DictColumn(
-        name=_('Local'),
-        attribute='size',
+        name=_("Local"),
+        attribute="size",
         defaultOrder=False,
-        format='%0.1f',
+        format="%0.1f",
         percentPossible=True,
         targetWidth=5,
     ),
     listviews.DictColumn(
-        name=_('Children'),
-        attribute='rsize',
-        format='%0.1f',
+        name=_("Children"),
+        attribute="rsize",
+        format="%0.1f",
         percentPossible=True,
         defaultOrder=False,
         targetWidth=5,
     ),
     listviews.DictColumn(
-        name=_('/Refs'),
-        attribute='parents',
+        name=_("/Refs"),
+        attribute="parents",
         defaultOrder=False,
         targetWidth=4,
-        getter=lambda x: len(x.get('parents', ())),
+        getter=lambda x: len(x.get("parents", ())),
     ),
     listviews.DictColumn(
-        name=_('Refs/'),
-        attribute='children',
+        name=_("Refs/"),
+        attribute="children",
         defaultOrder=False,
         targetWidth=4,
-        getter=lambda x: len(x.get('children', ())),
+        getter=lambda x: len(x.get("children", ())),
     ),
 ]
 
@@ -189,7 +189,7 @@ class MainFrame(wx.Frame):
     activated_node = None
     selected_node = None
 
-    viewType = 'functions'
+    viewType = "functions"
     viewTypeTool = None
 
     TBFLAGS = (
@@ -227,7 +227,7 @@ class MainFrame(wx.Frame):
         self.leftSplitter = wx.SplitterWindow(self)
         self.rightSplitter = wx.SplitterWindow(self.leftSplitter)
         self.listControl = listviews.DataView(
-            self.leftSplitter, columns=PROFILE_VIEW_COLUMNS, name='mainlist',
+            self.leftSplitter, columns=PROFILE_VIEW_COLUMNS, name="mainlist",
         )
         self.squareMap = squaremap.SquareMap(
             self.rightSplitter,
@@ -241,16 +241,16 @@ class MainFrame(wx.Frame):
         self.CreateSourceWindow(self.tabs)
 
         self.calleeListControl = listviews.DataView(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name='callee',
+            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="callee",
         )
         self.allCalleeListControl = listviews.DataView(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name='allcallee',
+            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="allcallee",
         )
         self.allCallerListControl = listviews.DataView(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name='allcaller',
+            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="allcaller",
         )
         self.callerListControl = listviews.DataView(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name='caller',
+            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="caller",
         )
         self.ProfileListControls = [
             self.listControl,
@@ -259,12 +259,12 @@ class MainFrame(wx.Frame):
             self.callerListControl,
             self.allCallerListControl,
         ]
-        self.tabs.AddPage(self.calleeListControl, _('Callees'), True)
-        self.tabs.AddPage(self.allCalleeListControl, _('All Callees'), False)
-        self.tabs.AddPage(self.callerListControl, _('Callers'), False)
-        self.tabs.AddPage(self.allCallerListControl, _('All Callers'), False)
+        self.tabs.AddPage(self.calleeListControl, _("Callees"), True)
+        self.tabs.AddPage(self.allCalleeListControl, _("All Callees"), False)
+        self.tabs.AddPage(self.callerListControl, _("Callers"), False)
+        self.tabs.AddPage(self.allCallerListControl, _("All Callers"), False)
         if editor:
-            self.tabs.AddPage(self.sourceCodeControl, _('Source Code'), False)
+            self.tabs.AddPage(self.sourceCodeControl, _("Source Code"), False)
         self.rightSplitter.SetSashSize(10)
         # calculate size as proportional value for initial display...
         self.LoadState(config_parser)
@@ -292,13 +292,13 @@ class MainFrame(wx.Frame):
         """Create our menu-bar for triggering operations"""
         menubar = wx.MenuBar()
         menu = wx.Menu()
-        menu.Append(ID_OPEN, _('&Open Profile'), _('Open a cProfile file'))
+        menu.Append(ID_OPEN, _("&Open Profile"), _("Open a cProfile file"))
         menu.Append(
-            ID_OPEN_MEMORY, _('Open &Memory'), _('Open a Meliae memory-dump file')
+            ID_OPEN_MEMORY, _("Open &Memory"), _("Open a Meliae memory-dump file")
         )
         menu.AppendSeparator()
-        menu.Append(ID_EXIT, _('&Close'), _('Close this RunSnakeRun window'))
-        menubar.Append(menu, _('&File'))
+        menu.Append(ID_EXIT, _("&Close"), _("Close this RunSnakeRun window"))
+        menubar.Append(menu, _("&File"))
         menu = wx.Menu()
         #        self.packageMenuItem = menu.AppendCheckItem(
         #            ID_PACKAGE_VIEW, _('&File View'),
@@ -306,39 +306,39 @@ class MainFrame(wx.Frame):
         #        )
         self.percentageMenuItem = menu.AppendCheckItem(
             ID_PERCENTAGE_VIEW,
-            _('&Percentage View'),
-            _('View time spent as percent of overall time'),
+            _("&Percentage View"),
+            _("View time spent as percent of overall time"),
         )
         self.rootViewItem = menu.Append(
-            ID_ROOT_VIEW, _('&Root View (Home)'), _('View the root of the tree')
+            ID_ROOT_VIEW, _("&Root View (Home)"), _("View the root of the tree")
         )
         self.backViewItem = menu.Append(
-            ID_BACK_VIEW, _('&Back'), _('Go back in your viewing history')
+            ID_BACK_VIEW, _("&Back"), _("Go back in your viewing history")
         )
         self.upViewItem = menu.Append(
             ID_UP_VIEW,
-            _('&Up'),
+            _("&Up"),
             _('Go "up" to the parent of this node with the largest cumulative total'),
         )
         self.moreSquareViewItem = menu.AppendCheckItem(
             ID_MORE_SQUARE,
-            _('&Hierarchic Squares'),
-            _('Toggle hierarchic squares in the square-map view'),
+            _("&Hierarchic Squares"),
+            _("Toggle hierarchic squares in the square-map view"),
         )
 
         # This stuff isn't really all that useful for profiling,
         # it's more about how to generate graphics to describe profiling...
         self.deeperViewItem = menu.Append(
-            ID_DEEPER_VIEW, _('&Deeper'), _('View deeper squaremap views')
+            ID_DEEPER_VIEW, _("&Deeper"), _("View deeper squaremap views")
         )
         self.shallowerViewItem = menu.Append(
-            ID_SHALLOWER_VIEW, _('&Shallower'), _('View shallower squaremap views')
+            ID_SHALLOWER_VIEW, _("&Shallower"), _("View shallower squaremap views")
         )
         #        wx.ToolTip.Enable(True)
-        menubar.Append(menu, _('&View'))
+        menubar.Append(menu, _("&View"))
 
         self.viewTypeMenu = wx.Menu()
-        menubar.Append(self.viewTypeMenu, _('View &Type'))
+        menubar.Append(self.viewTypeMenu, _("View &Type"))
 
         self.SetMenuBar(menubar)
 
@@ -436,7 +436,7 @@ class MainFrame(wx.Frame):
             wx.EVT_CHECKBOX, self.OnPercentageView, id=self.percentageViewTool.GetId()
         )
 
-        self.viewTypeTool = wx.Choice(tb, -1, choices=getattr(self.loader, 'ROOTS', []))
+        self.viewTypeTool = wx.Choice(tb, -1, choices=getattr(self.loader, "ROOTS", []))
         self.viewTypeTool.SetToolTip(
             wx.ToolTip(_("Switch between different hierarchic views of the data"))
         )
@@ -455,7 +455,7 @@ class MainFrame(wx.Frame):
 
     def ConfigureViewTypeChoices(self, event=None):
         """Configure the set of View types in the toolbar (and menus)"""
-        self.viewTypeTool.SetItems(getattr(self.loader, 'ROOTS', []))
+        self.viewTypeTool.SetItems(getattr(self.loader, "ROOTS", []))
         if self.loader and self.viewType in self.loader.ROOTS:
             self.viewTypeTool.SetSelection(self.loader.ROOTS.index(self.viewType))
 
@@ -477,7 +477,7 @@ class MainFrame(wx.Frame):
                     self.viewTypeMenu,
                     -1,
                     root.title(),
-                    _("View hierarchy by %(name)s") % {'name': root.title(),},
+                    _("View hierarchy by %(name)s") % {"name": root.title(),},
                     kind=wx.ITEM_RADIO,
                 )
                 self.viewTypeMenu.Append(item)
@@ -559,7 +559,7 @@ class MainFrame(wx.Frame):
         selected_parent = None
 
         if node:
-            if hasattr(self.adapter, 'best_parent'):
+            if hasattr(self.adapter, "best_parent"):
                 selected_parent = self.adapter.best_parent(node)
             else:
                 parents = self.adapter.parents(node)
@@ -574,11 +574,11 @@ class MainFrame(wx.Frame):
                 self.OnNodeActivated(event)
             else:
                 self.SetStatusText(
-                    _('No parents for the currently selected node: %(node_name)s')
+                    _("No parents for the currently selected node: %(node_name)s")
                     % dict(node_name=self.adapter.label(node))
                 )
         else:
-            self.SetStatusText(_('No currently selected node'))
+            self.SetStatusText(_("No currently selected node"))
 
     def OnBackView(self, event):
         """Request to move backward in the history"""
@@ -586,7 +586,7 @@ class MainFrame(wx.Frame):
         try:
             self.RestoreHistory(self.history[self.historyIndex])
         except IndexError as err:
-            self.SetStatusText(_('No further history available'))
+            self.SetStatusText(_("No further history available"))
 
     def OnRootView(self, event):
         """Reset view to the root of the tree"""
@@ -602,7 +602,7 @@ class MainFrame(wx.Frame):
         self.squareMap.SetSelected(event.node)
         if editor:
             if self.SourceShowFile(event.node):
-                if hasattr(event.node, 'lineno'):
+                if hasattr(event.node, "lineno"):
                     self.sourceCodeControl.GotoLine(event.node.lineno)
         self.RecordHistory()
 
@@ -691,7 +691,7 @@ class MainFrame(wx.Frame):
     def load(self, *filenames):
         """Load our dataset (iteratively)"""
         if len(filenames) == 1:
-            if os.path.basename(filenames[0]) == 'index.coldshot':
+            if os.path.basename(filenames[0]) == "index.coldshot":
                 return self.load_coldshot(os.path.dirname(filenames[0]))
             elif os.path.isdir(filenames[0]):
                 return self.load_coldshot(filenames[0])
@@ -702,17 +702,17 @@ class MainFrame(wx.Frame):
             self.viewType = self.loader.ROOTS[0]
             self.SetTitle(
                 _("Run Snake Run: %(filenames)s")
-                % {'filenames': ', '.join(filenames)[:120]}
+                % {"filenames": ", ".join(filenames)[:120]}
             )
         except (IOError, OSError, ValueError, MemoryError) as err:
-            log.exception('Failure loading: %s', filenames)
+            log.exception("Failure loading: %s", filenames)
             self.SetStatusText(
-                _('Failure during load of %(filenames)s: %(err)s')
+                _("Failure during load of %(filenames)s: %(err)s")
                 % dict(filenames=" ".join([repr(x) for x in filenames]), err=err)
             )
 
     def load_memory(self, filename):
-        self.viewType = 'memory'
+        self.viewType = "memory"
         for view in self.ProfileListControls:
             view.SetColumns(MEMORY_VIEW_COLUMNS)
         self.loader = meliaeloader.Loader(filename)
@@ -750,18 +750,18 @@ class MainFrame(wx.Frame):
 
     def SaveState(self, config_parser):
         """Retrieve window state to be restored on the next run..."""
-        if not config_parser.has_section('window'):
-            config_parser.add_section('window')
+        if not config_parser.has_section("window"):
+            config_parser.add_section("window")
         if self.IsMaximized():
-            config_parser.set('window', 'maximized', str(True))
+            config_parser.set("window", "maximized", str(True))
         else:
-            config_parser.set('window', 'maximized', str(False))
+            config_parser.set("window", "maximized", str(False))
         size = self.GetSize()
         position = self.GetPosition()
-        config_parser.set('window', 'width', str(size[0]))
-        config_parser.set('window', 'height', str(size[1]))
-        config_parser.set('window', 'x', str(position[0]))
-        config_parser.set('window', 'y', str(position[1]))
+        config_parser.set("window", "width", str(size[0]))
+        config_parser.set("window", "height", str(size[1]))
+        config_parser.set("window", "x", str(position[0]))
+        config_parser.set("window", "y", str(position[1]))
 
         for control in self.ProfileListControls:
             control.SaveState(config_parser)
@@ -772,15 +772,15 @@ class MainFrame(wx.Frame):
         """Set our window state from the given config_parser instance"""
         if not config_parser:
             return
-        if not config_parser.has_section('window') or (
-            config_parser.has_option('window', 'maximized')
-            and config_parser.getboolean('window', 'maximized')
+        if not config_parser.has_section("window") or (
+            config_parser.has_option("window", "maximized")
+            and config_parser.getboolean("window", "maximized")
         ):
             self.Maximize(True)
         try:
             width, height, x, y = [
-                config_parser.getint('window', key)
-                for key in ['width', 'height', 'x', 'y']
+                config_parser.getint("window", key)
+                for key in ["width", "height", "x", "y"]
             ]
             self.SetPosition((x, y))
             self.SetSize((width, height))
@@ -795,7 +795,7 @@ class MainFrame(wx.Frame):
             )
 
         try:
-            font_size = config_parser.getint('window', 'font_size')
+            font_size = config_parser.getint("window", "font_size")
         except Exception:
             pass  # use the default, by default
         else:
@@ -814,8 +814,8 @@ class MainFrame(wx.Frame):
         try:
             self.SaveState(self.config)
             config = config_file()
-            temp = config + '~'
-            self.config.write(open(temp, 'w'))
+            temp = config + "~"
+            self.config.write(open(temp, "w"))
             os.rename(temp, config)
         except Exception as err:
             log.error(
@@ -837,11 +837,11 @@ class RunSnakeRunApp(wx.App):
         frame.Show(True)
         self.SetTopWindow(frame)
         if sys.argv[1:]:
-            if sys.argv[1] == '-m':
+            if sys.argv[1] == "-m":
                 if sys.argv[2:]:
                     wx.CallAfter(frame.load_memory, sys.argv[2])
                 else:
-                    log.warn('No memory file specified')
+                    log.warn("No memory file specified")
             else:
                 wx.CallAfter(frame.load, *sys.argv[1:])
         return True
@@ -859,7 +859,7 @@ class MeliaeViewApp(wx.App):
         if sys.argv[1:]:
             wx.CallAfter(frame.load_memory, sys.argv[1])
         else:
-            log.warn('No memory file specified')
+            log.warn("No memory file specified")
         return True
 
 
@@ -876,7 +876,7 @@ def getIcon(data):
 
 def config_directory():
     base = homedirectory.appdatadirectory()
-    directory = os.path.join(base, 'RunSnakeRun')
+    directory = os.path.join(base, "RunSnakeRun")
     if not os.path.exists(directory):
         os.makedirs(directory)
     return directory
@@ -884,7 +884,7 @@ def config_directory():
 
 def config_file():
     directory = config_directory()
-    return os.path.join(directory, 'runsnake.conf')
+    return os.path.join(directory, "runsnake.conf")
 
 
 def load_config():
