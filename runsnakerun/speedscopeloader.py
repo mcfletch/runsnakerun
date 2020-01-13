@@ -38,7 +38,24 @@ class StackFrame(DataBase):
     def child_cumulative_time(self, child):
         """What fraction of our cumulative time was spent in child?"""
         return child.cumulative / float(self.cumulative or 1.0)
-
+    @property
+    def name(self):
+        return self.frame.name
+    @property 
+    def filename(self):
+        return os.path.basename(self.frame.file)
+    @property
+    def directory(self):
+        return os.path.dirname(self.frame.file)
+    @property 
+    def lineno(self):
+        return self.frame.line
+    @property 
+    def localPer(self):
+        return self.local/float(self.calls or 1)
+    @property 
+    def cumulativePer(self):
+        return self.cumulative/float(self.calls or 1)
 
 class Frame(DataBase):
     name = None
@@ -104,18 +121,15 @@ class SampledProfile(Profile):
                             calls=1,
                             children=[],
                         )
+                        if parent and not current in parent.children:
+                            parent.children.append(current)
                     else:
                         current.cumulative += weight
                         current.calls += 1
                         current.local += local
-                    if parent:
-                        parent.children.append(current)
-                    else:
-                        if current not in self._roots:
-                            log.debug("Found new root: %s", path)
-                            self._roots.append(current)
-                        # else:
-                        #     log.debug("Adding to root: %s", parent.frame)
+                    if (not parent) and current not in self._roots:
+                        log.debug("Found new root: %s", path)
+                        self._roots.append(current)
                     parent = current
             self._parent_map = path_map
         return self._roots
