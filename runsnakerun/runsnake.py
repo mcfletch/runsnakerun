@@ -265,7 +265,11 @@ class MainFrame(wx.Frame):
         self.tabs.AddPage(self.allCallerListControl, _('All Callers'), False)
         if editor:
             self.tabs.AddPage(self.sourceCodeControl, _('Source Code'), False)
-        self.rightSplitter.SetSashSize(10)
+
+        # SetSashSize has been removed since it didn't work correctly
+        # per https://github.com/wxWidgets/wxWidgets/commit/26696222ffb75ac8531207cf356a52b033c48d9e
+        #self.rightSplitter.SetSashSize(10)
+
         # calculate size as proportional value for initial display...
         self.LoadState(config_parser)
         width, height = self.GetSize()
