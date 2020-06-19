@@ -120,7 +120,7 @@ class DataView(wx.ListCtrl):
         """Create/recreate our column definitions from current self.columns"""
         self.SetItemCount(0)
         # clear any current columns...
-        for i in range(self.GetColumnCount())[::-1]:
+        for i in range(self.GetColumnCount()-1, -1, -1):
             self.DeleteColumn(i)
         # now create
         for i, column in enumerate(self.columns):
