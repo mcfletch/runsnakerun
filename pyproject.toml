@@ -1,0 +1,19 @@
+[tool.black]
+skip-string-normalization=true
+exclude = '''
+(
+  /(
+      \.eggs|
+      \.git|
+      \.hg|
+      \.mypy_cache|
+      \.nox|
+      \.tox|
+      \.venv|
+      build|
+      protos|
+      dist
+  )/
+)
+'''
+

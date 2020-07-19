@@ -1,5 +1,5 @@
-import time 
+import time
+
 
 def r():
-	time.sleep( .5 )
-
+    time.sleep(0.5)

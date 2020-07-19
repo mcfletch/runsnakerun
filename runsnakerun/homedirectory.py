@@ -71,7 +71,7 @@ def appdatadirectory():
                 return os.environ[name]
             return os.path.join(os.environ[name], RELATIVE_CONFIG)
     # well, someone's being naughty, see if we can get ~ to expand to a directory...
-    possible = os.path.abspath(os.path.expanduser('~/%s'%(RELATIVE_CONFIG,)))
+    possible = os.path.abspath(os.path.expanduser('~/%s' % (RELATIVE_CONFIG,)))
     if os.path.exists(possible):
         return possible
     try:
@@ -79,9 +79,8 @@ def appdatadirectory():
     except Exception:
         pass
     raise OSError(
-        """Unable to determine user's application-data directory, no ${HOME} or ${APPDATA} in environment, unable to create %s"""%(
-            possible,
-        )
+        """Unable to determine user's application-data directory, no ${HOME} or ${APPDATA} in environment, unable to create %s"""
+        % (possible,)
     )
 
 

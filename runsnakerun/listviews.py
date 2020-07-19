@@ -260,7 +260,7 @@ class DataView(wx.ListCtrl):
         self.sorted = functions[:]
         self.reorder()
         if not self.initial_autosize:
-            self.initial_autosize= True
+            self.initial_autosize = True
             for i, column in enumerate(self.columns):
                 if not windows or column.targetWidth is None:
                     self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
@@ -268,7 +268,7 @@ class DataView(wx.ListCtrl):
                     self.SetColumnWidth(i, column.targetWidth)
         self.Refresh()
 
-    if hasattr(wx,'ItemAttr'):
+    if hasattr(wx, 'ItemAttr'):
         indicated_attribute = wx.ItemAttr()
     else:
         indicated_attribute = wx.ListItemAttr()

@@ -38,24 +38,31 @@ class StackFrame(DataBase):
     def child_cumulative_time(self, child):
         """What fraction of our cumulative time was spent in child?"""
         return child.cumulative / float(self.cumulative or 1.0)
+
     @property
     def name(self):
         return self.frame.name
-    @property 
+
+    @property
     def filename(self):
         return os.path.basename(self.frame.file)
+
     @property
     def directory(self):
         return os.path.dirname(self.frame.file)
-    @property 
+
+    @property
     def lineno(self):
         return self.frame.line
-    @property 
+
+    @property
     def localPer(self):
-        return self.local/float(self.calls or 1)
-    @property 
+        return self.local / float(self.calls or 1)
+
+    @property
     def cumulativePer(self):
-        return self.cumulative/float(self.calls or 1)
+        return self.cumulative / float(self.calls or 1)
+
 
 class Frame(DataBase):
     name = None

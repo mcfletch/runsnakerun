@@ -240,18 +240,12 @@ class MainFrame(wx.Frame):
 
         self.CreateSourceWindow(self.tabs)
 
-        def dataview_panel(parent,columns,name, control=None):
-            panel = wx.Panel(
-                parent,
-            )
+        def dataview_panel(parent, columns, name, control=None):
+            panel = wx.Panel(parent,)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             panel.SetSizer(sizer)
-            control = listviews.DataView(
-                panel,
-                columns=columns,
-                name=name,
-            )
-            sizer.Add(control,wx.EXPAND)
+            control = listviews.DataView(panel, columns=columns, name=name,)
+            sizer.Add(control, wx.EXPAND)
             return control
 
         self.calleeListControl = dataview_panel(
@@ -273,16 +267,22 @@ class MainFrame(wx.Frame):
             self.callerListControl,
             self.allCallerListControl,
         ]
-        for child,title,focus in [
+        for child, title, focus in [
             (self.calleeListControl, _("Callees"), True),
             (self.allCalleeListControl, _("All Callees"), False),
             (self.callerListControl, _("Callers"), False),
             (self.allCallerListControl, _("All Callers"), False),
-            (self.sourceCodeControl,_("Source Code"),False),
+            (self.sourceCodeControl, _("Source Code"), False),
         ]:
             if child:
-                self.tabs.AddPage(child.GetParent() if child is not self.sourceCodeControl else self.sourceCodeControl,title,focus)
-        if hasattr(self.rightSplitter,'SetSashSize'):
+                self.tabs.AddPage(
+                    child.GetParent()
+                    if child is not self.sourceCodeControl
+                    else self.sourceCodeControl,
+                    title,
+                    focus,
+                )
+        if hasattr(self.rightSplitter, 'SetSashSize'):
             self.rightSplitter.SetSashSize(10)
         # else:
         #     self.rightSplitter.SashSize = 10
