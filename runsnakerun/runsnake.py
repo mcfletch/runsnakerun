@@ -392,6 +392,7 @@ class MainFrame(wx.Frame):
 
             return getIcon(rsricon_png.data)
         except Exception as err:
+            log.exception("Unable to load resource icon")
             return None
 
     sourceCodeControl = None
@@ -763,7 +764,7 @@ class MainFrame(wx.Frame):
                 header = fh.read(1)
                 if header and header == b"{":
                     content = fh.read()
-                    return not '\x00' in content and content.endswith('}')
+                    return not b'\x00' in content and content.endswith(b'}')
         except Exception:
             return False
 
@@ -914,12 +915,15 @@ class MeliaeViewApp(wx.App):
 
 def getIcon(data):
     """Return the data from the resource as a wxIcon"""
-    import cStringIO
+    from io import BytesIO
 
-    stream = cStringIO.StringIO(data)
-    image = wx.ImageFromStream(stream)
-    icon = wx.EmptyIcon()
-    icon.CopyFromBitmap(wx.BitmapFromImage(image))
+    stream = BytesIO(data)
+    image = wx.Image()
+    if not image.LoadFile(stream):
+        raise RuntimeError("Unable to load image")
+    bitmap = wx.Bitmap(image, depth=wx.BITMAP_SCREEN_DEPTH)
+    icon = wx.Icon()
+    icon.CopyFromBitmap(bitmap)
     return icon
 
 
