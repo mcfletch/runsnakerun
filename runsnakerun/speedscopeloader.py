@@ -17,6 +17,24 @@ class DataBase(object):
             if not key.startswith("_"):
                 setattr(self, key, value)
 
+    def descendants(self, known=None):
+        """(Recursively) Get the set of all descendants of this node"""
+        known = known or set()
+        for child in self.children:
+            if child not in known:
+                known.add(child)
+                child.descendants(known)
+        return list(known)
+
+    def ancestors(self, known=None):
+        """(Recursively) Get the set of all parents of this node"""
+        known = known or set()
+        for parent in self.parents:
+            if parent not in known:
+                known.add(parent)
+                parent.ancestors(known)
+        return list(known)
+
 
 class Profile(DataBase):
     name = None
