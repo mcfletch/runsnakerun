@@ -268,7 +268,10 @@ class DataView(wx.ListCtrl):
                     self.SetColumnWidth(i, column.targetWidth)
         self.Refresh()
 
-    indicated_attribute = wx.ListItemAttr()
+    if hasattr(wx,'ItemAttr'):
+        indicated_attribute = wx.ItemAttr()
+    else:
+        indicated_attribute = wx.ListItemAttr()
     indicated_attribute.SetBackgroundColour('#00ff00')
 
     def OnGetItemAttr(self, item):
