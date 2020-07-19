@@ -259,12 +259,15 @@ class MainFrame(wx.Frame):
             self.callerListControl,
             self.allCallerListControl,
         ]
-        self.tabs.AddPage(self.calleeListControl, _("Callees"), True)
-        self.tabs.AddPage(self.allCalleeListControl, _("All Callees"), False)
-        self.tabs.AddPage(self.callerListControl, _("Callers"), False)
-        self.tabs.AddPage(self.allCallerListControl, _("All Callers"), False)
-        if editor:
-            self.tabs.AddPage(self.sourceCodeControl, _("Source Code"), False)
+        for child,title,focus in [
+            (self.calleeListControl, _("Callees"), True),
+            (self.allCalleeListControl, _("All Callees"), False),
+            (self.callerListControl, _("Callers"), False),
+            (self.allCallerListControl, _("All Callers"), False),
+            (self.sourceCodeControl,_("Source Code"),False),
+        ]:
+            if child:
+                self.tabs.AddPage(child,title,focus)
         if hasattr(self.rightSplitter,'SetSashSize'):
             self.rightSplitter.SetSashSize(10)
         # else:
