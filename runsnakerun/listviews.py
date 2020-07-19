@@ -74,6 +74,7 @@ class DataView(wx.ListCtrl):
     activated_node = None
     selected_node = None
     indicated_node = None
+    initial_autosize = False
 
     def __init__(
         self,
@@ -126,9 +127,7 @@ class DataView(wx.ListCtrl):
         for i, column in enumerate(self.columns):
             column.index = i
             self.InsertColumn(i, column.name)
-            if not windows or column.targetWidth is None:
-                self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
-            else:
+            if column.targetWidth is not None:
                 self.SetColumnWidth(i, column.targetWidth)
 
     def SetColumns(self, columns, sortOrder=None):
@@ -260,6 +259,13 @@ class DataView(wx.ListCtrl):
         self.SetItemCount(len(functions))
         self.sorted = functions[:]
         self.reorder()
+        if not self.initial_autosize:
+            self.initial_autosize= True
+            for i, column in enumerate(self.columns):
+                if not windows or column.targetWidth is None:
+                    self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
+                else:
+                    self.SetColumnWidth(i, column.targetWidth)
         self.Refresh()
 
     indicated_attribute = wx.ListItemAttr()
