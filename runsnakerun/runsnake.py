@@ -240,16 +240,30 @@ class MainFrame(wx.Frame):
 
         self.CreateSourceWindow(self.tabs)
 
-        self.calleeListControl = listviews.DataView(
+        def dataview_panel(parent,columns,name, control=None):
+            panel = wx.Panel(
+                parent,
+            )
+            sizer = wx.BoxSizer(wx.HORIZONTAL)
+            panel.SetSizer(sizer)
+            control = listviews.DataView(
+                panel,
+                columns=columns,
+                name=name,
+            )
+            sizer.Add(control,wx.EXPAND)
+            return control
+
+        self.calleeListControl = dataview_panel(
             self.tabs, columns=PROFILE_VIEW_COLUMNS, name="callee",
         )
-        self.allCalleeListControl = listviews.DataView(
+        self.allCalleeListControl = dataview_panel(
             self.tabs, columns=PROFILE_VIEW_COLUMNS, name="allcallee",
         )
-        self.allCallerListControl = listviews.DataView(
+        self.allCallerListControl = dataview_panel(
             self.tabs, columns=PROFILE_VIEW_COLUMNS, name="allcaller",
         )
-        self.callerListControl = listviews.DataView(
+        self.callerListControl = dataview_panel(
             self.tabs, columns=PROFILE_VIEW_COLUMNS, name="caller",
         )
         self.ProfileListControls = [
@@ -267,7 +281,7 @@ class MainFrame(wx.Frame):
             (self.sourceCodeControl,_("Source Code"),False),
         ]:
             if child:
-                self.tabs.AddPage(child,title,focus)
+                self.tabs.AddPage(child.GetParent() if child is not self.sourceCodeControl else self.sourceCodeControl,title,focus)
         if hasattr(self.rightSplitter,'SetSashSize'):
             self.rightSplitter.SetSashSize(10)
         # else:
