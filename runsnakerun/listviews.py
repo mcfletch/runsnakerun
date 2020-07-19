@@ -121,13 +121,15 @@ class DataView(wx.ListCtrl):
         """Create/recreate our column definitions from current self.columns"""
         self.SetItemCount(0)
         # clear any current columns...
-        for i in range(self.GetColumnCount())[::-1]:
+        for i in list(range(self.GetColumnCount()))[::-1]:
             self.DeleteColumn(i)
         # now create
         for i, column in enumerate(self.columns):
             column.index = i
             self.InsertColumn(i, column.name)
-            if column.targetWidth is not None:
+            if not windows or column.targetWidth is None:
+                self.SetColumnWidth(i, wx.LIST_AUTOSIZE_USEHEADER)
+            else:
                 self.SetColumnWidth(i, column.targetWidth)
 
     def SetColumns(self, columns, sortOrder=None):
@@ -259,13 +261,6 @@ class DataView(wx.ListCtrl):
         self.SetItemCount(len(functions))
         self.sorted = functions[:]
         self.reorder()
-        if not self.initial_autosize:
-            self.initial_autosize = True
-            for i, column in enumerate(self.columns):
-                if not windows or column.targetWidth is None:
-                    self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
-                else:
-                    self.SetColumnWidth(i, column.targetWidth)
         self.Refresh()
 
     if hasattr(wx, 'ItemAttr'):
