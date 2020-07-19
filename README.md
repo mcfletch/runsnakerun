@@ -16,7 +16,7 @@ Supported Formats:
 
 ## Documentation
 
-[See the website] for usage documentation
+[See the website](https://mcfletch.github.com/runsnakerun) for usage documentation
 
 ## Contributing and Bug Reports
 
