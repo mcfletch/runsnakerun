@@ -265,7 +265,10 @@ class MainFrame(wx.Frame):
         self.tabs.AddPage(self.allCallerListControl, _("All Callers"), False)
         if editor:
             self.tabs.AddPage(self.sourceCodeControl, _("Source Code"), False)
-        self.rightSplitter.SetSashSize(10)
+        if hasattr(self.rightSplitter,'SetSashSize'):
+            self.rightSplitter.SetSashSize(10)
+        # else:
+        #     self.rightSplitter.SashSize = 10
         # calculate size as proportional value for initial display...
         self.LoadState(config_parser)
         width, height = self.GetSize()
@@ -742,7 +745,8 @@ class MainFrame(wx.Frame):
             with open(filename, "rb") as fh:
                 header = fh.read(1)
                 if header and header == b"{":
-                    return True
+                    content = fh.read()
+                    return not '\x00' in content and content.endswith('}')
         except Exception:
             return False
 
