@@ -668,8 +668,8 @@ class MainFrame(wx.Frame):
         self.selected_node = event.node
         self.calleeListControl.integrateRecords(self.adapter.children(event.node))
         self.callerListControl.integrateRecords(self.adapter.parents(event.node))
-        # self.allCalleeListControl.integrateRecords(event.node.descendants())
-        # self.allCallerListControl.integrateRecords(event.node.ancestors())
+        self.allCalleeListControl.integrateRecords(event.node.descendants())
+        self.allCallerListControl.integrateRecords(event.node.ancestors())
 
     def OnMoreSquareToggle(self, event):
         """Toggle the more-square view (better looking, but more likely to filter records)"""
