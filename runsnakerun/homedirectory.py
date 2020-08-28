@@ -24,15 +24,15 @@ r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Fol
 
 def winreg_getShellFolder(name):
     """Get a shell folder by string name from the registry"""
-    k = six.moves.winreg.OpenKey(
-        six.moves.winreg.HKEY_CURRENT_USER,
+    k = winreg.OpenKey(
+        winreg.HKEY_CURRENT_USER,
         r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
     )
     try:
         # should check that it's valid? How?
-        return six.moves.winreg.QueryValueEx(k, name)[0]
+        return winreg.QueryValueEx(k, name)[0]
     finally:
-        six.moves.winreg.CloseKey(k)
+        winreg.CloseKey(k)
 
 
 def shell_getShellFolder(type):
@@ -50,7 +50,7 @@ def appdatadirectory():
 
     This is the location where application-specific
     files should be stored.  On *nix systems, this will
-    be the ${HOME}/{RELATIVE_CONFIG} directory.  
+    be the ${HOME}/{RELATIVE_CONFIG} directory.
     On Win32 systems, it will be
     the "Application Data" directory.  Note that for
     Win32 systems it is normal to create a sub-directory
