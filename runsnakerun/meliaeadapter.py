@@ -23,7 +23,7 @@ Planned:
 """
 from __future__ import absolute_import
 from __future__ import print_function
-import wx, sys, os, logging, imp
+import wx, sys, os, logging
 import wx.lib.newevent
 import six
 
@@ -31,6 +31,27 @@ log = logging.getLogger(__name__)
 import sys
 from squaremap import squaremap
 from runsnakerun import meliaeloader
+
+try:
+    # python3 before 3.12
+    import imp
+except ImportError:
+    import importlib.util
+
+    def find_module(name):
+        spec = importlib.util.find_spec(name)
+        if spec:
+            return spec.origin
+        return None
+
+else:
+
+    def find_module(name):
+        fp, pathname, description = imp.find_module(name)
+        if fp:
+            fp.close()
+        return pathname
+
 
 RANKS = [
     (1024 * 1024 * 1024, '%0.1fGB'),
@@ -41,7 +62,7 @@ RANKS = [
 
 
 def mb(value):
-    for (unit, format) in RANKS:
+    for unit, format in RANKS:
         if abs(value) >= unit * 2:
             return format % (value / float(unit or 1))
     raise ValueError("Number where abs(x) is not >= 0?: %s" % (value,))
@@ -143,12 +164,10 @@ class MeliaeAdapter(squaremap.DefaultAdapter):
     def filename(self, node):
         if 'module' in node and not 'filename' in node:
             try:
-                fp, pathname, description = imp.find_module(node['module'])
-            except (ImportError) as err:
+                pathname = find_module(node['module'])
+            except ImportError as err:
                 node['filename'] = None
             else:
-                if fp:
-                    fp.close()
                 node['filename'] = pathname
         elif not 'filename' in node:
             return None
@@ -163,7 +182,9 @@ class TestApp(wx.App):
     def OnInit(self):
         """Initialise the application"""
         wx.Image.AddHandler(self.handler)
-        self.frame = frame = wx.Frame(None,)
+        self.frame = frame = wx.Frame(
+            None,
+        )
         frame.CreateStatusBar()
 
         model = model = self.get_model(sys.argv[1])
