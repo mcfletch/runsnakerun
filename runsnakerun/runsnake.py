@@ -49,13 +49,22 @@ ID_MORE_SQUARE = wx.NewId()
 
 PROFILE_VIEW_COLUMNS = [
     listviews.ColumnDefinition(
-        name=_("Name"), attribute="name", defaultOrder=True, targetWidth=50,
+        name=_("Name"),
+        attribute="name",
+        defaultOrder=True,
+        targetWidth=50,
     ),
     listviews.ColumnDefinition(
-        name=_("Calls"), attribute="calls", defaultOrder=False, targetWidth=50,
+        name=_("Calls"),
+        attribute="calls",
+        defaultOrder=False,
+        targetWidth=50,
     ),
     listviews.ColumnDefinition(
-        name=_("RCalls"), attribute="recursive", defaultOrder=False, targetWidth=40,
+        name=_("RCalls"),
+        attribute="recursive",
+        defaultOrder=False,
+        targetWidth=40,
     ),
     listviews.ColumnDefinition(
         name=_("Local"),
@@ -91,7 +100,11 @@ PROFILE_VIEW_COLUMNS = [
     listviews.ColumnDefinition(
         name=_("File"),
         attribute="filename",
-        sortOn=("filename", "lineno", "directory",),
+        sortOn=(
+            "filename",
+            "lineno",
+            "directory",
+        ),
         defaultOrder=True,
         targetWidth=70,
     ),
@@ -128,7 +141,10 @@ def mem_name(x):
 
 MEMORY_VIEW_COLUMNS = [
     listviews.DictColumn(
-        name=_("Type"), attribute="type", targetWidth=20, defaultOrder=True,
+        name=_("Type"),
+        attribute="type",
+        targetWidth=20,
+        defaultOrder=True,
     ),
     listviews.DictColumn(
         name=_("Name"),
@@ -227,7 +243,9 @@ class MainFrame(wx.Frame):
         self.leftSplitter = wx.SplitterWindow(self)
         self.rightSplitter = wx.SplitterWindow(self.leftSplitter)
         self.listControl = listviews.DataView(
-            self.leftSplitter, columns=PROFILE_VIEW_COLUMNS, name="mainlist",
+            self.leftSplitter,
+            columns=PROFILE_VIEW_COLUMNS,
+            name="mainlist",
         )
         self.squareMap = squaremap.SquareMap(
             self.rightSplitter,
@@ -236,29 +254,46 @@ class MainFrame(wx.Frame):
             adapter=self.adapter,
             square_style=True,
         )
-        self.tabs = wx.Notebook(self.rightSplitter, size=(300, 50),)
+        self.tabs = wx.Notebook(
+            self.rightSplitter,
+            size=(300, 50),
+        )
 
         self.CreateSourceWindow(self.tabs)
 
         def dataview_panel(parent, columns, name, control=None):
-            panel = wx.Panel(parent,)
+            panel = wx.Panel(
+                parent,
+            )
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             panel.SetSizer(sizer)
-            control = listviews.DataView(panel, columns=columns, name=name,)
+            control = listviews.DataView(
+                panel,
+                columns=columns,
+                name=name,
+            )
             sizer.Add(control, wx.EXPAND)
             return control
 
         self.calleeListControl = dataview_panel(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="callee",
+            self.tabs,
+            columns=PROFILE_VIEW_COLUMNS,
+            name="callee",
         )
         self.allCalleeListControl = dataview_panel(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="allcallee",
+            self.tabs,
+            columns=PROFILE_VIEW_COLUMNS,
+            name="allcallee",
         )
         self.allCallerListControl = dataview_panel(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="allcaller",
+            self.tabs,
+            columns=PROFILE_VIEW_COLUMNS,
+            name="allcaller",
         )
         self.callerListControl = dataview_panel(
-            self.tabs, columns=PROFILE_VIEW_COLUMNS, name="caller",
+            self.tabs,
+            columns=PROFILE_VIEW_COLUMNS,
+            name="caller",
         )
         self.ProfileListControls = [
             self.listControl,
@@ -276,9 +311,11 @@ class MainFrame(wx.Frame):
         ]:
             if child:
                 self.tabs.AddPage(
-                    child.GetParent()
-                    if child is not self.sourceCodeControl
-                    else self.sourceCodeControl,
+                    (
+                        child.GetParent()
+                        if child is not self.sourceCodeControl
+                        else self.sourceCodeControl
+                    ),
                     title,
                     focus,
                 )
@@ -300,7 +337,8 @@ class MainFrame(wx.Frame):
         )
         self.squareMap.Bind(squaremap.EVT_SQUARE_SELECTED, self.OnSquareSelectedList)
         self.squareMap.Bind(
-            squaremap.EVT_SQUARE_SELECTED, self.OnSquareSelectedMap,
+            squaremap.EVT_SQUARE_SELECTED,
+            self.OnSquareSelectedMap,
         )
         self.squareMap.Bind(squaremap.EVT_SQUARE_ACTIVATED, self.OnNodeActivated)
         for control in self.ProfileListControls:
@@ -368,22 +406,34 @@ class MainFrame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.OnPercentageView, id=ID_PERCENTAGE_VIEW)
         self.Bind(
-            wx.EVT_MENU, self.OnUpView, id=ID_UP_VIEW,
+            wx.EVT_MENU,
+            self.OnUpView,
+            id=ID_UP_VIEW,
         )
         self.Bind(
-            wx.EVT_MENU, self.OnDeeperView, id=ID_DEEPER_VIEW,
+            wx.EVT_MENU,
+            self.OnDeeperView,
+            id=ID_DEEPER_VIEW,
         )
         self.Bind(
-            wx.EVT_MENU, self.OnShallowerView, id=ID_SHALLOWER_VIEW,
+            wx.EVT_MENU,
+            self.OnShallowerView,
+            id=ID_SHALLOWER_VIEW,
         )
         self.Bind(
-            wx.EVT_MENU, self.OnRootView, id=ID_ROOT_VIEW,
+            wx.EVT_MENU,
+            self.OnRootView,
+            id=ID_ROOT_VIEW,
         )
         self.Bind(
-            wx.EVT_MENU, self.OnBackView, id=ID_BACK_VIEW,
+            wx.EVT_MENU,
+            self.OnBackView,
+            id=ID_BACK_VIEW,
         )
         self.Bind(
-            wx.EVT_MENU, self.OnMoreSquareToggle, id=ID_MORE_SQUARE,
+            wx.EVT_MENU,
+            self.OnMoreSquareToggle,
+            id=ID_MORE_SQUARE,
         )
 
     def LoadRSRIcon(self):
@@ -498,7 +548,10 @@ class MainFrame(wx.Frame):
                     self.viewTypeMenu,
                     -1,
                     root.title(),
-                    _("View hierarchy by %(name)s") % {"name": root.title(),},
+                    _("View hierarchy by %(name)s")
+                    % {
+                        "name": root.title(),
+                    },
                     kind=wx.ITEM_RADIO,
                 )
                 self.viewTypeMenu.Append(item)
@@ -625,6 +678,8 @@ class MainFrame(wx.Frame):
             if self.SourceShowFile(event.node):
                 if hasattr(event.node, "lineno"):
                     self.sourceCodeControl.GotoLine(event.node.lineno)
+                else:
+                    log.info("No lineno in the node")
         self.RecordHistory()
 
     def SourceShowFile(self, node):
@@ -941,7 +996,11 @@ def config_file():
 
 
 def load_config():
-    config = six.moves.configparser.SafeConfigParser()
+    try:
+        # WTF would *six* remove a move??? ARGH
+        config = six.moves.configparser.SafeConfigParser()
+    except AttributeError:
+        config = six.moves.configparser.ConfigParser()
     filename = config_file()
     if os.path.exists(filename):
         config.read(filename)
