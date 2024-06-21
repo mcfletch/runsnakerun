@@ -100,6 +100,8 @@ class PStatsLoader(object):
                 log.info('Null row: %s', func)
         for row in six.itervalues(rows):
             row.weave(rows)
+        for row in six.itervalues(rows):
+            row.fix_children()
         return self.find_root(rows)
 
     def load_functions(self):
@@ -268,6 +270,29 @@ class PStatRow(BaseStat):
             if parent:
                 self.parents.append(parent)
                 parent.children.append(self)
+
+    def fix_children(self, seen=None):
+        """make sure rows in .children only contain call count/timings when called by self"""
+        seen = set() if seen is None else seen
+        if self in seen:
+            return self
+
+        seen.add(self)
+
+        children = []
+        for c in self.children:
+            call_timings = c.callers.get(self.key)
+            if call_timings is None:
+                children.append(c)
+            else:
+                child_node = PStatRow(c.key, (*call_timings, c.callers))
+                seen.add(child_node)
+                child_node.parents = c.parents
+                child_node.children = [cc.fix_children(seen) for cc in c.children]
+                children.append(child_node)
+
+        self.children = children
+        return self
 
     def child_cumulative_time(self, child):
         total = self.cumulative
