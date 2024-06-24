@@ -18,7 +18,7 @@ TREE_CALLS, TREE_FILES = list(range(2))
 
 def load_pstats(filenames):
     """Given list of filenames, load pstats, potentially using a different python version
-    
+
     Internally will create a python2 subprocess to convert python2
     pstats dumps for loading in python3, that will create a cPickle/pickle
     dump and load it locally.
@@ -116,16 +116,21 @@ class PStatsLoader(object):
         cycles by sorting on cumulative time, and then collecting the traced
         roots (or, if they are all on the same root, use that).
         """
-        maxes = sorted(list(rows.values()), key=lambda x: x.cumulative)
-        if not maxes:
-            raise RuntimeError("""Null results!""")
-        root = maxes[-1]
-        roots = [root]
+        roots = []
         for key, value in rows.items():
             if not value.parents:
                 log.debug('Found node root: %s', value)
                 if value not in roots:
                     roots.append(value)
+
+        if len(roots) == 0:
+            # use longest running function as root when we have not found a root, yet
+            maxes = sorted(list(rows.values()), key=lambda x: x.cumulative)
+            if not maxes:
+                raise RuntimeError("""Null results!""")
+            root = maxes[-1]
+            roots.append(root)
+
         if len(roots) > 1:
             root = PStatGroup(
                 directory='*', filename='*', name=_("<profiling run>"), children=roots,
